@@ -1,0 +1,238 @@
+/* =============================================================================
+   TECNOFINK — DESIGN SYSTEM
+   Fundação de tokens, tipografia e classes utilitárias.
+   Derivado da identidade do site institucional e do Playbook 2026 (Fernanda).
+   Suporta tema claro (padrão) e escuro via [data-theme="dark"].
+   ============================================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=Manrope:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* ---------------------------------------------------------------------------
+   1. TOKENS — TEMA CLARO (padrão)
+   --------------------------------------------------------------------------- */
+:root {
+  /* superfícies */
+  --tf-bg:        #F8F9FC;   /* fundo da página */
+  --tf-bg-pure:   #FFFFFF;   /* cards e superfícies elevadas */
+  --tf-bg-2:      #F1F2F7;   /* superfície secundária / hover */
+  --tf-bg-3:      #E7E8EF;   /* superfície terciária */
+
+  /* linhas e bordas */
+  --tf-line:      #E5E5EA;   /* hairline padrão */
+  --tf-line-2:    #D4D4DA;   /* borda de campo / mais forte */
+
+  /* texto */
+  --tf-ink:       #18182A;   /* texto principal */
+  --tf-ink-2:     #4A4A5A;   /* texto secundário */
+  --tf-ink-3:     #8E8E9A;   /* texto terciário / legendas */
+
+  /* marca — navy */
+  --tf-accent:      #0C0059; /* navy TecnoFink */
+  --tf-accent-2:    #1F1675; /* navy claro / gradiente */
+  --tf-accent-deep: #08003E; /* navy profundo (rodapé) */
+  --tf-accent-soft: rgba(12, 0, 89, 0.06);
+  --tf-accent-glow: rgba(12, 0, 89, 0.12);
+
+  /* tinta de marca secundária (cinza do wordmark) */
+  --tf-gray-mark: #6E6E78;
+
+  /* status / sinalização */
+  --tf-warn: #E85D2E;  /* laranja — em andamento / atenção */
+  --tf-live: #2DBA70;  /* verde — ativo / concluído */
+  --tf-crit: #D62B2B;  /* vermelho — crítico / erro */
+
+  /* grade de fundo */
+  --tf-grid: rgba(12, 0, 89, 0.025);
+
+  /* logo: em claro, exibe natural (cinza+navy). Sem filtro. */
+  --tf-logo-filter: none; /* @kind other */
+
+  /* raios e sombras */
+  --tf-radius-sm: 6px;
+  --tf-radius:    10px;
+  --tf-radius-lg: 16px;
+  --tf-radius-pill: 999px;
+  --tf-shadow:    0 1px 2px rgba(12, 0, 89, 0.04);
+  --tf-shadow-lg: 0 30px 80px -20px rgba(12, 0, 89, 0.18);
+
+  /* fontes */
+  --tf-font-display: 'Bricolage Grotesque', sans-serif;
+  --tf-font-body:    'Manrope', sans-serif;
+  --tf-font-mono:    'JetBrains Mono', monospace;
+
+  /* espaçamento base */
+  --tf-container: 1320px;
+  --tf-gutter: 32px;
+}
+
+/* ---------------------------------------------------------------------------
+   2. TOKENS — TEMA ESCURO
+   Ancorado no navy da marca: superfícies azul-escuro quase pretas, acento
+   em periwinkle (versão clareada do navy) para legibilidade sobre fundo escuro.
+   --------------------------------------------------------------------------- */
+[data-theme="dark"] {
+  --tf-bg:        #0B0B16;
+  --tf-bg-pure:   #111120;
+  --tf-bg-2:      #16162A;
+  --tf-bg-3:      #20203A;
+
+  --tf-line:      #2A2A42;
+  --tf-line-2:    #353551;
+
+  --tf-ink:       #F1F1F6;
+  --tf-ink-2:     #B7B7C6;
+  --tf-ink-3:     #7E7E92;
+
+  --tf-accent:      #4F7CFF;  /* azul royal — navy Tecnofink clareado p/ fundo escuro */
+  --tf-accent-2:    #3A5FE0;
+  --tf-accent-deep: #05010F;
+  --tf-accent-soft: rgba(79, 124, 255, 0.13);
+  --tf-accent-glow: rgba(79, 124, 255, 0.22);
+
+  --tf-gray-mark: #9A9AA6;
+
+  --tf-warn: #F2703E;
+  --tf-live: #35C77C;
+  --tf-crit: #E5484D;
+
+  --tf-grid: rgba(79, 124, 255, 0.045);
+
+  /* logo: em escuro, deixa o wordmark branco para contraste */
+  --tf-logo-filter: brightness(0) invert(1); /* @kind other */
+
+  --tf-shadow:    0 1px 2px rgba(0, 0, 0, 0.4);
+  --tf-shadow-lg: 0 30px 80px -20px rgba(0, 0, 0, 0.6);
+}
+
+/* ---------------------------------------------------------------------------
+   3. RESET + BASE
+   --------------------------------------------------------------------------- */
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  background-color: var(--tf-bg);
+  color: var(--tf-ink);
+  font-family: var(--tf-font-body);
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  /* grade de fundo — assinatura visual TecnoFink */
+  background-image:
+    linear-gradient(var(--tf-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--tf-grid) 1px, transparent 1px);
+  background-size: 64px 64px;
+  background-position: -1px -1px;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* desliga a grade onde não for desejada */
+.tf-no-grid { background-image: none; }
+
+/* ---------------------------------------------------------------------------
+   4. TIPOGRAFIA
+   --------------------------------------------------------------------------- */
+.tf-display,
+h1.tf, h2.tf, h3.tf {
+  font-family: var(--tf-font-display);
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1.02;
+  color: var(--tf-ink);
+}
+.tf-h1 { font-size: clamp(2.6rem, 6vw, 5.2rem); line-height: 0.98; letter-spacing: -0.035em; font-family: var(--tf-font-display); font-weight: 600; color: var(--tf-ink); }
+.tf-h2 { font-size: clamp(2rem, 4vw, 3.2rem); line-height: 1.02; letter-spacing: -0.025em; font-family: var(--tf-font-display); font-weight: 600; color: var(--tf-ink); }
+.tf-h3 { font-size: clamp(1.4rem, 2.4vw, 1.9rem); letter-spacing: -0.02em; font-family: var(--tf-font-display); font-weight: 600; color: var(--tf-ink); }
+.tf-h4 { font-size: 1.25rem; letter-spacing: -0.015em; font-family: var(--tf-font-display); font-weight: 600; color: var(--tf-ink); }
+.tf-lead { font-size: 1.15rem; color: var(--tf-ink-2); line-height: 1.55; }
+.tf-body { font-size: 1rem; color: var(--tf-ink-2); line-height: 1.6; }
+.tf-small { font-size: 0.88rem; color: var(--tf-ink-3); }
+.tf-accent-word { color: var(--tf-accent); font-weight: 700; }
+.tf-muted-word { color: var(--tf-ink-3); font-style: italic; font-weight: 400; }
+
+/* rótulo monoespaçado — assinatura: [ TEXTO ENTRE COLCHETES ] */
+.tf-mono {
+  font-family: var(--tf-font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--tf-ink-3);
+}
+
+/* ---------------------------------------------------------------------------
+   5. LAYOUT
+   --------------------------------------------------------------------------- */
+.tf-container { max-width: var(--tf-container); margin: 0 auto; padding: 0 var(--tf-gutter); }
+
+/* cabeçalho de seção — coluna de número + título */
+.tf-section-head { display: grid; grid-template-columns: 200px 1fr; gap: 60px; align-items: end; }
+.tf-section-num { font-family: var(--tf-font-mono); font-size: 0.85rem; color: var(--tf-accent); letter-spacing: 0.08em; font-weight: 500; }
+.tf-section-num::before { content: ''; display: block; width: 36px; height: 2px; background: var(--tf-accent); margin-bottom: 14px; }
+@media (max-width: 760px) { .tf-section-head { grid-template-columns: 1fr; gap: 18px; } }
+
+/* grade de cards com bordas hairline (padrão do site) */
+.tf-card-grid {
+  display: grid;
+  border-top: 1px solid var(--tf-line);
+  border-left: 1px solid var(--tf-line);
+  background: var(--tf-bg);
+}
+.tf-card-grid > * {
+  border-right: 1px solid var(--tf-line);
+  border-bottom: 1px solid var(--tf-line);
+}
+
+/* ---------------------------------------------------------------------------
+   6. COMPONENTES BASE (classes utilitárias espelhando os .jsx)
+   --------------------------------------------------------------------------- */
+
+/* Botões */
+.tf-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: var(--tf-font-body); font-size: 0.88rem; font-weight: 600;
+  padding: 11px 20px; border-radius: var(--tf-radius-pill);
+  border: 1px solid transparent; cursor: pointer; text-decoration: none;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  line-height: 1;
+}
+.tf-btn-primary { background: var(--tf-ink); color: var(--tf-bg); }
+.tf-btn-primary:hover { background: var(--tf-accent); color: #fff; }
+.tf-btn-accent { background: var(--tf-accent); color: #fff; }
+.tf-btn-accent:hover { background: var(--tf-accent-2); }
+.tf-btn-ghost { background: transparent; color: var(--tf-ink-2); border-color: var(--tf-line-2); }
+.tf-btn-ghost:hover { color: var(--tf-accent); border-color: var(--tf-accent); }
+
+/* Badges de status */
+.tf-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--tf-font-mono); font-size: 0.62rem; font-weight: 500;
+  padding: 4px 9px; border-radius: var(--tf-radius-pill);
+  letter-spacing: 0.06em; text-transform: uppercase;
+}
+.tf-badge-live { background: rgba(45, 186, 112, 0.14); color: var(--tf-live); }
+.tf-badge-warn { background: rgba(232, 93, 46, 0.14); color: var(--tf-warn); }
+.tf-badge-crit { background: rgba(214, 43, 43, 0.14); color: var(--tf-crit); }
+.tf-badge-neutral { background: var(--tf-bg-3); color: var(--tf-ink-3); }
+
+/* Card de superfície */
+.tf-card {
+  background: var(--tf-bg-pure);
+  border: 1px solid var(--tf-line);
+  border-radius: var(--tf-radius);
+  padding: 24px;
+  box-shadow: var(--tf-shadow);
+}
+
+/* Pílula de tecnologia (mega-tech do site) */
+.tf-tech {
+  font-family: var(--tf-font-mono); font-size: 0.6rem; color: var(--tf-accent);
+  border: 1px solid var(--tf-line-2); padding: 3px 7px; border-radius: var(--tf-radius-pill);
+  letter-spacing: 0.02em; display: inline-block;
+}
+
+/* Logo: aplica filtro conforme o tema */
+.tf-logo { display: block; }
+.tf-logo img, img.tf-logo { filter: var(--tf-logo-filter); }

@@ -1,0 +1,186 @@
+{
+  "plugins": [
+    "react",
+    "import"
+  ],
+  "rules": {
+    "react/forbid-elements": [
+      "warn",
+      {
+        "forbid": []
+      }
+    ],
+    "no-restricted-imports": [
+      "warn",
+      {
+        "patterns": [
+          {
+            "group": [
+              "components/Button/**",
+              "components/FeatureCard/**",
+              "components/MetricStat/**",
+              "components/MonoTag/**",
+              "components/SectionHead/**",
+              "components/StatusBadge/**",
+              "components/ThemeToggle/**"
+            ],
+            "message": "Import design-system components from 'index.js', not component internals."
+          }
+        ]
+      }
+    ],
+    "no-restricted-syntax": [
+      "warn",
+      {
+        "selector": "Literal[value=/#[0-9a-fA-F]{3,8}\\b/]",
+        "message": "Raw hex color — use a design-system color token via var()."
+      },
+      {
+        "selector": "Literal[value=/\\b\\d+px\\b/]",
+        "message": "Raw px value — use a design-system spacing token via var()."
+      },
+      {
+        "selector": "Literal[value=/font-family\\s*:\\s*(?!['\\\"]?(?:Bricolage Grotesque|Manrope|JetBrains Mono))/i]",
+        "message": "Font not provided by the design system. Available: Bricolage Grotesque, Manrope, JetBrains Mono."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Button'] > JSXAttribute > JSXIdentifier[name!=/^(?:label|variant|arrow|href|onClick|children|key|ref|className|style|children)$/]",
+        "message": "<Button> doesn't accept that prop. Declared props: label, variant, arrow, href, onClick, children."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='FeatureCard'] > JSXAttribute > JSXIdentifier[name!=/^(?:num|title|description|tags|href|key|ref|className|style|children)$/]",
+        "message": "<FeatureCard> doesn't accept that prop. Declared props: num, title, description, tags, href."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='MetricStat'] > JSXAttribute > JSXIdentifier[name!=/^(?:value|label|critical|key|ref|className|style|children)$/]",
+        "message": "<MetricStat> doesn't accept that prop. Declared props: value, label, critical."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='MonoTag'] > JSXAttribute > JSXIdentifier[name!=/^(?:label|brackets|tone|key|ref|className|style|children)$/]",
+        "message": "<MonoTag> doesn't accept that prop. Declared props: label, brackets, tone."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='MonoTag'] > JSXAttribute[name.name='tone'] > Literal[value!=/^(?:ink-3|accent)$/]",
+        "message": "<MonoTag> tone must be one of 'ink-3' | 'accent'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='SectionHead'] > JSXAttribute > JSXIdentifier[name!=/^(?:num|title|intro|key|ref|className|style|children)$/]",
+        "message": "<SectionHead> doesn't accept that prop. Declared props: num, title, intro."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='StatusBadge'] > JSXAttribute > JSXIdentifier[name!=/^(?:label|kind|dot|key|ref|className|style|children)$/]",
+        "message": "<StatusBadge> doesn't accept that prop. Declared props: label, kind, dot."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='ThemeToggle'] > JSXAttribute > JSXIdentifier[name!=/^(?:storageKey|key|ref|className|style|children)$/]",
+        "message": "<ThemeToggle> doesn't accept that prop. Declared props: storageKey."
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": [
+        "**/index.js"
+      ],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
+    }
+  ],
+  "x-omelette": {
+    "components": {
+      "Button": {
+        "replaces": []
+      },
+      "FeatureCard": {
+        "replaces": []
+      },
+      "MetricStat": {
+        "replaces": []
+      },
+      "MonoTag": {
+        "replaces": []
+      },
+      "SectionHead": {
+        "replaces": []
+      },
+      "StatusBadge": {
+        "replaces": []
+      },
+      "ThemeToggle": {
+        "replaces": []
+      }
+    },
+    "tokens": [
+      "--tf-accent",
+      "--tf-accent-2",
+      "--tf-accent-deep",
+      "--tf-accent-glow",
+      "--tf-accent-soft",
+      "--tf-bg",
+      "--tf-bg-2",
+      "--tf-bg-3",
+      "--tf-bg-pure",
+      "--tf-container",
+      "--tf-crit",
+      "--tf-font-body",
+      "--tf-font-display",
+      "--tf-font-mono",
+      "--tf-gray-mark",
+      "--tf-grid",
+      "--tf-gutter",
+      "--tf-ink",
+      "--tf-ink-2",
+      "--tf-ink-3",
+      "--tf-line",
+      "--tf-line-2",
+      "--tf-live",
+      "--tf-logo-filter",
+      "--tf-radius",
+      "--tf-radius-lg",
+      "--tf-radius-pill",
+      "--tf-radius-sm",
+      "--tf-shadow",
+      "--tf-shadow-lg",
+      "--tf-warn"
+    ],
+    "tokenKinds": {
+      "--tf-bg": "color",
+      "--tf-bg-pure": "color",
+      "--tf-bg-2": "color",
+      "--tf-bg-3": "color",
+      "--tf-line": "color",
+      "--tf-line-2": "color",
+      "--tf-ink": "color",
+      "--tf-ink-2": "color",
+      "--tf-ink-3": "color",
+      "--tf-accent": "color",
+      "--tf-accent-2": "color",
+      "--tf-accent-deep": "color",
+      "--tf-accent-soft": "color",
+      "--tf-accent-glow": "color",
+      "--tf-gray-mark": "color",
+      "--tf-warn": "color",
+      "--tf-live": "color",
+      "--tf-crit": "color",
+      "--tf-grid": "color",
+      "--tf-logo-filter": "other",
+      "--tf-radius-sm": "radius",
+      "--tf-radius": "radius",
+      "--tf-radius-lg": "radius",
+      "--tf-radius-pill": "radius",
+      "--tf-shadow": "shadow",
+      "--tf-shadow-lg": "shadow",
+      "--tf-font-display": "font",
+      "--tf-font-body": "font",
+      "--tf-font-mono": "font",
+      "--tf-container": "spacing",
+      "--tf-gutter": "spacing"
+    },
+    "fontFamilies": [
+      "Bricolage Grotesque",
+      "JetBrains Mono",
+      "Manrope"
+    ]
+  }
+}

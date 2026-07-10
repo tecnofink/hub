@@ -1,0 +1,31 @@
+{
+  "name": "portal-flux",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Portal Flux — hub de ferramentas de IA da Tecnofink (Especificação v2.1)",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "emuladores": "powershell -ExecutionPolicy Bypass -File scripts/emuladores.ps1",
+    "seed": "tsx scripts/seed-emulador.ts",
+    "deploy": "npm run build && firebase deploy"
+  },
+  "dependencies": {
+    "firebase": "^12.15.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.30.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "firebase-admin": "^14.1.0",
+    "firebase-tools": "^15.22.4",
+    "tsx": "^4.23.0",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11"
+  }
+}

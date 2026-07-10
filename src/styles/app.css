@@ -1,0 +1,79 @@
+/* =============================================================================
+   PORTAL FLUX — estilos da aplicação (complementam o DS Tecnofink em ds.css)
+   ============================================================================= */
+
+@keyframes tfIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes tfPop { from { opacity: 0; transform: translateY(14px) scale(0.985); } to { opacity: 1; transform: none; } }
+
+::selection { background: #0C0059; color: #fff; }
+input::placeholder, textarea::placeholder { color: var(--tf-ink-3); opacity: 0.65; }
+input[type="date"] { color-scheme: light; }
+[data-theme="dark"] input[type="date"] { color-scheme: dark; }
+.kb-scroll::-webkit-scrollbar { display: none; }
+
+/* sem fill-mode: um transform residual criaria containing block e prenderia
+   os modais position:fixed à página (em vez da janela) */
+.anim-in { animation: tfIn .4s ease; }
+.anim-pop { animation: tfPop .5s ease both; }
+
+/* rótulo de campo — assinatura mono do DS */
+.f-label {
+  display: block;
+  font-family: var(--tf-font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--tf-ink-3);
+  margin: 0 0 8px;
+}
+
+.f-input, .f-select, .f-textarea {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1px solid var(--tf-line-2);
+  border-radius: 6px;
+  background: var(--tf-bg-pure);
+  color: var(--tf-ink);
+  font-family: var(--tf-font-body);
+  font-size: 0.95rem;
+  outline: none;
+  box-sizing: border-box;
+}
+.f-select { padding: 11px 12px; font-size: 0.9rem; }
+.f-textarea { resize: vertical; line-height: 1.55; }
+.f-input:focus, .f-textarea:focus { border-color: var(--tf-accent); box-shadow: 0 0 0 3px var(--tf-accent-soft); }
+.f-input:disabled { border-color: var(--tf-line); background: var(--tf-bg-2); color: var(--tf-ink-3); }
+.f-input[type="date"] { padding: 10px 12px; font-size: 0.92rem; }
+
+.f-erro {
+  background: rgba(214, 43, 43, 0.08);
+  border: 1px solid rgba(214, 43, 43, 0.3);
+  color: var(--tf-crit);
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 0.86rem;
+}
+
+/* botão fantasma de perigo (excluir / reprovar / encerrar) */
+.tf-btn-danger {
+  color: var(--tf-crit) !important;
+  border-color: rgba(214, 43, 43, 0.4) !important;
+}
+.tf-btn-danger:hover { border-color: var(--tf-crit) !important; }
+
+/* link mono de navegação de volta */
+.back-link {
+  font-family: var(--tf-font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--tf-ink-3);
+  cursor: pointer;
+  text-decoration: none;
+}
+.back-link:hover { color: var(--tf-accent); }
+
+a.acao { cursor: pointer; }
+a.acao:hover { text-decoration: underline; }
+
+.hover-accent:hover { border-color: var(--tf-accent) !important; }
