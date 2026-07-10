@@ -31,6 +31,7 @@ export function ThemeToggleBtn({ fixed }: { fixed?: boolean }) {
   return (
     <button
       onClick={toggleTema}
+      className="m-ml-auto"
       style={{
         ...(fixed ? { position: 'absolute' as const, top: 22, right: 26 } : {}),
         display: 'inline-flex', alignItems: 'center', gap: 8,
@@ -39,7 +40,7 @@ export function ThemeToggleBtn({ fixed }: { fixed?: boolean }) {
         border: '1px solid var(--tf-line-2)', background: 'var(--tf-bg-pure)', color: 'var(--tf-ink-2)', flex: 'none',
       }}
     >
-      {dark ? '☀ Claro' : '☾ Escuro'}
+      {dark ? '☀' : '☾'}<span className="m-hide">{dark ? 'Claro' : 'Escuro'}</span>
     </button>
   );
 }
@@ -182,10 +183,15 @@ export default function Shell() {
                 ? <img src={faviconDe(ferramentaAtual.rota)!} alt={ferramentaAtual.nome} style={{ width: 24, height: 24, borderRadius: 6 }} />
                 : <span style={{ width: 26, height: 26, borderRadius: 7, background: 'var(--tf-accent)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--tf-font-display)', fontWeight: 700, fontSize: '0.7rem' }}>{ferramentaAtual.sigla}</span>
             )}
-            {!fluxCtx && !emGestor && !emPlaybook && !ferramentaAtual && <img src="/brand/tecnofink-logo-transparent.png" alt="Tecnofink" className="tf-logo" style={{ height: 20 }} />}
-            {ctxTag && <span className="tf-mono" style={{ fontSize: '0.66rem', color: 'var(--tf-accent)' }}>[ {ctxTag} ]</span>}
+            {!fluxCtx && !emGestor && !emPlaybook && !ferramentaAtual && (
+              <>
+                <img src="/brand/tecnofink-logo-transparent.png" alt="Tecnofink" className="tf-logo m-hide" style={{ height: 20 }} />
+                <img src="/brand/tecnofink-icon-transparent.png" alt="Tecnofink" className="tf-logo m-only" style={{ height: 28 }} />
+              </>
+            )}
+            {ctxTag && <span className="tf-mono m-hide" style={{ fontSize: '0.66rem', color: 'var(--tf-accent)' }}>[ {ctxTag} ]</span>}
           </ALink>
-          <nav style={{ display: 'flex', gap: 6, flex: 1 }}>
+          <nav className="m-nav" style={{ display: 'flex', gap: 6, flex: 1 }}>
             <NavPill on={emFlux} to="/flux">Flux</NavPill>
             <NavPill on={emGestor} to="/tarefas">Tarefas</NavPill>
             <NavPill on={emPlaybook} to="/playbook">Playbook</NavPill>

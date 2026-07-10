@@ -83,10 +83,20 @@ a.acao:hover { text-decoration: underline; }
    estas classes sobrepõem SÓ em telas estreitas, daí os !important.
    ============================================================================= */
 
+/* nada mais largo que a janela (o zoom "encolhido" do mobile vem daí) */
+html { overflow-x: clip; }
+
+/* visível só no mobile (par do .m-hide) */
+.m-only { display: none !important; }
+
 @media (max-width: 900px) {
   .m-hide { display: none !important; }
-  /* header do Shell: vira multi-linha */
-  .m-header { height: auto !important; min-height: 56px; flex-wrap: wrap; padding: 10px 16px !important; row-gap: 6px; }
+  .m-only { display: inline-block !important; }
+  /* header do Shell em 2 linhas: marca + ações em cima, navegação rolável embaixo */
+  .m-header { height: auto !important; min-height: 52px; flex-wrap: wrap; padding: 8px 16px !important; row-gap: 4px; gap: 10px !important; }
+  .m-nav { order: 10; flex-basis: 100%; overflow-x: auto; scrollbar-width: none; }
+  .m-nav::-webkit-scrollbar { display: none; }
+  .m-ml-auto { margin-left: auto; }
   .g-1col-900 { grid-template-columns: 1fr !important; }
 }
 
