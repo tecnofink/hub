@@ -58,7 +58,7 @@ export default function Gestor() {
 
       {npOn && (
         <div className="tf-card" style={{ marginTop: 26, padding: '22px 26px', display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr', gap: 14 }}>
+          <div className="g-1col" style={{ display: 'grid', gridTemplateColumns: '1fr 1.4fr', gap: 14 }}>
             <div>
               <L>Nome do projeto</L>
               <input className="f-input" value={npNome} onChange={(e) => setNpNome(e.target.value)} placeholder="Ex.: Reorganização do arquivo técnico" autoFocus />
@@ -68,7 +68,7 @@ export default function Gestor() {
               <input className="f-input" value={npDesc} onChange={(e) => setNpDesc(e.target.value)} placeholder="Em uma frase, o objetivo do projeto" />
             </div>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <span className="tf-small" style={{ fontSize: '0.76rem' }}>Você entra como administrador — depois convide membros em "Gerenciar projeto".</span>
             <div style={{ display: 'flex', gap: 8 }}>
               <button onClick={() => { setNpOn(false); setNpNome(''); setNpDesc(''); }} className="tf-btn tf-btn-ghost">Cancelar</button>
@@ -85,7 +85,7 @@ export default function Gestor() {
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(340px,1fr))', gap: 16, marginTop: 26 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(min(340px,100%),1fr))', gap: 16, marginTop: 26 }}>
         {meus.map((x) => {
           const q = store.quadroDe(x.id);
           const total = q.tasks.length;

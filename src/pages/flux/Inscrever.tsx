@@ -49,7 +49,7 @@ export default function Inscrever() {
       <div className="tf-card" style={{ padding: 34, display: 'flex', flexDirection: 'column', gap: 26 }}>
         <div>
           <Mono accent>[ IDENTIFICAÇÃO ]</Mono>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18, marginTop: 14 }}>
+          <div className="g-1col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18, marginTop: 14 }}>
             <div>
               <L>Colaborador · do perfil</L>
               <input className="f-input" value={me.nome + ' · ' + (me.depto || me.cargo)} disabled />
@@ -85,7 +85,7 @@ export default function Inscrever() {
 
         <div>
           <Mono accent>[ RETORNO FINANCEIRO ]</Mono>
-          <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 18, marginTop: 14, alignItems: 'end' }}>
+          <div className="g-1col" style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 18, marginTop: 14, alignItems: 'end' }}>
             <div>
               <L>Como você estimou?</L>
               <div style={{ display: 'flex', gap: 6 }}>

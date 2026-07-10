@@ -221,6 +221,8 @@ export default function Tarefas() {
       {/* linha do tempo / Gantt de etapas (RF-47 + GanttChart do CRM) */}
       <div className="tf-card" style={{ marginTop: 14, padding: '24px 26px' }}>
         <span className="tf-mono" style={{ color: 'var(--tf-accent)' }}>[ 01 · LINHA DO TEMPO ]</span>
+        <div style={{ overflowX: 'auto' }}>
+        <div style={{ minWidth: 640 }}>
         <div style={{ position: 'relative', marginTop: 16 }}>
           <div style={{ position: 'relative', height: 20, marginLeft: 190 }}>
             {mesesNoIntervalo(rangeIni, rangeFim).map((m) => (
@@ -254,6 +256,8 @@ export default function Tarefas() {
             <span className="tf-mono" style={{ position: 'absolute', top: -1, left: 5, fontSize: '0.54rem', color: 'var(--tf-warn)' }}>HOJE</span>
           </div>
         </div>
+        </div>
+        </div>
       </div>
 
       {/* quadro de tarefas (RF-47/48 + Kanban do CRM) */}
@@ -280,8 +284,8 @@ export default function Tarefas() {
           </div>
         )}
         <div style={{ position: 'relative' }}>
-          <button onMouseEnter={() => scrollStart(-9)} onMouseLeave={scrollStop} title="Rolar para a esquerda" style={setaStyle('left')}>‹</button>
-          <button onMouseEnter={() => scrollStart(9)} onMouseLeave={scrollStop} title="Rolar para a direita" style={setaStyle('right')}>›</button>
+          <button className="kb-seta" onMouseEnter={() => scrollStart(-9)} onMouseLeave={scrollStop} title="Rolar para a esquerda" style={setaStyle('left')}>‹</button>
+          <button className="kb-seta" onMouseEnter={() => scrollStart(9)} onMouseLeave={scrollStop} title="Rolar para a direita" style={setaStyle('right')}>›</button>
         <div className="kb-scroll" ref={kbRef} style={{ display: 'flex', gap: 12, overflowX: 'auto', scrollbarWidth: 'none', padding: '18px 2px 6px', alignItems: 'flex-start' }}>
           {cols.map((col) => {
             const aberta = !!expandida[col.key];
@@ -442,7 +446,7 @@ function NovaTarefa({ pid, membros, onFechar }: { pid: string; membros: { id: st
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div><L>Título</L><input className="f-input" value={f.ti} onChange={(e) => setF((s) => ({ ...s, ti: e.target.value }))} placeholder="O que precisa ser feito?" autoFocus /></div>
           <div><L>Descrição · opcional</L><textarea className="f-textarea" rows={2} value={f.desc} onChange={(e) => setF((s) => ({ ...s, desc: e.target.value }))} placeholder="Contexto, critérios de aceite, links…" /></div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+          <div className="g-1col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
             <div>
               <L>Etapa</L>
               {novaEtapaOn ? (

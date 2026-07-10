@@ -30,7 +30,7 @@ export default function AdmDominios() {
             </span>
           ))}
         </div>
-        <div style={{ display: 'flex', gap: 10, marginTop: 20, alignItems: 'flex-start' }}>
+        <div style={{ display: 'flex', gap: 10, marginTop: 20, alignItems: 'flex-start', flexWrap: 'wrap' }}>
           <div style={{ flex: 1, maxWidth: 340 }}>
             <input
               className="f-input" style={{ fontFamily: 'var(--tf-font-mono)', fontSize: '0.85rem' }}

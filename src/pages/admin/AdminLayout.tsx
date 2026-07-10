@@ -26,8 +26,8 @@ export default function AdminLayout() {
   return (
     <div className="anim-in" style={{ maxWidth: 1320, margin: '0 auto', padding: '48px 32px 80px' }}>
       <span className="tf-mono" style={{ color: 'var(--tf-accent)' }}>[ {hubArea ? 'ADMINISTRAÇÃO DO HUB' : 'FLUX · ADMINISTRAÇÃO'} ]</span>
-      <div style={{ display: 'grid', gridTemplateColumns: '230px 1fr', gap: 36, marginTop: 20, alignItems: 'start' }}>
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: 2, position: 'sticky', top: 88 }}>
+      <div className="adm-grid" style={{ display: 'grid', gridTemplateColumns: '230px 1fr', gap: 36, marginTop: 20, alignItems: 'start' }}>
+        <nav className="adm-nav" style={{ display: 'flex', flexDirection: 'column', gap: 2, position: 'sticky', top: 88 }}>
           {menu.map(([rota, label]) => {
             const on = loc.pathname === rota;
             return (

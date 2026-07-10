@@ -45,7 +45,7 @@ export default function Playbook() {
   return (
     <div className="anim-in" style={{ maxWidth: 1320, margin: '0 auto', padding: '32px 32px 90px' }}>
       {/* navegação interna por âncoras (PlaybookNav do original) */}
-      <div style={{ position: 'sticky', top: 64, zIndex: 40, background: 'var(--tf-bg)', padding: '10px 0 12px', display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', borderBottom: '1px solid var(--tf-line)' }}>
+      <div className="pb-ancoras" style={{ position: 'sticky', top: 64, zIndex: 40, background: 'var(--tf-bg)', padding: '10px 0 12px', display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', borderBottom: '1px solid var(--tf-line)' }}>
         {ANCORAS.map(([id, label]) => (
           <a
             key={id} href={'#' + id}
@@ -92,7 +92,7 @@ export default function Playbook() {
 
       {/* hero */}
       <div style={{ margin: '34px 0 8px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
           <img src="/brand/playbook-badge.png" alt="Playbook" style={{ height: 46 }} />
           <span className="tf-mono" style={{ color: 'var(--tf-accent)' }}>[ PLAYBOOK 2026 · TECNOFINK · MARKETING ]</span>
         </div>

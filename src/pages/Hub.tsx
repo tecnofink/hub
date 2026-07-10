@@ -54,11 +54,11 @@ function CardFluxDestaque({ c }: { c: Ciclo | null }) {
     <ALink to="/flux" className="hover-accent" style={{ gridColumn: '1 / -1', background: 'var(--tf-bg-pure)', padding: '26px 32px', display: 'flex', flexDirection: 'column', gap: 18, cursor: 'pointer', color: 'inherit', textDecoration: 'none' }}>
       <div style={{ display: 'flex', gap: 22, alignItems: 'center', flexWrap: 'wrap' }}>
         <img src="/brand/flux-badge.png" alt="Flux" style={{ width: 54, height: 54, flex: 'none' }} />
-        <div style={{ flex: 1, minWidth: 280 }}>
+        <div style={{ flex: 1, minWidth: 'min(280px, 100%)' }}>
           <span className="tf-mono" style={{ fontSize: '0.6rem', color: 'var(--tf-accent)' }}>[ FERRAMENTA EM DESTAQUE · PROGRAMA DE INOVAÇÃO COM IA ]</span>
           <h3 className="tf-h3" style={{ margin: '6px 0 6px' }}>Flux</h3>
           <p className="tf-small" style={{ margin: 0, maxWidth: 620 }}>{FLUX_FIXO.desc}</p>
-          <span style={{ display: 'inline-flex', gap: 22, alignItems: 'center', marginTop: 12 }}>
+          <span style={{ display: 'inline-flex', gap: 14, alignItems: 'center', flexWrap: 'wrap', marginTop: 12 }}>
             <span style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--tf-accent)' }}>Abrir o Flux →</span>
             <button
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); nav('/flux/como-funciona'); }}
@@ -68,7 +68,7 @@ function CardFluxDestaque({ c }: { c: Ciclo | null }) {
             </button>
           </span>
         </div>
-        <div style={{ flex: 'none', minWidth: 230, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 9, textAlign: 'right' }}>
+        <div style={{ flex: 'none', minWidth: 'min(230px, 100%)', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 9, textAlign: 'right' }}>
           <Badge kind={ind.badge}>{ind.rotulo}</Badge>
           <span style={{ fontFamily: 'var(--tf-font-display)', fontWeight: 700, fontSize: '1.9rem', letterSpacing: '-0.02em', lineHeight: 1, color: 'var(--tf-accent)' }}>{ind.valor}</span>
           <span className="tf-mono" style={{ fontSize: '0.6rem' }}>{ind.linha.toUpperCase()}</span>
@@ -129,7 +129,7 @@ export default function Hub() {
       <p className="tf-lead" style={{ margin: 0 }}>Suas ferramentas de IA em um só lugar.</p>
 
       <div className="tf-mono" style={{ margin: '44px 0 16px' }}>[ FERRAMENTAS ]</div>
-      <div className="tf-card-grid" style={{ gridTemplateColumns: 'repeat(3,1fr)' }}>
+      <div className="tf-card-grid grid-hub" style={{ gridTemplateColumns: 'repeat(3,1fr)' }}>
         {/* Flux — permanente e em destaque, definido em código */}
         <CardFluxDestaque c={cicloAtivo} />
 

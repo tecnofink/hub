@@ -66,12 +66,12 @@ export default function SecChecklist({ eventos, arvore, podeEditar, salvarArvore
               {Object.values(feira.checklist).filter((m) => m.marcado).length} DE {totalItens} ITENS MARCADOS
             </span>
           </div>
-          <div style={{ display: 'flex', gap: 5, borderBottom: '1px solid var(--tf-line)', margin: '16px 0 20px' }}>
+          <div style={{ display: 'flex', gap: 5, borderBottom: '1px solid var(--tf-line)', margin: '16px 0 20px', overflowX: 'auto' }}>
             {ABAS.map(([id, label]) => (
               <button
                 key={id}
                 onClick={() => setAba(id)}
-                style={{ padding: '9px 15px', border: 'none', borderBottom: '2px solid ' + (aba === id ? 'var(--tf-accent)' : 'transparent'), background: 'none', color: aba === id ? 'var(--tf-accent)' : 'var(--tf-ink-2)', fontFamily: 'var(--tf-font-body)', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer' }}
+                style={{ padding: '9px 15px', border: 'none', borderBottom: '2px solid ' + (aba === id ? 'var(--tf-accent)' : 'transparent'), background: 'none', color: aba === id ? 'var(--tf-accent)' : 'var(--tf-ink-2)', fontFamily: 'var(--tf-font-body)', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', flex: 'none' }}
               >
                 {label}
               </button>

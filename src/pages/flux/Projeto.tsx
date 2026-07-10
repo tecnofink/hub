@@ -42,7 +42,7 @@ export default function Projeto() {
     <div className="anim-in" style={{ maxWidth: 1100, margin: '0 auto', padding: '48px 32px 80px' }}>
       <a onClick={() => nav('/flux')} className="back-link">← FLUX / {cc ? cc.nome : 'BACKLOG'}</a>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 24, marginTop: 14, flexWrap: 'wrap' }}>
-        <div style={{ flex: 1, minWidth: 320 }}>
+        <div style={{ flex: 1, minWidth: 'min(320px, 100%)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
             <Badge kind={st.badge}>{st.label}</Badge>
             <span className="tf-mono" style={{ fontSize: '0.62rem' }}>{catNome(p.cat).toUpperCase()}</span>
@@ -74,7 +74,7 @@ export default function Projeto() {
 
       {st.k !== 'reprovado' && (
         <div className="tf-card" style={{ marginTop: 26, padding: '22px 28px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap', rowGap: 16 }}>
             {PASSOS.map((label, i) => (
               <div key={label} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, textAlign: 'center' }}>
                 <span style={{ width: 28, height: 28, borderRadius: '50%', background: i <= passo ? 'var(--tf-accent)' : 'var(--tf-bg-3)', color: i <= passo ? '#fff' : 'var(--tf-ink-3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--tf-font-mono)', fontSize: '0.62rem' }}>{i + 1}</span>
@@ -102,11 +102,11 @@ export default function Projeto() {
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 16, marginTop: 16, alignItems: 'start' }}>
+      <div className="g-1col-900" style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: 16, marginTop: 16, alignItems: 'start' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div className="tf-card" style={{ padding: 26 }}>
             <Mono accent>[ PITCH · SOMENTE LEITURA ]</Mono>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 16 }}>
+            <div className="g-1col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 16 }}>
               <div>
                 <div className="tf-mono" style={{ fontSize: '0.6rem', marginBottom: 4 }}>DEADLINE DEFINIDO</div>
                 <div style={{ fontSize: '0.92rem' }}>{dbr(p.deadline)}</div>

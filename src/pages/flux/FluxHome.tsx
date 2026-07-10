@@ -96,7 +96,7 @@ export default function FluxHome() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 0, border: '1px solid var(--tf-line)', borderRadius: 10, background: 'var(--tf-bg-pure)', marginTop: 16, overflow: 'hidden' }}>
+      <div className="g-metrics" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 0, border: '1px solid var(--tf-line)', borderRadius: 10, background: 'var(--tf-bg-pure)', marginTop: 16, overflow: 'hidden' }}>
         {stats.map((st, i) => (
           <div key={i} style={{ padding: '22px 26px', borderRight: i < 3 ? '1px solid var(--tf-line)' : 'none' }}>
             <MetricStat value={st.v} label={st.l} />
@@ -109,8 +109,8 @@ export default function FluxHome() {
       </div>
 
       <div style={{ position: 'relative' }}>
-        <button onMouseEnter={() => scrollStart(-9)} onMouseLeave={scrollStop} title="Rolar para a esquerda" style={setaStyle('left')}>‹</button>
-        <button onMouseEnter={() => scrollStart(9)} onMouseLeave={scrollStop} title="Rolar para a direita" style={setaStyle('right')}>›</button>
+        <button className="kb-seta" onMouseEnter={() => scrollStart(-9)} onMouseLeave={scrollStop} title="Rolar para a esquerda" style={setaStyle('left')}>‹</button>
+        <button className="kb-seta" onMouseEnter={() => scrollStart(9)} onMouseLeave={scrollStop} title="Rolar para a direita" style={setaStyle('right')}>›</button>
         <div className="kb-scroll" ref={kbRef} style={{ display: 'flex', gap: 12, overflowX: 'auto', scrollbarWidth: 'none', paddingBottom: 10, alignItems: 'flex-start' }}>
           {KB_COLS.map((col) => {
             const cards = all

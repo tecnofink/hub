@@ -27,7 +27,7 @@ export default function Historico() {
       )}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {encerrados.map((h) => (
-          <div key={h.id} onClick={() => nav('/flux/ranking/' + h.id)} className="tf-card hover-accent" style={{ padding: '22px 26px', display: 'flex', alignItems: 'center', gap: 18, cursor: 'pointer' }}>
+          <div key={h.id} onClick={() => nav('/flux/ranking/' + h.id)} className="tf-card hover-accent" style={{ padding: '22px 26px', display: 'flex', alignItems: 'center', gap: 18, cursor: 'pointer', flexWrap: 'wrap' }}>
             <Badge kind="neutral" style={{ flex: 'none' }}>encerrado</Badge>
             <div style={{ flex: 1 }}>
               <div style={{ fontFamily: 'var(--tf-font-display)', fontWeight: 600, fontSize: '1.15rem' }}>{h.nome}</div>

@@ -25,7 +25,7 @@ export default function Login() {
           <img src="/brand/tecnofink-logo-transparent.png" alt="Tecnofink" className="tf-logo" style={{ height: 30 }} />
           <span className="tf-mono">[ HUB DE FERRAMENTAS DE IA ]</span>
         </div>
-        <div className="tf-card" style={{ padding: 32 }}>
+        <div className="tf-card" style={{ padding: 'clamp(20px, 6vw, 32px)' }}>
           <h1 className="tf-h3" style={{ margin: '0 0 6px' }}>Entrar no portal</h1>
           <p className="tf-small" style={{ margin: '0 0 22px' }}>Acesso exclusivo para colaboradores do grupo Tecnofink.</p>
           {loginErro && <div style={{ marginBottom: 16 }}><Erro msg={loginErro} /></div>}

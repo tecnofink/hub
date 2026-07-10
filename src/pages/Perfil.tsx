@@ -25,7 +25,7 @@ export default function Perfil() {
     <div className="anim-in" style={{ maxWidth: 1000, margin: '0 auto', padding: '56px 32px 80px' }}>
       <span className="tf-mono">[ MEU PERFIL ]</span>
       <h1 className="tf-h2" style={{ margin: '12px 0 34px' }}>Perfil</h1>
-      <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: 24, alignItems: 'start' }}>
+      <div className="g-1col-760" style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: 24, alignItems: 'start' }}>
         <div className="tf-card" style={{ padding: 30, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, textAlign: 'center' }}>
           <div style={{ position: 'relative' }}>
             <Avatar nome={f.nome || me.nome} cor={cor(me.id)} foto={me.foto} size={84} fontSize="1.3rem" />
@@ -43,7 +43,7 @@ export default function Perfil() {
           <p className="tf-small" style={{ fontSize: '0.74rem', margin: '6px 0 0' }}>Foto e nome sincronizados da sua conta Google Workspace no login.</p>
         </div>
         <div className="tf-card" style={{ padding: 30 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}>
+          <div className="g-1col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}>
             <div><L>Nome</L><input className="f-input" value={f.nome} onChange={on('nome')} /></div>
             <div><L>E-mail · não editável</L><input className="f-input" value={me.email} disabled /></div>
             <div><L>Cargo</L><input className="f-input" value={f.cargo} onChange={on('cargo')} placeholder="Ex.: Analista" /></div>

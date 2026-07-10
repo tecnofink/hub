@@ -61,15 +61,15 @@ export default function ProjetoAdmin() {
           {membros.map(({ u, papel }) => {
             const ultimoAdmin = papel === 'admin' && admins.length === 1;
             return (
-              <div key={u!.id} style={{ display: 'flex', alignItems: 'center', gap: 12, border: '1px solid var(--tf-line)', borderRadius: 10, padding: '12px 16px' }}>
+              <div key={u!.id} style={{ display: 'flex', alignItems: 'center', gap: 12, border: '1px solid var(--tf-line)', borderRadius: 10, padding: '12px 16px', flexWrap: 'wrap' }}>
                 <Avatar nome={u!.nome} cor={store.cor(u!.id)} foto={u!.foto} size={32} fontSize="0.6rem" />
-                <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ flex: 1, minWidth: 160 }}>
                   <div style={{ fontSize: '0.9rem', fontWeight: 700 }}>{u!.nome}{u!.id === me.id ? ' · você' : ''}</div>
                   <div className="tf-small" style={{ fontSize: '0.74rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u!.email}</div>
                 </div>
                 {editandoPapel === u!.id ? (
                   <select
-                    className="f-select" style={{ width: 170, padding: '8px 10px' }} autoFocus value={papel}
+                    className="f-select" style={{ width: '100%', maxWidth: 170, padding: '8px 10px' }} autoFocus value={papel}
                     onChange={(e) => {
                       const err = store.alterarPapelMembro(id, u!.id, e.target.value as PapelProjeto);
                       if (err) store.showToast(err);

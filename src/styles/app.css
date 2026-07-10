@@ -77,3 +77,52 @@ a.acao { cursor: pointer; }
 a.acao:hover { text-decoration: underline; }
 
 .hover-accent:hover { border-color: var(--tf-accent) !important; }
+
+/* =============================================================================
+   Responsividade mobile — as páginas usam estilos inline (desktop-first);
+   estas classes sobrepõem SÓ em telas estreitas, daí os !important.
+   ============================================================================= */
+
+@media (max-width: 900px) {
+  .m-hide { display: none !important; }
+  /* header do Shell: vira multi-linha */
+  .m-header { height: auto !important; min-height: 56px; flex-wrap: wrap; padding: 10px 16px !important; row-gap: 6px; }
+  .g-1col-900 { grid-template-columns: 1fr !important; }
+}
+
+@media (max-width: 760px) {
+  .g-1col-760 { grid-template-columns: 1fr !important; }
+  /* faixas de indicadores (MetricStat): 4/3 colunas -> 2 */
+  .g-metrics { grid-template-columns: repeat(2, 1fr) !important; }
+  .g-metrics > div { border-right: none !important; border-bottom: 1px solid var(--tf-line); }
+  .g-datas { grid-template-columns: 1fr 1fr !important; }
+  /* layout do admin: menu lateral vira barra horizontal rolável */
+  .adm-grid { grid-template-columns: 1fr !important; }
+  .adm-nav { position: static !important; display: flex !important; flex-direction: row !important; overflow-x: auto; white-space: nowrap; }
+}
+
+@media (max-width: 640px) {
+  /* gutter das páginas (containers .anim-in têm padding inline de 32px) */
+  .anim-in { padding-left: 16px !important; padding-right: 16px !important; }
+  .g-1col { grid-template-columns: 1fr !important; }
+  .grid-hub { grid-template-columns: 1fr !important; }
+  /* barra de âncoras do Playbook: linha única rolável */
+  .pb-ancoras { flex-wrap: nowrap !important; overflow-x: auto; padding-bottom: 8px !important; }
+  .pb-ancoras > a { white-space: nowrap; flex: none; }
+}
+
+@media (max-width: 1024px) and (min-width: 641px) {
+  .grid-hub { grid-template-columns: repeat(2, 1fr) !important; }
+  .g-cats { grid-template-columns: repeat(2, 1fr) !important; }
+}
+@media (max-width: 640px) {
+  .g-cats { grid-template-columns: 1fr !important; }
+}
+@media (max-width: 480px) {
+  .g-datas { grid-template-columns: 1fr !important; }
+}
+
+/* setas de rolagem dos kanbans dependem de hover — sem função no touch */
+@media (hover: none) {
+  .kb-seta { display: none !important; }
+}

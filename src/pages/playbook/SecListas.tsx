@@ -79,7 +79,7 @@ export function SecProspeccao({ dados, podeEditar, salvar }: { dados: PbDocProsp
               </div>
               <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {evs.map((e) => (
-                  <div key={e.id} style={{ display: 'grid', gridTemplateColumns: '1.2fr 170px 1fr 1fr 30px', gap: 8, alignItems: 'center' }}>
+                  <div key={e.id} className="g-1col" style={{ display: 'grid', gridTemplateColumns: '1.2fr 170px 1fr 1fr 30px', gap: 8, alignItems: 'center' }}>
                     <CampoBlur valor={e.nome} onSalvar={(v) => salvar({ ...dados, eventos: dados.eventos.map((x) => (x.id === e.id ? { ...x, nome: v } : x)) })} desabilitado={!podeEditar} style={{ padding: '7px 10px', fontSize: '0.84rem', fontWeight: 600 }} />
                     <select
                       className="f-select" value={e.participacao} disabled={!podeEditar} style={{ padding: '7px 8px', fontSize: '0.78rem' }}

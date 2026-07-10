@@ -36,7 +36,7 @@ export default function AdmPainel() {
       <p className="tf-body" style={{ margin: '0 0 22px' }}>
         {c ? `${c.nome} · ${dbr(c.inicio)} a ${dbr(c.fim)} · ${Math.max(0, diasAte(c.fim))} dias restantes` : 'Nenhum ciclo ativo — crie um em Ciclos.'}
       </p>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 0, border: '1px solid var(--tf-line)', borderRadius: 10, background: 'var(--tf-bg-pure)', overflow: 'hidden' }}>
+      <div className="g-metrics" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 0, border: '1px solid var(--tf-line)', borderRadius: 10, background: 'var(--tf-bg-pure)', overflow: 'hidden' }}>
         {stats.map((st, i) => (
           <div key={i} style={{ padding: '20px 24px', borderRight: i < 3 ? '1px solid var(--tf-line)' : 'none' }}>
             <MetricStat value={st.v} label={st.l} critical={st.crit} />
@@ -51,7 +51,7 @@ export default function AdmPainel() {
       )}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {alertas.map((a, i) => (
-          <div key={i} className="tf-card" style={{ padding: '16px 22px', display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div key={i} className="tf-card" style={{ padding: '16px 22px', display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
             <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--tf-warn)', flex: 'none' }} />
             <span style={{ flex: 1, fontSize: '0.9rem', color: 'var(--tf-ink-2)' }}>{a.txt}</span>
             <button onClick={a.go} className="tf-btn tf-btn-ghost" style={{ flex: 'none', padding: '8px 14px' }}>{a.cta} →</button>

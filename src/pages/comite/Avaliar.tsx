@@ -57,7 +57,7 @@ export default function Avaliar() {
   };
 
   const notaBtns = (k: 'i' | 'imp' | 'alc') => (
-    <div style={{ display: 'flex', gap: 5 }}>
+    <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
       {[0, 1, 2, 3, 4, 5].map((v) => {
         const on = notas[k] === v;
         return (
@@ -86,7 +86,7 @@ export default function Avaliar() {
           <Badge kind={pt === 100 ? 'live' : 'crit'}>PONTUALIDADE · {pt}%</Badge>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginTop: 20 }}>
+        <div className="g-1col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginTop: 20 }}>
           <div style={{ background: 'var(--tf-bg-2)', borderRadius: 10, padding: '14px 16px' }}>
             <div className="tf-mono" style={{ fontSize: '0.58rem', marginBottom: 4 }}>ESTIMADO NO PITCH</div>
             <div style={{ fontFamily: 'var(--tf-font-display)', fontWeight: 600, fontSize: '1.2rem' }}>{brl(p.estimPer === 'mes' ? p.estimValor * meses : p.estimValor)}</div>
@@ -189,7 +189,7 @@ export default function Avaliar() {
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 16, alignItems: 'stretch' }}>
+      <div className="g-1col-760" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 16, alignItems: 'stretch' }}>
         <div className="tf-card" style={{ padding: 24, background: 'var(--tf-bg-2)' }}>
           <Mono accent>[ LEGENDA · COMO AVALIAR O RETORNO INTANGÍVEL ]</Mono>
           <p className="tf-small" style={{ fontSize: '0.72rem', margin: '8px 0 10px' }}>Nota de 0 a 5 · convertida em 0–100 pts · peso de 20% na nota final.</p>

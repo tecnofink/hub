@@ -18,7 +18,7 @@ export default function Categorias() {
         <h1 className="tf-h2" style={{ margin: '0 0 8px' }}>Destaques por categoria</h1>
         <p className="tf-body" style={{ margin: 0 }}>O líder de cada uma das 5 categorias do programa{c ? ' · ' + c.nome : ''}</p>
       </div>
-      <div className="tf-card-grid" style={{ gridTemplateColumns: 'repeat(5,1fr)', marginTop: 28 }}>
+      <div className="tf-card-grid g-cats" style={{ gridTemplateColumns: 'repeat(5,1fr)', marginTop: 28 }}>
         {CATS.map((ct) => {
           const lider = ranking.find((r) => r.p.cat === ct.id);
           const u = lider ? store.byId(lider.p.uid) : null;

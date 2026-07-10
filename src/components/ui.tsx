@@ -67,7 +67,7 @@ export function Erro({ msg }: { msg: string | null }) {
 /** Estado vazio tracejado. */
 export function Vazio({ titulo, texto, mono }: { titulo?: string; texto: string; mono?: string }) {
   return (
-    <div style={{ border: '1px dashed var(--tf-line-2)', borderRadius: 12, padding: '48px 32px', textAlign: 'center', background: 'var(--tf-bg-pure)' }}>
+    <div style={{ border: '1px dashed var(--tf-line-2)', borderRadius: 12, padding: '48px clamp(16px, 5vw, 32px)', textAlign: 'center', background: 'var(--tf-bg-pure)' }}>
       {mono && <span className="tf-mono">{mono}</span>}
       {titulo && <h3 className="tf-h4" style={{ margin: '12px 0 8px' }}>{titulo}</h3>}
       <p className="tf-small" style={{ margin: '0 auto', maxWidth: 480 }}>{texto}</p>

@@ -94,7 +94,7 @@ export default function SecCatalogos({ dados, podeEditar, salvar }: {
   return (
     <section>
       <SecHead id="catalogos" num="02" titulo="Catálogos" sub="Projeção de estoque ao longo dos eventos do ano — o saldo considera o consumo previsto por evento." />
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 0, border: '1px solid var(--tf-line)', borderRadius: 10, background: 'var(--tf-bg-pure)', overflow: 'hidden' }}>
+      <div className="g-metrics" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 0, border: '1px solid var(--tf-line)', borderRadius: 10, background: 'var(--tf-bg-pure)', overflow: 'hidden' }}>
         {[
           { v: estoqueTotal.toLocaleString('pt-BR'), l: 'estoque total', crit: false },
           { v: consumoPrevisto.toLocaleString('pt-BR'), l: 'consumo previsto 2026', crit: false },

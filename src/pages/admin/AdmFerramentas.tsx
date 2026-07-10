@@ -51,12 +51,12 @@ export default function AdmFerramentas() {
               <a
                 className="acao" title="Mover para cima"
                 onClick={() => i > 0 && store.moverFerramenta(t.id, -1)}
-                style={{ color: i > 0 ? 'var(--tf-accent)' : 'var(--tf-line-2)', fontSize: '0.8rem', lineHeight: 1, cursor: i > 0 ? 'pointer' : 'default' }}
+                style={{ color: i > 0 ? 'var(--tf-accent)' : 'var(--tf-line-2)', fontSize: '0.8rem', lineHeight: 1, cursor: i > 0 ? 'pointer' : 'default', padding: '4px 8px', margin: '-4px -8px' }}
               >▲</a>
               <a
                 className="acao" title="Mover para baixo"
                 onClick={() => i < ordenadas.length - 1 && store.moverFerramenta(t.id, 1)}
-                style={{ color: i < ordenadas.length - 1 ? 'var(--tf-accent)' : 'var(--tf-line-2)', fontSize: '0.8rem', lineHeight: 1, cursor: i < ordenadas.length - 1 ? 'pointer' : 'default' }}
+                style={{ color: i < ordenadas.length - 1 ? 'var(--tf-accent)' : 'var(--tf-line-2)', fontSize: '0.8rem', lineHeight: 1, cursor: i < ordenadas.length - 1 ? 'pointer' : 'default', padding: '4px 8px', margin: '-4px -8px' }}
               >▼</a>
             </span>
             {iconeNativo(t.rota) ? (
@@ -110,7 +110,7 @@ export default function AdmFerramentas() {
 
       <div className="tf-card" style={{ padding: 26, marginTop: 14, borderStyle: 'dashed' }}>
         <Mono accent>[ CADASTRAR FERRAMENTA ]</Mono>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginTop: 16 }}>
+        <div className="g-1col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginTop: 16 }}>
           <div><L>Nome</L><input className="f-input" style={{ padding: '10px 13px', fontSize: '0.9rem' }} value={f.nome} onChange={(e) => { setF((s) => ({ ...s, nome: e.target.value })); setErro(null); }} placeholder="Ex.: Assistente de Propostas" /></div>
           <div><L>Rota / URL</L><input className="f-input" style={{ padding: '10px 13px', fontFamily: 'var(--tf-font-mono)', fontSize: '0.82rem' }} value={f.rota} onChange={(e) => { setF((s) => ({ ...s, rota: e.target.value })); setErro(null); }} placeholder="https://ferramenta.tecnofink.com ou /rota-interna" /></div>
           <div style={{ gridColumn: '1 / -1' }}><L>Descrição</L><input className="f-input" style={{ padding: '10px 13px', fontSize: '0.9rem' }} value={f.desc} onChange={(e) => { setF((s) => ({ ...s, desc: e.target.value })); setErro(null); }} placeholder="O que a ferramenta faz, em uma frase" /></div>

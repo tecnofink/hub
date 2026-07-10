@@ -22,7 +22,7 @@ export function SecStands({ lista, podeEditar, salvar }: { lista: PbStand[]; pod
   return (
     <section>
       <SecHead id="stands2027" num="07" titulo="Stands 2027" sub="Planejamento antecipado dos stands do próximo ano: status, valores, prazos e documentos." />
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 0, border: '1px solid var(--tf-line)', borderRadius: 10, background: 'var(--tf-bg-pure)', overflow: 'hidden' }}>
+      <div className="g-metrics" style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 0, border: '1px solid var(--tf-line)', borderRadius: 10, background: 'var(--tf-bg-pure)', overflow: 'hidden' }}>
         {[
           { v: String(lista.length), l: 'eventos no radar' },
           { v: String(confirmados), l: 'stands confirmados' },
@@ -34,7 +34,7 @@ export function SecStands({ lista, podeEditar, salvar }: { lista: PbStand[]; pod
         ))}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(340px,1fr))', gap: 12, marginTop: 14 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(min(340px,100%),1fr))', gap: 12, marginTop: 14 }}>
         {lista.sort((a, b) => a.ordem - b.ordem).map((s) => (
           <div key={s.id} className="tf-card" style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -80,14 +80,14 @@ export function SecWorkshops({ lista, podeEditar, salvar }: { lista: PbWorkshop[
   return (
     <section>
       <SecHead id="workshops" num="08" titulo="Workshops" sub="Registro dos workshops técnicos: quem organizou, onde, quando e o que foi apresentado." />
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(340px,1fr))', gap: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(min(340px,100%),1fr))', gap: 12 }}>
         {lista.sort((a, b) => a.ordem - b.ordem).map((w) => (
           <div key={w.id} className="tf-card" style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <CampoBlur valor={w.tema} onSalvar={(v) => up(w.id, (x) => ({ ...x, tema: v }))} desabilitado={!podeEditar} placeholder="Tema do workshop" style={{ fontWeight: 700, fontSize: '0.96rem', padding: '7px 10px', flex: 1 }} />
               <BotaoRemover podeEditar={podeEditar} titulo="Remover workshop?" texto={`"${w.tema || 'Workshop'}" será removido.`} onConfirmar={() => salvar({ lista: lista.filter((x) => x.id !== w.id) })} />
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+            <div className="g-1col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
               <div><L>Organizador</L><CampoBlur valor={w.organizador ?? ''} onSalvar={(v) => up(w.id, (x) => ({ ...x, organizador: v }))} desabilitado={!podeEditar} style={{ padding: '7px 10px', fontSize: '0.8rem' }} /></div>
               <div><L>Local</L><CampoBlur valor={w.local ?? ''} onSalvar={(v) => up(w.id, (x) => ({ ...x, local: v }))} desabilitado={!podeEditar} style={{ padding: '7px 10px', fontSize: '0.8rem' }} /></div>
               <div><L>Data</L><CampoBlur valor={w.data ?? ''} onSalvar={(v) => up(w.id, (x) => ({ ...x, data: v }))} desabilitado={!podeEditar} style={{ padding: '7px 10px', fontSize: '0.8rem' }} /></div>

@@ -30,7 +30,7 @@ export default function Acesso() {
             <div key={p.id} className="tf-card" style={{ padding: '24px 26px' }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap' }}>
                 <Avatar nome={u.nome} cor={store.cor(u.id)} size={38} fontSize="0.66rem" />
-                <div style={{ flex: 1, minWidth: 280 }}>
+                <div style={{ flex: 1, minWidth: 'min(280px, 100%)' }}>
                   <div style={{ fontFamily: 'var(--tf-font-display)', fontWeight: 600, fontSize: '1.1rem', lineHeight: 1.25 }}>{p.nome}</div>
                   <div className="tf-small" style={{ fontSize: '0.8rem', marginTop: 3 }}>{u.nome} · {u.depto || u.cargo} · {catNome(p.cat)}</div>
                   <div className="tf-mono" style={{ fontSize: '0.6rem', marginTop: 6 }}>

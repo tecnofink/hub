@@ -102,7 +102,7 @@ export default function ComoFunciona() {
       <Secao num="02" titulo="OS 5 CRITÉRIOS E SEUS PESOS">
         <div className="tf-card" style={{ marginTop: 16, padding: '22px 26px', display: 'flex', flexDirection: 'column', gap: 16 }}>
           {CRITERIOS.map((cr) => (
-            <div key={cr.nome} style={{ display: 'grid', gridTemplateColumns: '170px 64px 1fr', gap: 14, alignItems: 'center' }}>
+            <div key={cr.nome} className="g-1col" style={{ display: 'grid', gridTemplateColumns: '170px 64px 1fr', gap: 14, alignItems: 'center' }}>
               <span style={{ fontWeight: 700, fontSize: '0.9rem' }}>{cr.nome}</span>
               <span style={{ fontFamily: 'var(--tf-font-display)', fontWeight: 700, fontSize: '1.25rem', color: 'var(--tf-accent)' }}>{cr.peso}%</span>
               <div>

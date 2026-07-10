@@ -72,7 +72,7 @@ export function BotaoRemover({ onConfirmar, titulo, texto, podeEditar }: { onCon
     <a
       className="acao"
       onClick={() => store.confirmar({ titulo, texto, cta: 'Remover', danger: true, onConfirm: onConfirmar })}
-      style={{ color: 'var(--tf-crit)', fontWeight: 700, fontSize: '0.82rem', flex: 'none' }}
+      style={{ color: 'var(--tf-crit)', fontWeight: 700, fontSize: '0.82rem', flex: 'none', padding: '6px 10px', margin: '-6px -10px' }}
       title="Remover"
     >
       ×
@@ -143,7 +143,7 @@ export function UploadCampo({ rotulo, valor, pathPrefix, accept, podeEditar, onS
             />
           </div>
         ) : (
-          <div style={{ display: 'flex', gap: 6 }}>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             <input ref={fileRef} type="file" accept={accept} style={{ display: 'none' }} onChange={(e) => { const f = e.target.files?.[0]; if (f) void enviar(f); e.target.value = ''; }} />
             <button onClick={() => fileRef.current?.click()} className="tf-btn tf-btn-ghost" style={{ padding: '6px 12px', fontSize: '0.74rem' }} disabled={enviando}>
               {enviando ? 'Enviando…' : '+ Arquivo'}

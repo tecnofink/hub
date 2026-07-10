@@ -68,7 +68,7 @@ export default function Resultado() {
       <div className="tf-card" style={{ padding: 34, display: 'flex', flexDirection: 'column', gap: 26 }}>
         <div>
           <Mono accent>[ RETORNO REALIZADO ]</Mono>
-          <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 18, marginTop: 14, alignItems: 'end' }}>
+          <div className="g-1col" style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 18, marginTop: 14, alignItems: 'end' }}>
             <div>
               <L>Base do valor</L>
               <div style={{ display: 'flex', gap: 6 }}>

@@ -51,7 +51,7 @@ function AbaLogistica({ eventoId, feira, salvar, podeEditar }: { eventoId: strin
         ))}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14 }}>
+      <div className="g-1col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14 }}>
         <div><L>Hotel</L><CampoBlur area valor={log.hotel ?? ''} onSalvar={(v) => setLog({ hotel: v })} desabilitado={!podeEditar} placeholder="Reserva, endereço, contato…" /></div>
         <div><L>Transporte</L><CampoBlur area valor={log.transporte ?? ''} onSalvar={(v) => setLog({ transporte: v })} desabilitado={!podeEditar} placeholder="Voos, carro, transfer…" /></div>
         <div><L>Observações</L><CampoBlur area valor={log.obs ?? ''} onSalvar={(v) => setLog({ obs: v })} desabilitado={!podeEditar} /></div>
@@ -127,7 +127,7 @@ function AbaLeads({ eventoId, feira, salvar, podeEditar }: { eventoId: string; f
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+      <div className="g-1col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
         <UploadCampo rotulo="Planilha do coletor do evento" valor={leads.planilha} pathPrefix={`leads/${eventoId}`} accept=".xlsx,.xls,.csv" podeEditar={podeEditar} onSalvar={(arq) => setLeads({ planilha: arq })} />
         <UploadCampo rotulo="Planilha consolidada (manual)" valor={leads.manualPlanilha} pathPrefix={`leads/${eventoId}`} accept=".xlsx,.xls,.csv" podeEditar={podeEditar} onSalvar={(arq) => setLeads({ manualPlanilha: arq })} />
       </div>
@@ -196,7 +196,7 @@ function AbaPortal({ feira, salvar, podeEditar }: { feira: PbFeira; salvar: (f: 
   return (
     <div style={{ maxWidth: 560, display: 'flex', flexDirection: 'column', gap: 14 }}>
       <div><L>Link do portal do expositor</L><CampoBlur mono valor={portal.link ?? ''} onSalvar={(v) => setPortal({ link: v })} desabilitado={!podeEditar} placeholder="https://…" /></div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+      <div className="g-1col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
         <div><L>Login</L><CampoBlur mono valor={portal.login ?? ''} onSalvar={(v) => setPortal({ login: v })} desabilitado={!podeEditar} /></div>
         <div>
           <L>Senha</L>

@@ -80,7 +80,7 @@ export default function TaskModal({ pid, tarefa, quadro, membros, papel, onFecha
         </div>
         <h3 className="tf-h4" style={{ margin: '10px 0 14px' }}>{tarefa.ti}</h3>
 
-        <div style={{ display: 'flex', gap: 5, borderBottom: '1px solid var(--tf-line)', marginBottom: 18 }}>
+        <div style={{ display: 'flex', gap: 5, borderBottom: '1px solid var(--tf-line)', marginBottom: 18, overflowX: 'auto' }}>
           {([['detalhes', 'Detalhes'], ['comentarios', 'Comentários'], ['anexos', `Anexos${tarefa.anexos?.length ? ' · ' + tarefa.anexos.length : ''}`]] as [Aba, string][]).map(([id, label]) => (
             <button
               key={id}
@@ -96,7 +96,7 @@ export default function TaskModal({ pid, tarefa, quadro, membros, papel, onFecha
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             <div><L>Título</L><input className="f-input" value={f.ti} onChange={(e) => setF((s) => ({ ...s, ti: e.target.value }))} disabled={!podeEditar} /></div>
             <div><L>Descrição · opcional</L><textarea className="f-textarea" rows={3} value={f.desc} onChange={(e) => setF((s) => ({ ...s, desc: e.target.value }))} disabled={!podeEditar} placeholder="Contexto, critérios de aceite, links…" /></div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+            <div className="g-1col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
               <div>
                 <L>Etapa</L>
                 <select className="f-select" value={f.et} onChange={(e) => setF((s) => ({ ...s, et: e.target.value }))} disabled={!podeEditar}>
@@ -116,10 +116,10 @@ export default function TaskModal({ pid, tarefa, quadro, membros, papel, onFecha
               <div><L>Data de início · opcional</L><input type="date" className="f-input" value={f.inicio} onChange={(e) => setF((s) => ({ ...s, inicio: e.target.value }))} disabled={!podeEditar} /></div>
               <div><L>Prazo</L><input type="date" className="f-input" value={f.prazo} onChange={(e) => setF((s) => ({ ...s, prazo: e.target.value }))} disabled={!podeEditar} /></div>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+            <div className="g-1col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
               <div>
                 <L>Prioridade</L>
-                <div style={{ display: 'flex', gap: 5 }}>
+                <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
                   {(['Alta', 'Média', 'Baixa'] as const).map((pr) => (
                     <Pill key={pr} on={f.prio === pr} onClick={() => podeEditar && setF((s) => ({ ...s, prio: pr }))} style={{ fontSize: '0.76rem' }}>{pr}</Pill>
                   ))}
@@ -140,7 +140,7 @@ export default function TaskModal({ pid, tarefa, quadro, membros, papel, onFecha
               </div>
             )}
             {tarefa.conclusao && <div className="tf-mono" style={{ fontSize: '0.62rem' }}>CONCLUÍDA EM {dbr(tarefa.conclusao)}</div>}
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginTop: 6, borderTop: '1px solid var(--tf-line)', paddingTop: 16 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginTop: 6, borderTop: '1px solid var(--tf-line)', paddingTop: 16, flexWrap: 'wrap' }}>
               {podeEditar ? (
                 <button
                   onClick={() => store.confirmar({

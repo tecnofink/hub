@@ -51,7 +51,7 @@ export function ToastModal() {
       {toast && (
         <div
           onClick={fecharToast}
-          style={{ position: 'fixed', right: 24, bottom: 24, zIndex: 300, background: 'var(--tf-ink)', color: 'var(--tf-bg)', padding: '14px 20px', borderRadius: 10, boxShadow: 'var(--tf-shadow-lg)', fontFamily: 'var(--tf-font-body)', fontSize: '0.9rem', fontWeight: 500, maxWidth: 440, cursor: 'pointer', animation: 'tfPop .3s ease both', display: 'flex', alignItems: 'center', gap: 14 }}
+          style={{ position: 'fixed', right: 24, bottom: 24, zIndex: 300, background: 'var(--tf-ink)', color: 'var(--tf-bg)', padding: '14px 20px', borderRadius: 10, boxShadow: 'var(--tf-shadow-lg)', fontFamily: 'var(--tf-font-body)', fontSize: '0.9rem', fontWeight: 500, maxWidth: 'min(440px, calc(100vw - 48px))', cursor: 'pointer', animation: 'tfPop .3s ease both', display: 'flex', alignItems: 'center', gap: 14 }}
         >
           <span>{toast.msg}</span>
           {toast.acao && (
@@ -157,7 +157,7 @@ export default function Shell() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <header style={{ position: 'sticky', top: 0, zIndex: 60, background: 'var(--tf-bg-pure)', borderBottom: '1px solid var(--tf-line)' }}>
-        <div style={{ maxWidth: 1320, margin: '0 auto', padding: '0 32px', height: 64, display: 'flex', alignItems: 'center', gap: 20 }}>
+        <div className="m-header" style={{ maxWidth: 1320, margin: '0 auto', padding: '0 32px', height: 64, display: 'flex', alignItems: 'center', gap: 20 }}>
           <ALink
             to="/"
             title="Hub — página inicial"
@@ -168,7 +168,7 @@ export default function Shell() {
             </svg>
             Hub
           </ALink>
-          <span style={{ width: 1, height: 24, background: 'var(--tf-line-2)', flex: 'none' }} />
+          <span className="m-hide" style={{ width: 1, height: 24, background: 'var(--tf-line-2)', flex: 'none' }} />
           <ALink
             to={fluxCtx ? '/flux' : emGestor ? '/tarefas' : emPlaybook ? '/playbook' : ferramentaAtual ? rotaNormalizada(ferramentaAtual.rota) : '/'}
             title={fluxCtx ? 'Flux — abrir a ferramenta' : emGestor ? 'Gestor de Tarefas — meus projetos' : emPlaybook ? 'Playbook' : ferramentaAtual?.nome ?? 'Tecnofink'}
@@ -193,7 +193,7 @@ export default function Shell() {
             {fluxCtx && souFluxAdmin && <NavPill on={emAdminFlux} to="/admin/flux">Admin do Flux</NavPill>}
             {!fluxCtx && !emGestor && !emPlaybook && souHubAdmin && <NavPill on={emAdminHub} to="/admin/hub/dominios">Admin do Hub</NavPill>}
           </nav>
-          <span className="tf-mono" style={{ fontSize: '0.6rem', flex: 'none' }}>[ HOJE · {dbr(todayISO())} ]</span>
+          <span className="tf-mono m-hide" style={{ fontSize: '0.6rem', flex: 'none' }}>[ HOJE · {dbr(todayISO())} ]</span>
           <ThemeToggleBtn />
           <ALink to="/perfil" title="Meu perfil" style={{ display: 'flex', alignItems: 'center', background: 'none', border: 'none', cursor: 'pointer', padding: 2, flex: 'none' }}>
             <MeAvatar />

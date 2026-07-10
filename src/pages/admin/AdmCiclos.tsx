@@ -16,7 +16,7 @@ export default function AdmCiclos() {
   }));
 
   const dateGrid = (v: typeof ce, set: (x: typeof ce) => void) => (
-    <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 1fr 1fr', gap: 14, alignItems: 'end' }}>
+    <div className="g-datas" style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 1fr 1fr', gap: 14, alignItems: 'end' }}>
       <div><L>Nome</L><input className="f-input" style={{ padding: '10px 13px', fontSize: '0.9rem' }} value={v.nome} onChange={(e) => set({ ...v, nome: e.target.value })} /></div>
       <div><L>Abertura</L><input type="date" className="f-input" value={v.inicio} onChange={(e) => set({ ...v, inicio: e.target.value })} /></div>
       <div><L>Fim das inscrições</L><input type="date" className="f-input" value={v.limite} onChange={(e) => set({ ...v, limite: e.target.value })} /></div>
@@ -80,7 +80,7 @@ export default function AdmCiclos() {
       <div className="tf-mono" style={{ margin: '24px 0 12px' }}>[ TODOS OS CICLOS ]</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {state.cycles.map((x) => (
-          <div key={x.id} className="tf-card" style={{ padding: '16px 22px', display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div key={x.id} className="tf-card" style={{ padding: '16px 22px', display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
             <Badge kind={x.status === 'ativo' ? 'live' : 'neutral'} style={{ flex: 'none' }}>{x.status === 'ativo' ? '● ATIVO' : 'ENCERRADO'}</Badge>
             <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>{x.nome}</span>
             <span className="tf-small" style={{ fontSize: '0.8rem' }}>{dbr(x.inicio)} a {dbr(x.fim)} · inscrições até {dbr(x.limite)}</span>

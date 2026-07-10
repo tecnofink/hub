@@ -46,7 +46,7 @@ export default function Confirmar() {
       </div>
       <div className="tf-card" style={{ padding: '8px 28px' }}>
         {rows.map(([k, v]) => (
-          <div key={k} style={{ display: 'grid', gridTemplateColumns: '190px 1fr', gap: 18, padding: '14px 0', borderBottom: '1px solid var(--tf-line)' }}>
+          <div key={k} className="g-1col" style={{ display: 'grid', gridTemplateColumns: '190px 1fr', gap: 18, padding: '14px 0', borderBottom: '1px solid var(--tf-line)' }}>
             <span className="tf-mono" style={{ fontSize: '0.62rem', paddingTop: 2 }}>{k}</span>
             <span style={{ fontSize: '0.92rem', color: 'var(--tf-ink)', lineHeight: 1.5 }}>{v}</span>
           </div>
