@@ -8,3 +8,6 @@ firestore-debug.log
 ui-debug.log
 *.log
 .firebase/
+
+# arquivos de lock do Office
+~$*
