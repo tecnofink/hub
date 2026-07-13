@@ -115,6 +115,11 @@ export default function Tarefas() {
 
   const segs = (['conc', 'and', 'rev', 'atras', 'nao'] as TaskStatusDerivado[]).filter((k) => counts[k] > 0);
 
+  // abre a tarefa também por teclado (Enter/Espaço) — cards e linhas são div "button"
+  const abrirPorTecla = (tid: string) => (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setTkModal(tid); }
+  };
+
   // rolagem do quadro por hover nas setas — mesmo padrão do kanban do Flux
   const scrollStart = (dx: number) => {
     scrollStop();
@@ -316,9 +321,14 @@ export default function Tarefas() {
                     return (
                       <div
                         key={t.id}
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`Abrir tarefa ${t.id}: ${t.ti}`}
+                        className="foco-tf"
                         draggable={podeEditar}
                         onDragStart={(e) => e.dataTransfer.setData('text/pf-tarefa', t.id)}
                         onClick={() => setTkModal(t.id)}
+                        onKeyDown={abrirPorTecla(t.id)}
                         style={{ background: 'var(--tf-bg-pure)', border: '1px solid var(--tf-line)', borderLeft: '3px solid ' + stCor(k), borderRadius: 8, padding: '12px 13px', display: 'flex', flexDirection: 'column', gap: 6, cursor: podeEditar ? 'grab' : 'pointer', boxShadow: 'var(--tf-shadow)' }}
                       >
                         <span className="tf-mono" style={{ fontSize: '0.54rem', color: 'var(--tf-ink-3)' }}>
@@ -361,7 +371,7 @@ export default function Tarefas() {
           {[...q.tasks].sort((a, b) => a.id.localeCompare(b.id)).map((t) => {
             const k = stDe(t);
             return (
-              <div key={t.id} onClick={() => setTkModal(t.id)} style={{ display: 'grid', gridTemplateColumns: '110px 1fr 150px 160px 110px 110px 130px', minWidth: 880, gap: 0, padding: '11px 24px', borderBottom: '1px solid var(--tf-line)', alignItems: 'center', cursor: 'pointer' }}>
+              <div key={t.id} role="button" tabIndex={0} aria-label={`Abrir tarefa ${t.id}: ${t.ti}`} className="foco-tf" onClick={() => setTkModal(t.id)} onKeyDown={abrirPorTecla(t.id)} style={{ display: 'grid', gridTemplateColumns: '110px 1fr 150px 160px 110px 110px 130px', minWidth: 880, gap: 0, padding: '11px 24px', borderBottom: '1px solid var(--tf-line)', alignItems: 'center', cursor: 'pointer' }}>
                 <span className="tf-mono" style={{ fontSize: '0.66rem' }}>{t.id}</span>
                 <span style={{ fontSize: '0.86rem', fontWeight: 600, paddingRight: 12 }}>{t.ti}</span>
                 <span className="tf-small" style={{ fontSize: '0.76rem' }}>{exibirResponsavel(t, state.users)}</span>

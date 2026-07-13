@@ -8,7 +8,7 @@ import React, { createContext, useContext, useEffect, useMemo, useRef, useState 
 import { onAuthStateChanged, signInWithPopup, signOut, User } from 'firebase/auth';
 import {
   arrayRemove, arrayUnion, collection, deleteDoc, deleteField, doc, getDoc, limit,
-  onSnapshot, orderBy, query, serverTimestamp, setDoc, updateDoc, where,
+  onSnapshot, orderBy, query, runTransaction, serverTimestamp, setDoc, updateDoc, where,
 } from 'firebase/firestore';
 import { deleteObject, getDownloadURL, ref as sRef, uploadBytes } from 'firebase/storage';
 import { auth, db, googleProvider, storage } from '../lib/firebase';
@@ -17,7 +17,7 @@ import { brl, GCOLORS, num, primeiroNome } from '../lib/format';
 import { isAvaliado, rankingDoCiclo, setComiteMembros, tangValidado } from '../lib/scoring';
 import { ehFluxAdmin, ehHubAdmin } from '../lib/roles';
 import type {
-  Anexo, AnexoTarefa, AppState, Ciclo, Comentario, Ferramenta, LogEntry, LogTipo,
+  Anexo, AnexoTarefa, AppState, Ciclo, Comentario, Etapa, Ferramenta, LogEntry, LogTipo,
   NotaTrio, PapelProjeto, Periodicidade, Projeto, ProjetoLivre, QuadroProjeto,
   Role, Tarefa, Tier, Usuario,
 } from '../lib/types';
@@ -375,14 +375,34 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
       return { etapas: [{ id: 'F0', nome: 'Execução do projeto', inicio, fim }], tasks: [] };
     };
 
-    const salvarQuadro = (pid: string, q: QuadroProjeto) => {
-      if (!me) return;
-      // denormalização p/ regras e consultas: dono do projeto + membros (CRM)
+    /**
+     * Mutação transacional do quadro: relê o doc `tarefas/{pid}` do SERVIDOR
+     * dentro da transação e aplica `mut` sobre essa versão autoritativa — nunca
+     * sobre o estado local, que pode estar defasado. Isso elimina o
+     * last-write-wins entre membros (a transação repete em caso de conflito) e
+     * impede que o quadro-padrão sobrescreva um quadro já existente quando o
+     * snapshot ainda não chegou. `mut` devolve null para abortar sem gravar.
+     * `opts.membrosIds` sobrepõe a denormalização (usado ao alterar membros).
+     */
+    const mutarQuadro = (
+      pid: string,
+      mut: (atual: QuadroProjeto) => QuadroProjeto | null,
+      opts?: { membrosIds?: string[] },
+    ): Promise<void> => {
+      if (!me) return Promise.resolve();
       const flux = proj(pid);
       const livre = extraProjs.find((x) => x.id === pid);
       const dono = flux?.uid ?? livre?.uid ?? me.id;
-      const membrosIds = livre?.membrosIds ?? [dono];
-      setDoc(doc(db, 'tarefas', pid), { etapas: q.etapas, tasks: q.tasks, uid: dono, membrosIds }).catch(falha);
+      const membrosIds = opts?.membrosIds ?? livre?.membrosIds ?? [dono];
+      const ref = doc(db, 'tarefas', pid);
+      return runTransaction(db, async (tx) => {
+        const snap = await tx.get(ref);
+        const base: QuadroProjeto = snap.exists()
+          ? { etapas: (snap.data().etapas ?? []) as Etapa[], tasks: (snap.data().tasks ?? []) as Tarefa[] }
+          : quadroDeFn(pid);
+        const novo = mut(base);
+        if (novo) tx.set(ref, { etapas: novo.etapas, tasks: novo.tasks, uid: dono, membrosIds });
+      });
     };
 
     const posicaoNoRanking = (projs: Projeto[], p: Projeto): { pos: number; pts: number } | null => {
@@ -725,8 +745,9 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
         const membrosIds = [...p.membrosIds, u.id];
         updateDoc(doc(db, 'extraProjs', pid), { membrosIds, ['papeis.' + u.id]: papel })
           .then(() => {
-            // denormalização: o quadro precisa refletir os membros (regras/consultas)
-            setDoc(doc(db, 'tarefas', pid), { ...quadroDeFn(pid), uid: p.uid, membrosIds }).catch(falha);
+            // denormalização: o quadro reflete os membros (regras/consultas), sem
+            // sobrescrever tarefas/etapas — a transação relê o quadro do servidor
+            void mutarQuadro(pid, (cur) => cur, { membrosIds }).catch(falha);
             showToast(u.nome + ' agora é ' + (papel === 'admin' ? 'administrador' : papel) + ' do projeto.');
           })
           .catch(falha);
@@ -754,7 +775,8 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
         const membrosIds = p.membrosIds.filter((m) => m !== membroId);
         updateDoc(doc(db, 'extraProjs', pid), { membrosIds, ['papeis.' + membroId]: deleteField() })
           .then(() => {
-            setDoc(doc(db, 'tarefas', pid), { ...quadroDeFn(pid), uid: p.uid, membrosIds }).catch(() => { /* sem acesso após sair */ });
+            // ao sair de si próprio a escrita do quadro é negada (papel já removido) — silencioso
+            void mutarQuadro(pid, (cur) => cur, { membrosIds }).catch(() => { /* sem acesso após sair */ });
             showToast(membroId === me!.id ? 'Você saiu do projeto.' : 'Membro removido do projeto.');
           })
           .catch(falha);
@@ -777,31 +799,33 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
       },
 
       addEtapa: (pid, etapa) => {
-        const cur = quadroDeFn(pid);
-        if (cur.etapas.some((e) => e.id === etapa.id)) return;
-        salvarQuadro(pid, { ...cur, etapas: [...cur.etapas, etapa] });
+        void mutarQuadro(pid, (cur) =>
+          cur.etapas.some((e) => e.id === etapa.id) ? null : { ...cur, etapas: [...cur.etapas, etapa] },
+        ).catch(falha);
       },
 
       addTarefa: (pid, t) => {
-        const cur = quadroDeFn(pid);
-        const maior = cur.tasks.reduce((a, x) => Math.max(a, parseInt(x.id.replace(/\D/g, ''), 10) || 0), 0);
-        const nova: Tarefa = {
-          id: 'TASK-' + String(maior + 1).padStart(3, '0'),
-          et: t.et, ti: t.ti.trim(), desc: (t.desc ?? '').trim() || undefined,
-          resp: t.respId ? (byId(t.respId)?.nome ?? '') : me!.nome, respId: t.respId ?? me!.id,
-          inicio: t.inicio || undefined, prazo: t.prazo, prio: t.prio, st: 'nao', anexos: [],
-        };
-        // etapa criada junto com a tarefa entra na mesma gravação (sem corrida)
-        const etapas = t.etapaNova && !cur.etapas.some((e) => e.id === t.etapaNova!.id)
-          ? [...cur.etapas, t.etapaNova]
-          : cur.etapas;
-        salvarQuadro(pid, { etapas, tasks: [...cur.tasks, nova] });
-        showToast('Tarefa adicionada ao quadro.');
+        void mutarQuadro(pid, (cur) => {
+          // id derivado da base do SERVIDOR — adds concorrentes não colidem
+          const maior = cur.tasks.reduce((a, x) => Math.max(a, parseInt(x.id.replace(/\D/g, ''), 10) || 0), 0);
+          const nova: Tarefa = {
+            id: 'TASK-' + String(maior + 1).padStart(3, '0'),
+            et: t.et, ti: t.ti.trim(), desc: (t.desc ?? '').trim() || undefined,
+            resp: t.respId ? (byId(t.respId)?.nome ?? '') : me!.nome, respId: t.respId ?? me!.id,
+            inicio: t.inicio || undefined, prazo: t.prazo, prio: t.prio, st: 'nao', anexos: [],
+          };
+          // etapa criada junto com a tarefa entra na mesma gravação (sem corrida)
+          const etapas = t.etapaNova && !cur.etapas.some((e) => e.id === t.etapaNova!.id)
+            ? [...cur.etapas, t.etapaNova]
+            : cur.etapas;
+          return { etapas, tasks: [...cur.tasks, nova] };
+        })
+          .then(() => showToast('Tarefa adicionada ao quadro.'))
+          .catch(falha);
       },
 
       editarTarefa: (pid, tid, patch) => {
-        const cur = quadroDeFn(pid);
-        salvarQuadro(pid, {
+        void mutarQuadro(pid, (cur) => ({
           ...cur,
           tasks: cur.tasks.map((x) => {
             if (x.id !== tid) return x;
@@ -811,33 +835,36 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
             else nx.conclusao = undefined;
             return nx;
           }),
-        });
+        })).catch(falha);
       },
 
       moverTarefa: (pid, tid, destino) => {
+        // checagem local só para devolver o undo de forma síncrona (UX do toast);
+        // a gravação real relê o servidor na transação
         const cur = quadroDeFn(pid);
         const t = cur.tasks.find((x) => x.id === tid);
         if (!t) return null;
         const antes = { st: t.st, et: t.et, conclusao: t.conclusao };
         const aplicar = (vals: { st?: TaskStatusMovel; et?: string; conclusao?: string }) => {
-          const q = quadroDeFn(pid);
-          salvarQuadro(pid, {
-            ...q,
-            tasks: q.tasks.map((x) => {
-              if (x.id !== tid) return x;
-              const nx = { ...x, ...('st' in vals && vals.st ? { st: vals.st } : {}), ...('et' in vals && vals.et ? { et: vals.et } : {}) };
-              if ('st' in vals) nx.conclusao = vals.st === 'conc' ? (vals.conclusao ?? todayISO()) : vals.conclusao;
-              return nx;
-            }),
-          });
+          void mutarQuadro(pid, (q) => {
+            if (!q.tasks.some((x) => x.id === tid)) return null; // tarefa removida por outro membro
+            return {
+              ...q,
+              tasks: q.tasks.map((x) => {
+                if (x.id !== tid) return x;
+                const nx = { ...x, ...('st' in vals && vals.st ? { st: vals.st } : {}), ...('et' in vals && vals.et ? { et: vals.et } : {}) };
+                if ('st' in vals) nx.conclusao = vals.st === 'conc' ? (vals.conclusao ?? todayISO()) : vals.conclusao;
+                return nx;
+              }),
+            };
+          }).catch(falha);
         };
         aplicar(destino);
         return () => aplicar(antes);
       },
 
       excluirTarefa: (pid, tid) => {
-        const cur = quadroDeFn(pid);
-        salvarQuadro(pid, { ...cur, tasks: cur.tasks.filter((x) => x.id !== tid) });
+        void mutarQuadro(pid, (cur) => ({ ...cur, tasks: cur.tasks.filter((x) => x.id !== tid) })).catch(falha);
       },
 
       /* ── Comentários por tarefa (CRM) ── */
@@ -871,20 +898,22 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
 
       /* ── Anexos por tarefa (CRM: Storage + metadados na tarefa) ── */
       addAnexosTarefa: async (pid, tid, arquivos) => {
-        const novos: AnexoTarefa[] = [];
-        for (const f of arquivos) {
-          const r = sRef(storage, `anexos-tarefas/${pid}/${tid}/${Date.now()}_${f.name}`);
-          await uploadBytes(r, f);
-          novos.push({ n: f.name, url: await getDownloadURL(r), tamanho: f.size, por: me!.id, em: todayISO() });
+        try {
+          const novos: AnexoTarefa[] = [];
+          for (const f of arquivos) {
+            const r = sRef(storage, `anexos-tarefas/${pid}/${tid}/${Date.now()}_${f.name}`);
+            await uploadBytes(r, f);
+            novos.push({ n: f.name, url: await getDownloadURL(r), tamanho: f.size, por: me!.id, em: todayISO() });
+          }
+          await mutarQuadro(pid, (cur) => ({ ...cur, tasks: cur.tasks.map((x) => (x.id === tid ? { ...x, anexos: [...(x.anexos ?? []), ...novos] } : x)) }));
+          showToast(novos.length === 1 ? 'Anexo enviado.' : novos.length + ' anexos enviados.');
+        } catch (e) {
+          falha(e);
         }
-        const cur = quadroDeFn(pid);
-        salvarQuadro(pid, { ...cur, tasks: cur.tasks.map((x) => (x.id === tid ? { ...x, anexos: [...(x.anexos ?? []), ...novos] } : x)) });
-        showToast(novos.length === 1 ? 'Anexo enviado.' : novos.length + ' anexos enviados.');
       },
 
       removerAnexoTarefa: (pid, tid, anexo) => {
-        const cur = quadroDeFn(pid);
-        salvarQuadro(pid, { ...cur, tasks: cur.tasks.map((x) => (x.id === tid ? { ...x, anexos: (x.anexos ?? []).filter((a) => a.url !== anexo.url) } : x)) });
+        void mutarQuadro(pid, (cur) => ({ ...cur, tasks: cur.tasks.map((x) => (x.id === tid ? { ...x, anexos: (x.anexos ?? []).filter((a) => a.url !== anexo.url) } : x)) })).catch(falha);
         // remoção do arquivo é best-effort (como no CRM)
         try {
           const path = decodeURIComponent(new URL(anexo.url).pathname.split('/o/')[1] ?? '');
