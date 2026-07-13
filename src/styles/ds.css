@@ -24,7 +24,7 @@
   /* texto */
   --tf-ink:       #18182A;   /* texto principal */
   --tf-ink-2:     #4A4A5A;   /* texto secundário */
-  --tf-ink-3:     #8E8E9A;   /* texto terciário / legendas */
+  --tf-ink-3:     #5C5C68;   /* texto terciário / legendas (AA — contraste forte) */
 
   /* marca — navy */
   --tf-accent:      #0C0059; /* navy TecnoFink */
@@ -81,7 +81,7 @@
 
   --tf-ink:       #F1F1F6;
   --tf-ink-2:     #B7B7C6;
-  --tf-ink-3:     #7E7E92;
+  --tf-ink-3:     #A6A6B5;  /* texto terciário / legendas (AA — contraste forte) */
 
   --tf-accent:      #4F7CFF;  /* azul royal — navy Tecnofink clareado p/ fundo escuro */
   --tf-accent-2:    #3A5FE0;
@@ -149,7 +149,7 @@ h1.tf, h2.tf, h3.tf {
 .tf-h4 { font-size: 1.25rem; letter-spacing: -0.015em; font-family: var(--tf-font-display); font-weight: 600; color: var(--tf-ink); }
 .tf-lead { font-size: 1.15rem; color: var(--tf-ink-2); line-height: 1.55; }
 .tf-body { font-size: 1rem; color: var(--tf-ink-2); line-height: 1.6; }
-.tf-small { font-size: 0.88rem; color: var(--tf-ink-3); }
+.tf-small { font-size: 0.88rem; color: var(--tf-ink-3); font-weight: 500; }
 .tf-accent-word { color: var(--tf-accent); font-weight: 700; }
 .tf-muted-word { color: var(--tf-ink-3); font-style: italic; font-weight: 400; }
 
@@ -160,6 +160,7 @@ h1.tf, h2.tf, h3.tf {
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--tf-ink-3);
+  font-weight: 500;
 }
 
 /* ---------------------------------------------------------------------------
