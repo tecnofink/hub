@@ -91,12 +91,16 @@ export default function Playbook() {
       </div>
 
       {papeisOn && pb.podeGerirEditores && (
-        <div className="tf-card" style={{ marginTop: 14, padding: '18px 22px' }}>
-          <Mono accent>[ PAPÉIS DO MARKETING ]</Mono>
-          <p className="tf-small" style={{ margin: '6px 0 4px', fontSize: '0.78rem' }}>
-            <strong>Editor</strong> altera o conteúdo e gere esta lista · <strong>Observador</strong> vê tudo (somente leitura) · <strong>Leitor</strong> vê tudo, exceto Página da Feira e Stands 2027.
-          </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
+        <div onClick={() => setPapeisOn(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(8,0,62,0.45)', zIndex: 250, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '84px 24px 24px', overflowY: 'auto', animation: 'tfIn .2s ease' }}>
+          <div onClick={(e) => e.stopPropagation()} className="tf-card" style={{ maxWidth: 560, width: '100%', padding: '20px 24px', boxShadow: 'var(--tf-shadow-lg)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+              <Mono accent>[ PAPÉIS DO MARKETING ]</Mono>
+              <button onClick={() => setPapeisOn(false)} className="tf-btn tf-btn-ghost" style={{ padding: '6px 12px' }}>Fechar</button>
+            </div>
+            <p className="tf-small" style={{ margin: '8px 0 4px', fontSize: '0.78rem' }}>
+              <strong>Editor</strong> altera o conteúdo e gere esta lista · <strong>Observador</strong> vê tudo (somente leitura) · <strong>Leitor</strong> vê tudo, exceto Página da Feira e Stands 2027.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 12 }}>
             {state.users.filter((u) => u.ativo).map((u) => {
               const atual = papelDe(u.id);
               return (
@@ -121,6 +125,7 @@ export default function Playbook() {
                 </div>
               );
             })}
+            </div>
           </div>
         </div>
       )}
@@ -143,7 +148,8 @@ export default function Playbook() {
         <SecChecklist eventos={pb.docs.eventos.lista} arvore={pb.docs.checklist} podeEditar={pb.podeEditar} salvarArvore={(d) => pb.salvar('checklist', d)} />
       )}
       <SecAssociacoes lista={pb.docs.associacoes.lista} podeEditar={pb.podeEditar} salvar={(d) => pb.salvar('associacoes', d)} />
-      <SecProspeccao dados={pb.docs.prospeccao} podeEditar={pb.podeEditar} salvar={(d) => pb.salvar('prospeccao', d)} />
+      {/* Prospecção é colaborativa: editável por qualquer colaborador logado */}
+      <SecProspeccao dados={pb.docs.prospeccao} podeEditar salvar={(d) => pb.salvar('prospeccao', d)} />
       <SecBrindes lista={pb.docs.brindes.lista} podeEditar={pb.podeEditar} salvar={(d) => pb.salvar('brindes', d)} />
       {pb.podeVerTudo && (
         <SecStands lista={pb.docs.stands2027.lista} podeEditar={pb.podeEditar} salvar={(d) => pb.salvar('stands2027', d)} />

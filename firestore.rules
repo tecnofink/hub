@@ -250,7 +250,9 @@ service cloud.firestore {
 
     match /playbook/{secao} {
       allow read: if isActive();
-      allow write: if secao != 'config' && ehEditorPlaybook();
+      // conteúdo só por editores — exceto Prospecção, colaborativa (qualquer ativo)
+      allow write: if secao != 'config'
+        && (ehEditorPlaybook() || (secao == 'prospeccao' && isActive()));
     }
     match /playbook/config {
       allow write: if ehEditorPlaybook() || ehHubAdmin();
