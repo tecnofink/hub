@@ -3,17 +3,17 @@
  * kanban público com movimentação automática. Backlog reativável pelo titular
  * quando um novo ciclo abre as inscrições (RF-27 / decisão P16).
  */
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../store/AppStore';
 import { dbr, diasAte, mesesDoCiclo, mesesLabel, todayISO, diffDias } from '../../lib/dates';
 import { brl, brlK } from '../../lib/format';
 import { catNome, isAvaliado, score, tangValidado } from '../../lib/scoring';
 import type { Projeto } from '../../lib/types';
-import { Avatar, MetricStat, L } from '../../components/ui';
+import { Avatar, Badge, MetricStat, L } from '../../components/ui';
 import ALink from '../../components/ALink';
 import FluxPills from './FluxPills';
-import { colunaDe, KB_COLS, ColunaId } from './statusProjeto';
+import { colunaDe, statusDe, KB_COLS, ColunaId } from './statusProjeto';
 
 export default function FluxHome() {
   const store = useStore();
@@ -22,6 +22,21 @@ export default function FluxHome() {
   const kbRef = useRef<HTMLDivElement>(null);
   const timer = useRef<number | null>(null);
   const [reativar, setReativar] = useState<{ pid: string; deadline: string } | null>(null);
+  const [avisoAtraso, setAvisoAtraso] = useState(false);
+
+  // aviso (1×/dia) quando o próprio usuário tem projeto atrasado no ciclo
+  useEffect(() => {
+    if (!me || !c) return;
+    const meus = state.projects.filter((p) => p.uid === me.id && p.ciclo === c.id && statusDe(p).k === 'atrasado');
+    if (!meus.length) return;
+    const chave = `pf-flux-atraso-${c.id}-${todayISO()}`;
+    try {
+      if (!localStorage.getItem(chave)) {
+        const t = window.setTimeout(() => setAvisoAtraso(true), 600);
+        return () => window.clearTimeout(t);
+      }
+    } catch { /* sem storage */ }
+  }, [me, c, state.projects]);
 
   if (!me) return null;
 
@@ -173,6 +188,39 @@ export default function FluxHome() {
           </div>
         </div>
       )}
+
+      {avisoAtraso && (() => {
+        const meus = state.projects.filter((p) => p.uid === me.id && p.ciclo === c.id && statusDe(p).k === 'atrasado');
+        if (!meus.length) return null;
+        return (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(8,0,62,0.45)', zIndex: 260, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '84px 24px 24px', animation: 'tfIn .2s ease' }}>
+            <div className="tf-card" style={{ maxWidth: 460, width: '100%', padding: 28, boxShadow: 'var(--tf-shadow-lg)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <Badge kind="crit">atenção</Badge>
+                <h3 className="tf-h4" style={{ margin: 0 }}>{meus.length === 1 ? '1 projeto seu está atrasado' : meus.length + ' projetos seus estão atrasados'}</h3>
+              </div>
+              <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 300, overflowY: 'auto' }}>
+                {meus.map((p) => {
+                  const dias = p.deadline ? -diasAte(p.deadline) : 0;
+                  return (
+                    <div key={p.id} style={{ border: '1px solid var(--tf-line)', borderLeft: '3px solid var(--tf-crit)', borderRadius: 8, padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'baseline' }}>
+                        <span style={{ fontWeight: 700, fontSize: '0.9rem', minWidth: 0 }}>{p.nome}</span>
+                        <span style={{ fontSize: '0.72rem', color: 'var(--tf-crit)', fontWeight: 600, whiteSpace: 'nowrap', flex: 'none' }}>venceu há {dias} dia{dias > 1 ? 's' : ''}</span>
+                      </div>
+                      <ALink to={'/flux/projeto/' + p.id + '/resultado'} onClick={() => setAvisoAtraso(false)} style={{ fontSize: '0.76rem', fontWeight: 700, color: 'var(--tf-accent)', textDecoration: 'none' }}>Registrar resultado →</ALink>
+                    </div>
+                  );
+                })}
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20, flexWrap: 'wrap' }}>
+                <button onClick={() => { try { localStorage.setItem(`pf-flux-atraso-${c.id}-${todayISO()}`, '1'); } catch { /* ok */ } setAvisoAtraso(false); }} className="tf-btn tf-btn-ghost">Não mostrar de novo hoje</button>
+                <button onClick={() => setAvisoAtraso(false)} className="tf-btn tf-btn-accent">Ver no Flux</button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
@@ -202,7 +250,7 @@ function KanbanCard({ p, col, onReativar }: { p: Projeto; col: ColunaId; onReati
     const d = p.deadline ? diasAte(p.deadline) : 0;
     meta1 = 'Deadline · ' + dbr(p.deadline);
     meta2 = d < 0 ? 'Vencido há ' + -d + ' dias' : d === 0 ? 'O deadline é hoje' : d + ' dias restantes';
-    if (d < 0) chip = 'ATRASADO';
+    if (d < 0) chip = 'ATRASADO · ' + (-d) + 'D';
   }
   if (col === 'aval') {
     meta1 = 'Registrado em ' + dbr(p.resultado!.data);
@@ -224,10 +272,20 @@ function KanbanCard({ p, col, onReativar }: { p: Projeto; col: ColunaId; onReati
   const clickOn = col !== 'back';
   const destino = mine ? '/tarefas/' + p.id : '/flux/projeto/' + p.id;
 
+  const atrasado = statusDe(p).k === 'atrasado';
   const fg = mine ? '#fff' : 'var(--tf-ink)';
   const sub = mine ? 'rgba(255,255,255,0.72)' : 'var(--tf-ink-3)';
 
-  const cardStyle: React.CSSProperties = { background: mine ? 'var(--tf-accent)' : 'var(--tf-bg-pure)', border: '1px solid ' + (mine ? 'var(--tf-accent)' : 'var(--tf-line)'), borderRadius: 10, padding: 16, display: 'flex', flexDirection: 'column', gap: 9, cursor: clickOn ? 'pointer' : 'default', boxShadow: 'var(--tf-shadow)', color: 'inherit' };
+  const cardStyle: React.CSSProperties = {
+    background: atrasado
+      ? (mine ? 'var(--tf-crit)' : 'color-mix(in srgb, var(--tf-crit) 8%, var(--tf-bg-pure))')
+      : (mine ? 'var(--tf-accent)' : 'var(--tf-bg-pure)'),
+    border: (atrasado && !mine)
+      ? '2px solid var(--tf-crit)'
+      : '1px solid ' + (atrasado ? 'var(--tf-crit)' : (mine ? 'var(--tf-accent)' : 'var(--tf-line)')),
+    borderRadius: 10, padding: 16, display: 'flex', flexDirection: 'column', gap: 9,
+    cursor: clickOn ? 'pointer' : 'default', boxShadow: 'var(--tf-shadow)', color: 'inherit',
+  };
   const Envelope = ({ children }: { children: React.ReactNode }) =>
     clickOn
       ? <ALink to={destino} style={cardStyle}>{children}</ALink>
@@ -253,7 +311,7 @@ function KanbanCard({ p, col, onReativar }: { p: Projeto; col: ColunaId; onReati
         <span style={{ fontSize: '0.74rem', color: sub }}>{meta2}</span>
       </div>
       {clickOn && (
-        <span style={{ fontSize: '0.76rem', fontWeight: 700, color: mine ? '#fff' : 'var(--tf-accent)' }}>{mine ? 'Abrir gestor de tarefas →' : 'Ver ficha →'}</span>
+        <span style={{ fontSize: '0.76rem', fontWeight: 700, color: mine ? '#fff' : atrasado ? 'var(--tf-crit)' : 'var(--tf-accent)' }}>{mine ? 'Abrir em Produtividade →' : 'Ver ficha →'}</span>
       )}
       {reativavel && (
         <button onClick={(e) => { e.stopPropagation(); onReativar(); }} className="tf-btn tf-btn-accent" style={{ padding: '8px 14px', fontSize: '0.78rem', justifyContent: 'center' }}>

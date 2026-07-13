@@ -191,12 +191,12 @@ const DOMINIOS_INICIAIS = ['tecnofink.com', 'grupotecnofink.com.br'];
 /** Ferramentas nativas geridas pelo Admin do Hub (o Flux é fixo em código). */
 async function criarFerramentasNativas(): Promise<void> {
   await db().doc('tools/gestor').set({
-    nome: 'Gestor de Tarefas', sigla: 'Gt',
+    nome: 'Produtividade', sigla: 'Pr',
     desc: 'Etapas, prazos e quadro de tarefas dos seus projetos. Pitches do Flux entram aqui automaticamente; projetos livres também.',
     rota: '/tarefas', perfis: ['user'], ativo: true, fixa: true, ordem: 1,
   });
   await db().doc('tools/playbook').set({
-    nome: 'Playbook', sigla: 'Pb',
+    nome: 'Marketing', sigla: 'Mk',
     desc: 'Padrões, guias e materiais de referência do grupo Tecnofink. Ferramenta importada de projeto existente.',
     rota: '/playbook', perfis: ['user'], ativo: true, fixa: true, importada: true, ordem: 2,
   });

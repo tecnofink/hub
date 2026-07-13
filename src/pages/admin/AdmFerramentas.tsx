@@ -98,7 +98,7 @@ export default function AdmFerramentas() {
         <a
           onClick={() => store.confirmar({
             titulo: 'Restaurar ferramentas nativas?',
-            texto: 'Todos os cadastros atuais serão removidos e o Gestor de Tarefas (/tarefas) e o Playbook (/playbook) serão recriados. O Flux não é afetado (fixo em código).',
+            texto: 'Todos os cadastros atuais serão removidos e o Produtividade (/tarefas) e o Marketing (/playbook) serão recriados. O Flux não é afetado (fixo em código).',
             cta: 'Restaurar', danger: true,
             onConfirm: () => store.restaurarFerramentas(),
           })}

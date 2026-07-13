@@ -258,8 +258,8 @@ export function seedState(): AppState {
     domains: ['tecnofink.com', 'grupotecnofink.com.br'],
     tools: [
       { id: 'flux', nome: 'Flux', sigla: 'Fx', desc: 'Programa de inovação com IA: inscreva seu pitch, execute com prazo definido e acompanhe o ranking do ciclo em tempo real.', rota: '/flux', perfis: ['user'], ativo: true, fixa: true, ordem: 0 },
-      { id: 'gestor', nome: 'Gestor de Tarefas', sigla: 'Gt', desc: 'Etapas, prazos e quadro de tarefas dos seus projetos. Pitches do Flux entram aqui automaticamente; projetos livres também.', rota: '/tarefas', perfis: ['user'], ativo: true, fixa: true, ordem: 1 },
-      { id: 'playbook', nome: 'Playbook', sigla: 'Pb', desc: 'Padrões, guias e materiais de referência do grupo Tecnofink. Ferramenta importada de projeto existente.', rota: '/playbook', perfis: ['user'], ativo: true, fixa: false, importada: true, ordem: 2 },
+      { id: 'gestor', nome: 'Produtividade', sigla: 'Pr', desc: 'Etapas, prazos e quadro de tarefas dos seus projetos. Pitches do Flux entram aqui automaticamente; projetos livres também.', rota: '/tarefas', perfis: ['user'], ativo: true, fixa: true, ordem: 1 },
+      { id: 'playbook', nome: 'Marketing', sigla: 'Mk', desc: 'Padrões, guias e materiais de referência do grupo Tecnofink. Ferramenta importada de projeto existente.', rota: '/playbook', perfis: ['user'], ativo: true, fixa: false, importada: true, ordem: 2 },
     ],
     extraProjs: [
       {

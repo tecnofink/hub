@@ -45,8 +45,8 @@ export default function Gestor() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 24, flexWrap: 'wrap' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            <img src="/brand/gestor-badge.png" alt="Gestor de Tarefas" style={{ height: 42 }} />
-            <span className="tf-mono" style={{ color: 'var(--tf-accent)' }}>[ GESTOR DE TAREFAS ]</span>
+            <img src="/brand/gestor-badge.png" alt="Produtividade" style={{ height: 42 }} />
+            <span className="tf-mono" style={{ color: 'var(--tf-accent)' }}>[ PRODUTIVIDADE ]</span>
           </div>
           <h1 className="tf-h2" style={{ margin: '12px 0 8px' }}>Meus projetos</h1>
           <p className="tf-body" style={{ margin: 0, maxWidth: 640 }}>

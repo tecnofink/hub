@@ -35,8 +35,11 @@ const VAZIO: PlaybookDocs = {
   brindes: { lista: [] },
   stands2027: { lista: [] },
   workshops: { lista: [] },
-  config: { editores: [] },
+  config: { editores: [], observadores: [] },
 };
+
+/** Papel do usuário no Marketing (antigo Playbook). */
+export type PapelPlaybook = 'editor' | 'observador' | 'leitor';
 
 export function pbId(): string {
   return typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : 'pb' + Date.now() + Math.floor(Math.random() * 1e6);
@@ -59,19 +62,24 @@ export function usePlaybook() {
     }, () => setPronto(true));
   }, []);
 
-  // acesso da ferramenta é gerido nela própria: só EDITORES escrevem conteúdo;
-  // a lista de editores é autogerida (admin do hub tem acesso de socorro)
+  // acesso gerido na própria ferramenta (cada uma cuida do seu):
+  //  · editor    — escreve o conteúdo e gere os papéis (admin do hub: socorro)
+  //  · observador — somente leitura, mas vê TUDO
+  //  · leitor     — somente leitura e NÃO vê Página da Feira nem Stands 2027
   const podeEditar = !!me && docs.config.editores.includes(me.id);
+  const ehObservador = !!me && (docs.config.observadores ?? []).includes(me.id);
+  const podeVerTudo = podeEditar || ehObservador || ehHubAdmin(me);
   const podeGerirEditores = podeEditar || ehHubAdmin(me);
+  const papel: PapelPlaybook = podeEditar ? 'editor' : ehObservador ? 'observador' : 'leitor';
 
   return useMemo(() => ({
-    docs, pronto, podeEditar, podeGerirEditores,
+    docs, pronto, podeEditar, podeVerTudo, podeGerirEditores, papel,
     /** regrava o documento inteiro da seção (documentos pequenos, edição rara) */
     salvar: <K extends keyof PlaybookDocs>(secao: K, dados: PlaybookDocs[K]) => {
       setDoc(doc(db, 'playbook', secao), dados).catch((e) => store.showToast(msg(e)));
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [docs, pronto, podeEditar, podeGerirEditores, me?.id]);
+  }), [docs, pronto, podeEditar, podeVerTudo, podeGerirEditores, papel, me?.id]);
 }
 
 /** Documento da "página da feira" de um evento (checklist/logística/leads/portal). */
@@ -103,7 +111,7 @@ export function useFeira(eventoId: string | null) {
 
 function msg(e: unknown): string {
   const s = String((e as { code?: string })?.code ?? e);
-  return s.includes('permission') ? 'Somente editores do Playbook podem alterar o conteúdo.' : s;
+  return s.includes('permission') ? 'Somente editores podem alterar o conteúdo.' : s;
 }
 
 /** Upload de documento do playbook → Storage; devolve {n, url}. */

@@ -241,7 +241,7 @@ export default function Projeto() {
           )}
           {p.uid === me.id && !emBacklog && (
             <button onClick={() => nav('/tarefas/' + p.id)} className="tf-btn tf-btn-ghost" style={{ justifyContent: 'center' }}>
-              Abrir no Gestor de Tarefas →
+              Abrir em Produtividade →
             </button>
           )}
         </div>

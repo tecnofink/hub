@@ -167,5 +167,7 @@ export const FEIRA_VAZIA: PbFeira = {
 };
 
 export interface PbConfig {
-  editores: string[]; // uids com escrita no playbook (admins do hub também escrevem)
+  editores: string[];      // uids com escrita no Marketing (admins do hub também escrevem)
+  observadores?: string[]; // uids somente-leitura que veem TUDO; os demais logados são
+                           // "leitor" e não veem Página da Feira nem Stands 2027
 }

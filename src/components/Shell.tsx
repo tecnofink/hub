@@ -100,8 +100,8 @@ function Splash() {
 /** Título da aba do navegador conforme a ferramenta aberta. */
 function tituloDe(path: string): string {
   if (path.startsWith('/flux') || path.startsWith('/comite') || path.startsWith('/admin/flux')) return 'Flux';
-  if (path.startsWith('/tarefas')) return 'Gestor de Tarefas';
-  if (path.startsWith('/playbook')) return 'Playbook';
+  if (path.startsWith('/tarefas')) return 'Produtividade';
+  if (path.startsWith('/playbook')) return 'Marketing';
   if (path.startsWith('/admin/hub')) return 'Admin do Hub';
   if (path.startsWith('/perfil')) return 'Perfil';
   return 'HUB';
@@ -153,7 +153,7 @@ export default function Shell() {
   const emHub = path === '/';
   const fluxCtx = emFlux || emComite || emAdminFlux;
 
-  const ctxTag = emComite ? 'FLUX · COMITÊ' : emAdminFlux ? 'FLUX · ADMIN' : emFlux ? 'FLUX' : emGestor ? 'GESTOR DE TAREFAS' : emPlaybook ? 'PLAYBOOK' : emAdminHub ? 'HUB · ADMINISTRAÇÃO' : ferramentaAtual ? ferramentaAtual.nome.toUpperCase() : '';
+  const ctxTag = emComite ? 'FLUX · COMITÊ' : emAdminFlux ? 'FLUX · ADMIN' : emFlux ? 'FLUX' : emGestor ? 'PRODUTIVIDADE' : emPlaybook ? 'MARKETING' : emAdminHub ? 'HUB · ADMINISTRAÇÃO' : ferramentaAtual ? ferramentaAtual.nome.toUpperCase() : '';
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -172,12 +172,12 @@ export default function Shell() {
           <span className="m-hide" style={{ width: 1, height: 24, background: 'var(--tf-line-2)', flex: 'none' }} />
           <ALink
             to={fluxCtx ? '/flux' : emGestor ? '/tarefas' : emPlaybook ? '/playbook' : ferramentaAtual ? rotaNormalizada(ferramentaAtual.rota) : '/'}
-            title={fluxCtx ? 'Flux — abrir a ferramenta' : emGestor ? 'Gestor de Tarefas — meus projetos' : emPlaybook ? 'Playbook' : ferramentaAtual?.nome ?? 'Tecnofink'}
+            title={fluxCtx ? 'Flux — abrir a ferramenta' : emGestor ? 'Produtividade — meus projetos' : emPlaybook ? 'Marketing' : ferramentaAtual?.nome ?? 'Tecnofink'}
             style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'none', border: 'none', cursor: 'pointer', padding: 0, flex: 'none' }}
           >
             {fluxCtx && <img src="/brand/flux-badge.png" alt="Flux" style={{ width: 26, height: 26 }} />}
-            {emGestor && <img src="/brand/gestor-badge.png" alt="Gestor de Tarefas" style={{ height: 22 }} />}
-            {emPlaybook && <img src="/brand/playbook-badge.png" alt="Playbook" style={{ height: 26 }} />}
+            {emGestor && <img src="/brand/gestor-badge.png" alt="Produtividade" style={{ height: 22 }} />}
+            {emPlaybook && <img src="/brand/playbook-badge.png" alt="Marketing" style={{ height: 26 }} />}
             {ferramentaAtual && (
               faviconDe(ferramentaAtual.rota)
                 ? <img src={faviconDe(ferramentaAtual.rota)!} alt={ferramentaAtual.nome} style={{ width: 24, height: 24, borderRadius: 6 }} />
@@ -193,8 +193,8 @@ export default function Shell() {
           </ALink>
           <nav className="m-nav" style={{ display: 'flex', gap: 6, flex: 1 }}>
             <NavPill on={emFlux} to="/flux">Flux</NavPill>
-            <NavPill on={emGestor} to="/tarefas">Tarefas</NavPill>
-            <NavPill on={emPlaybook} to="/playbook">Playbook</NavPill>
+            <NavPill on={emGestor} to="/tarefas">Produtividade</NavPill>
+            <NavPill on={emPlaybook} to="/playbook">Marketing</NavPill>
             {fluxCtx && souAval && <NavPill on={emComite} to="/comite/acesso">Comitê</NavPill>}
             {fluxCtx && souFluxAdmin && <NavPill on={emAdminFlux} to="/admin/flux">Admin do Flux</NavPill>}
             {!fluxCtx && !emGestor && !emPlaybook && souHubAdmin && <NavPill on={emAdminHub} to="/admin/hub/dominios">Admin do Hub</NavPill>}

@@ -463,7 +463,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
         setDoc(ref, docData)
           .then(() => {
             addLog('Pitch inscrito', novo.nome, 'flux');
-            showToast('Pitch enviado! O comitê vai definir o acesso ao Claude — e um projeto com o mesmo nome já foi aberto no Gestor de Tarefas.');
+            showToast('Pitch enviado! O comitê vai definir o acesso ao Claude — e um projeto com o mesmo nome já foi aberto em Produtividade.');
           })
           .catch(falha);
         return novo;

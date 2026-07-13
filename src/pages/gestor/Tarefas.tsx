@@ -130,7 +130,7 @@ export default function Tarefas() {
   return (
     <div className="anim-in" style={{ maxWidth: 1320, margin: '0 auto', padding: '40px 32px 80px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
-        <a onClick={() => nav('/tarefas')} className="back-link">← GESTOR DE TAREFAS / MEUS PROJETOS</a>
+        <a onClick={() => nav('/tarefas')} className="back-link">← PRODUTIVIDADE / MEUS PROJETOS</a>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           {livre && papel === 'admin' && (
             <button onClick={() => nav('/tarefas/' + id + '/admin')} className="tf-btn tf-btn-ghost">Gerenciar projeto</button>
@@ -149,7 +149,7 @@ export default function Tarefas() {
         )}
         <div style={{ flex: 1, minWidth: 240 }}>
           <span className="tf-mono" style={{ color: 'var(--tf-accent)' }}>
-            [ {flux ? 'GESTOR DE TAREFAS · PROJETO DO FLUX' : 'GESTOR DE TAREFAS · PROJETO LIVRE'}{livre ? ' · ' + membros.length + ' MEMBRO' + (membros.length > 1 ? 'S' : '') : ''} ]
+            [ {flux ? 'PRODUTIVIDADE · PROJETO DO FLUX' : 'PRODUTIVIDADE · PROJETO LIVRE'}{livre ? ' · ' + membros.length + ' MEMBRO' + (membros.length > 1 ? 'S' : '') : ''} ]
           </span>
           <h1 className="tf-h3" style={{ margin: '6px 0 0', fontSize: '1.7rem' }}>{nome}</h1>
           {livre?.descricao && <p className="tf-small" style={{ margin: '4px 0 0', maxWidth: 620 }}>{livre.descricao}</p>}

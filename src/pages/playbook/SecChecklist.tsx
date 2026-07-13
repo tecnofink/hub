@@ -189,7 +189,7 @@ function AbaChecklist({ arvore, feira, podeEditar, salvarFeira, salvarArvore }: 
           {estruturaOn && <EditorEstrutura arvore={arvore} salvar={salvarArvore} />}
         </div>
       )}
-      {!podeEditar && <p className="tf-small" style={{ fontSize: '0.74rem', margin: '10px 0 0' }}>Somente editores do Playbook marcam itens e alteram a estrutura.</p>}
+      {!podeEditar && <p className="tf-small" style={{ fontSize: '0.74rem', margin: '10px 0 0' }}>Somente editores marcam itens e alteram a estrutura.</p>}
     </div>
   );
 }
