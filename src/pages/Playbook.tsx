@@ -84,9 +84,9 @@ export default function Playbook() {
             ? <Badge kind="neutral">observador · vê tudo</Badge>
             : <Badge kind="neutral">leitor</Badge>}
         {pb.podeGerirEditores && (
-          <a className="acao" onClick={() => setPapeisOn((v) => !v)} style={{ fontSize: '0.78rem', color: 'var(--tf-accent)', fontWeight: 700 }}>
+          <button type="button" className="acao foco-tf" onClick={() => setPapeisOn((v) => !v)} style={{ fontSize: '0.78rem', color: 'var(--tf-accent)', fontWeight: 700 }}>
             papéis
-          </a>
+          </button>
         )}
       </div>
 

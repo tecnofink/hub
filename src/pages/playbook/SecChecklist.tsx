@@ -130,9 +130,9 @@ function AbaChecklist({ arvore, feira, podeEditar, salvarFeira, salvarArvore }: 
           <span style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
             <span className="tf-mono" style={{ fontSize: '0.56rem' }}>{marcados}/{itens.length}</span>
             {podeEditar && itens.length > 0 && (
-              <a className="acao" onClick={() => marcarCategoria(catId, marcados < itens.length)} style={{ fontSize: '0.72rem', color: 'var(--tf-accent)' }}>
+              <button type="button" className="acao foco-tf" onClick={() => marcarCategoria(catId, marcados < itens.length)} style={{ fontSize: '0.72rem', color: 'var(--tf-accent)' }}>
                 {marcados < itens.length ? 'marcar tudo' : 'desmarcar'}
-              </a>
+              </button>
             )}
           </span>
         </div>
@@ -183,9 +183,9 @@ function AbaChecklist({ arvore, feira, podeEditar, salvarFeira, salvarArvore }: 
 
       {podeEditar && (
         <div style={{ borderTop: '1px dashed var(--tf-line-2)', paddingTop: 14 }}>
-          <a className="acao" onClick={() => setEstruturaOn((v) => !v)} style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--tf-accent)' }}>
+          <button type="button" className="acao foco-tf" onClick={() => setEstruturaOn((v) => !v)} style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--tf-accent)' }}>
             {estruturaOn ? '▾ Ocultar edição da estrutura' : '▸ Editar estrutura do checklist (vale para todas as feiras)'}
-          </a>
+          </button>
           {estruturaOn && <EditorEstrutura arvore={arvore} salvar={salvarArvore} />}
         </div>
       )}
@@ -206,8 +206,9 @@ function EditorEstrutura({ arvore, salvar }: { arvore: PbDocChecklist; salvar: (
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <CampoBlur valor={s.nome} onSalvar={(v) => salvar({ ...arvore, setores: arvore.setores.map((x) => (x.id === s.id ? { ...x, nome: v } : x)) })} style={{ maxWidth: 320, padding: '7px 10px', fontSize: '0.86rem', fontWeight: 700 }} />
             <span className="tf-mono" style={{ fontSize: '0.56rem', flex: 1 }}>SETOR</span>
-            <a
-              className="acao"
+            <button
+              type="button"
+              className="acao foco-tf"
               onClick={() => store.confirmar({
                 titulo: 'Remover setor?', texto: `As categorias de "${s.nome}" ficam soltas na seção Geral (não são apagadas).`, cta: 'Remover', danger: true,
                 onConfirm: () => salvar({ ...arvore, setores: arvore.setores.filter((x) => x.id !== s.id) }),
@@ -215,15 +216,16 @@ function EditorEstrutura({ arvore, salvar }: { arvore: PbDocChecklist; salvar: (
               style={{ color: 'var(--tf-crit)', fontWeight: 700 }}
             >
               ×
-            </a>
+            </button>
           </div>
           <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
             {arvore.categorias.filter((c) => c.setorId === s.id).sort((a, b) => a.ordem - b.ordem).map((c) => (
               <div key={c.id} style={{ paddingLeft: 14, borderLeft: '2px solid var(--tf-line)' }}>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                   <CampoBlur valor={c.nome} onSalvar={(v) => salvar({ ...arvore, categorias: arvore.categorias.map((x) => (x.id === c.id ? { ...x, nome: v } : x)) })} style={{ maxWidth: 300, padding: '6px 9px', fontSize: '0.82rem' }} />
-                  <a
-                    className="acao"
+                  <button
+                    type="button"
+                    className="acao foco-tf"
                     onClick={() => store.confirmar({
                       titulo: 'Remover categoria?', texto: `"${c.nome}" e os itens dela saem do checklist de todas as feiras.`, cta: 'Remover', danger: true,
                       onConfirm: () => salvar({ ...arvore, categorias: arvore.categorias.filter((x) => x.id !== c.id), itens: arvore.itens.filter((i) => i.categoriaId !== c.id) }),
@@ -231,13 +233,13 @@ function EditorEstrutura({ arvore, salvar }: { arvore: PbDocChecklist; salvar: (
                     style={{ color: 'var(--tf-crit)', fontWeight: 700 }}
                   >
                     ×
-                  </a>
+                  </button>
                 </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, margin: '6px 0 0' }}>
                   {arvore.itens.filter((i) => i.categoriaId === c.id).sort((a, b) => a.ordem - b.ordem).map((i) => (
                     <span key={i.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, border: '1px solid var(--tf-line)', borderRadius: 999, padding: '3px 10px', fontSize: '0.76rem' }}>
                       {i.nome}
-                      <a className="acao" onClick={() => salvar({ ...arvore, itens: arvore.itens.filter((x) => x.id !== i.id) })} style={{ color: 'var(--tf-crit)', fontWeight: 700 }}>×</a>
+                      <button type="button" className="acao foco-tf" onClick={() => salvar({ ...arvore, itens: arvore.itens.filter((x) => x.id !== i.id) })} style={{ color: 'var(--tf-crit)', fontWeight: 700 }}>×</button>
                     </span>
                   ))}
                   <input

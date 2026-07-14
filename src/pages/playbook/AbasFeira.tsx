@@ -63,7 +63,7 @@ function AbaLogistica({ eventoId, feira, salvar, podeEditar }: { eventoId: strin
           {log.colaboradores.map((c, i) => (
             <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, border: '1px solid var(--tf-line-2)', borderRadius: 999, padding: '5px 12px', fontSize: '0.8rem', fontWeight: 600 }}>
               {c}
-              {podeEditar && <a className="acao" onClick={() => setLog({ colaboradores: log.colaboradores.filter((_, j) => j !== i) })} style={{ color: 'var(--tf-crit)', fontWeight: 700 }}>×</a>}
+              {podeEditar && <button type="button" className="acao foco-tf" onClick={() => setLog({ colaboradores: log.colaboradores.filter((_, j) => j !== i) })} style={{ color: 'var(--tf-crit)', fontWeight: 700 }}>×</button>}
             </span>
           ))}
           {podeEditar && (
@@ -91,7 +91,7 @@ function AbaLogistica({ eventoId, feira, salvar, podeEditar }: { eventoId: strin
               <CampoBlur valor={c.descricao} onSalvar={(v) => setLog({ custos: log.custos.map((x) => (x.id === c.id ? { ...x, descricao: v } : x)) })} desabilitado={!podeEditar} placeholder="Descrição" style={{ flex: 1, padding: '8px 11px', fontSize: '0.84rem' }} />
               <NumeroBlur valor={c.valor} onSalvar={(v) => setLog({ custos: log.custos.map((x) => (x.id === c.id ? { ...x, valor: v ?? 0 } : x)) })} desabilitado={!podeEditar} largura={120} placeholder="R$" />
               {podeEditar && (
-                <a className="acao" onClick={() => store.confirmar({ titulo: 'Remover custo?', texto: c.descricao || 'Item de custo', cta: 'Remover', danger: true, onConfirm: () => setLog({ custos: log.custos.filter((x) => x.id !== c.id) }) })} style={{ color: 'var(--tf-crit)', fontWeight: 700 }}>×</a>
+                <button type="button" className="acao foco-tf" onClick={() => store.confirmar({ titulo: 'Remover custo?', texto: c.descricao || 'Item de custo', cta: 'Remover', danger: true, onConfirm: () => setLog({ custos: log.custos.filter((x) => x.id !== c.id) }) })} style={{ color: 'var(--tf-crit)', fontWeight: 700 }}>×</button>
               )}
             </div>
           ))}
@@ -176,7 +176,7 @@ function AbaLeads({ eventoId, feira, salvar, podeEditar }: { eventoId: string; f
                 {campo('obs', '—')}
                 <span style={{ textAlign: 'center' }}>
                   {podeEditar && (
-                    <a className="acao" onClick={() => store.confirmar({ titulo: 'Remover lead?', texto: (l.nome || 'Lead sem nome') + ' será removido.', cta: 'Remover', danger: true, onConfirm: () => setLeads({ manuais: leads.manuais.filter((x) => x.id !== l.id) }) })} style={{ color: 'var(--tf-crit)', fontWeight: 700 }}>×</a>
+                    <button type="button" className="acao foco-tf" onClick={() => store.confirmar({ titulo: 'Remover lead?', texto: (l.nome || 'Lead sem nome') + ' será removido.', cta: 'Remover', danger: true, onConfirm: () => setLeads({ manuais: leads.manuais.filter((x) => x.id !== l.id) }) })} style={{ color: 'var(--tf-crit)', fontWeight: 700 }}>×</button>
                   )}
                 </span>
               </div>

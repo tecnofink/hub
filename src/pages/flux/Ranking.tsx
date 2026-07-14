@@ -138,7 +138,7 @@ export default function Ranking() {
           })}
           <div style={{ padding: '14px 24px', display: 'flex', justifyContent: 'space-between', gap: 14, flexWrap: 'wrap' }}>
             <span className="tf-mono" style={{ fontSize: '0.62rem' }}>{statsL}</span>
-            {hist && <a onClick={() => nav('/flux/historico')} className="acao" style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--tf-accent)' }}>← Voltar ao histórico</a>}
+            {hist && <button type="button" onClick={() => nav('/flux/historico')} className="acao foco-tf" style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--tf-accent)' }}>← Voltar ao histórico</button>}
           </div>
         </div>
       )}

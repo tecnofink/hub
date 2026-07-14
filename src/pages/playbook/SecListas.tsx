@@ -188,7 +188,7 @@ export function SecBrindes({ lista, podeEditar, salvar }: { lista: PbBrinde[]; p
                   <div key={u.id} style={{ display: 'flex', gap: 7, alignItems: 'center' }}>
                     <CampoBlur valor={u.motivo ?? ''} onSalvar={(v) => up(b.id, (x) => ({ ...x, usos: x.usos.map((y) => (y.id === u.id ? { ...y, motivo: v } : y)) }))} desabilitado={!podeEditar} placeholder="Motivo" style={{ flex: 1, padding: '5px 9px', fontSize: '0.78rem' }} />
                     <NumeroBlur valor={u.qtd} onSalvar={(v) => up(b.id, (x) => ({ ...x, usos: x.usos.map((y) => (y.id === u.id ? { ...y, qtd: v ?? 0 } : y)) }))} desabilitado={!podeEditar} largura={70} />
-                    {podeEditar && <a className="acao" onClick={() => up(b.id, (x) => ({ ...x, usos: x.usos.filter((y) => y.id !== u.id) }))} style={{ color: 'var(--tf-crit)', fontWeight: 700 }}>×</a>}
+                    {podeEditar && <button type="button" className="acao foco-tf" onClick={() => up(b.id, (x) => ({ ...x, usos: x.usos.filter((y) => y.id !== u.id) }))} style={{ color: 'var(--tf-crit)', fontWeight: 700 }}>×</button>}
                   </div>
                 ))}
                 {podeEditar && (

@@ -69,14 +69,15 @@ export function BotaoRemover({ onConfirmar, titulo, texto, podeEditar }: { onCon
   const store = useStore();
   if (!podeEditar) return null;
   return (
-    <a
-      className="acao"
+    <button
+      type="button"
+      className="acao foco-tf"
       onClick={() => store.confirmar({ titulo, texto, cta: 'Remover', danger: true, onConfirm: onConfirmar })}
       style={{ color: 'var(--tf-crit)', fontWeight: 700, fontSize: '0.82rem', flex: 'none', padding: '6px 10px', margin: '-6px -10px' }}
       title="Remover"
     >
       ×
-    </a>
+    </button>
   );
 }
 
@@ -120,8 +121,9 @@ export function UploadCampo({ rotulo, valor, pathPrefix, accept, podeEditar, onS
             {valor!.url ? '⇩ ' + (valor!.n ?? 'arquivo') : '↗ ' + (valor!.link ?? '')}
           </a>
           {podeEditar && (
-            <a
-              className="acao"
+            <button
+              type="button"
+              className="acao foco-tf"
               onClick={() => store.confirmar({
                 titulo: 'Remover documento?', texto: `"${valor!.n ?? valor!.link}" será removido de ${rotulo}.`, cta: 'Remover', danger: true,
                 onConfirm: () => { removerArquivoPb(valor!.url); onSalvar(undefined); },
@@ -129,7 +131,7 @@ export function UploadCampo({ rotulo, valor, pathPrefix, accept, podeEditar, onS
               style={{ color: 'var(--tf-crit)', fontWeight: 700 }}
             >
               ×
-            </a>
+            </button>
           )}
         </div>
       ) : podeEditar ? (

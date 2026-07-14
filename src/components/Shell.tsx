@@ -52,8 +52,10 @@ export function ToastModal() {
       {toast && (
         <div
           onClick={fecharToast}
-          style={{ position: 'fixed', right: 24, bottom: 24, zIndex: 300, background: 'var(--tf-ink)', color: 'var(--tf-bg)', padding: '14px 20px', borderRadius: 10, boxShadow: 'var(--tf-shadow-lg)', fontFamily: 'var(--tf-font-body)', fontSize: '0.9rem', fontWeight: 500, maxWidth: 'min(440px, calc(100vw - 48px))', cursor: 'pointer', animation: 'tfPop .3s ease both', display: 'flex', alignItems: 'center', gap: 14 }}
+          role={toast.erro ? 'alert' : 'status'}
+          style={{ position: 'fixed', right: 24, bottom: 24, zIndex: 300, background: toast.erro ? 'var(--tf-crit)' : 'var(--tf-ink)', color: '#fff', padding: '14px 20px', borderRadius: 10, boxShadow: 'var(--tf-shadow-lg)', fontFamily: 'var(--tf-font-body)', fontSize: '0.9rem', fontWeight: 500, maxWidth: 'min(440px, calc(100vw - 48px))', cursor: 'pointer', animation: 'tfPop .3s ease both', display: 'flex', alignItems: 'center', gap: 14 }}
         >
+          {toast.erro && <span aria-hidden="true" style={{ flex: 'none', fontWeight: 800 }}>⚠</span>}
           <span>{toast.msg}</span>
           {toast.acao && (
             <button

@@ -26,7 +26,7 @@ export default function AdmDominios() {
           {state.domains.map((d) => (
             <span key={d} style={{ display: 'inline-flex', alignItems: 'center', gap: 10, fontFamily: 'var(--tf-font-mono)', fontSize: '0.78rem', padding: '9px 16px', border: '1px solid var(--tf-line-2)', borderRadius: 999, color: 'var(--tf-ink)' }}>
               @{d}
-              <a onClick={() => store.removeDominio(d)} title="Remover domínio" className="acao" style={{ color: 'var(--tf-crit)', fontWeight: 700 }}>×</a>
+              <button type="button" onClick={() => store.removeDominio(d)} title="Remover domínio" className="acao foco-tf" style={{ color: 'var(--tf-crit)', fontWeight: 700 }}>×</button>
             </span>
           ))}
         </div>

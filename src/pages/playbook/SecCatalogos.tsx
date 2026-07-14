@@ -131,9 +131,9 @@ export default function SecCatalogos({ dados, podeEditar, salvar }: {
       )}
 
       <div style={{ marginTop: 14 }}>
-        <a className="acao" onClick={() => setConsumoAberto((v) => !v)} style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--tf-accent)' }}>
+        <button type="button" className="acao foco-tf" onClick={() => setConsumoAberto((v) => !v)} style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--tf-accent)' }}>
           {consumoAberto ? '▾ Ocultar consumo previsto por evento' : '▸ Consumo previsto por evento'}
-        </a>
+        </button>
         {consumoAberto && (
           <div className="tf-card" style={{ padding: 0, overflow: 'auto', marginTop: 10 }}>
             <div style={{ display: 'grid', gridTemplateColumns: `200px 90px repeat(${eventos.length}, 90px)`, minWidth: 300 + eventos.length * 90, gap: 0, padding: '10px 20px', borderBottom: '1px solid var(--tf-line)', background: 'var(--tf-bg-2)' }}>

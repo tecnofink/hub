@@ -34,6 +34,8 @@ export interface ToastDef {
   msg: string;
   /** Botão opcional no toast — ex.: "Desfazer" após mover tarefa (padrão do CRM). */
   acao?: { label: string; fn: () => void };
+  /** Falha de escrita: destaque vermelho, role=alert e mais tempo em tela. */
+  erro?: boolean;
 }
 
 export interface PitchDraft {
@@ -196,6 +198,14 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
     toastTimer.current = window.setTimeout(() => setToast(null), acao ? 5000 : 6000);
   };
 
+  // falha de escrita: destaque de erro e janela maior (o Firestore aplica a
+  // mudança localmente na hora, então sem isto a rejeição passaria despercebida)
+  const showErro = (msg: string) => {
+    if (toastTimer.current) window.clearTimeout(toastTimer.current);
+    setToast({ msg, erro: true });
+    toastTimer.current = window.setTimeout(() => setToast(null), 10000);
+  };
+
   /* ── Autenticação (RF-01..05): SSO Google + criação automática do perfil ── */
   useEffect(() => {
     return onAuthStateChanged(auth, async (u) => {
@@ -355,7 +365,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
     const proj = (id: string) => projects.find((x) => x.id === id);
     const cicloAtivo = cycles.find((c) => c.status === 'ativo') ?? null;
 
-    const falha = (e: unknown) => showToast(msgErro(e));
+    const falha = (e: unknown) => showErro(msgErro(e));
 
     const addLog = (acao: string, det: string, tipo: LogTipo) => {
       if (!me) return;

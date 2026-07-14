@@ -84,16 +84,16 @@ export default function ProjetoAdmin() {
                     {PAPEIS.find((pp) => pp.id === papel)?.nome}
                   </span>
                 )}
-                <a
-                  className="acao"
+                <button type="button"
+                  className="acao foco-tf"
                   onClick={() => !ultimoAdmin && setEditandoPapel(u!.id)}
                   title={ultimoAdmin ? 'O projeto precisa de ao menos um administrador' : 'Alterar papel'}
                   style={{ fontSize: '0.76rem', color: ultimoAdmin ? 'var(--tf-ink-3)' : 'var(--tf-accent)', cursor: ultimoAdmin ? 'not-allowed' : 'pointer', flex: 'none' }}
                 >
                   papel
-                </a>
-                <a
-                  className="acao"
+                </button>
+                <button type="button"
+                  className="acao foco-tf"
                   onClick={() => {
                     if (ultimoAdmin) return;
                     const ehEu = u!.id === me.id;
@@ -114,7 +114,7 @@ export default function ProjetoAdmin() {
                   style={{ fontSize: '0.76rem', color: ultimoAdmin ? 'var(--tf-ink-3)' : 'var(--tf-crit)', cursor: ultimoAdmin ? 'not-allowed' : 'pointer', flex: 'none' }}
                 >
                   remover
-                </a>
+                </button>
               </div>
             );
           })}

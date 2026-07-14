@@ -45,8 +45,9 @@ export default function SecEventos({ lista, podeEditar, salvar }: {
               <Badge kind={BADGE[ev.status]}>{ev.status}</Badge>
             </a>
             {podeEditar && ev.isCustom && (
-              <a
-                className="acao"
+              <button
+                type="button"
+                className="acao foco-tf"
                 onClick={() => store.confirmar({
                   titulo: 'Remover evento?', texto: `"${ev.nome}" e a página da feira dele (checklist, logística, leads e portal) serão removidos.`, cta: 'Remover', danger: true,
                   onConfirm: () => salvar({ lista: lista.filter((x) => x.id !== ev.id) }),
@@ -54,7 +55,7 @@ export default function SecEventos({ lista, podeEditar, salvar }: {
                 style={{ color: 'var(--tf-crit)', fontWeight: 700 }}
               >
                 ×
-              </a>
+              </button>
             )}
           </span>
         </div>

@@ -135,9 +135,9 @@ export default function Gestor() {
 
       {arquivados > 0 && (
         <div style={{ marginTop: 18 }}>
-          <a className="acao" onClick={() => setVerArquivados((v) => !v)} style={{ fontSize: '0.82rem', color: 'var(--tf-ink-3)' }}>
+          <button type="button" className="acao foco-tf" onClick={() => setVerArquivados((v) => !v)} style={{ fontSize: '0.82rem', color: 'var(--tf-ink-3)' }}>
             {verArquivados ? 'Ocultar arquivados' : `Mostrar ${arquivados} projeto${arquivados > 1 ? 's' : ''} arquivado${arquivados > 1 ? 's' : ''}`}
-          </a>
+          </button>
         </div>
       )}
     </div>

@@ -47,9 +47,9 @@ export default function AdmUsuariosHub() {
             </span>
             <span style={{ textAlign: 'right' }}>
               {u.id !== me.id && ( // ninguém desativa a própria conta
-                <a onClick={() => store.toggleAtivo(u.id)} className="acao" style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--tf-crit)' }}>
+                <button type="button" onClick={() => store.toggleAtivo(u.id)} className="acao foco-tf" style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--tf-crit)' }}>
                   {u.ativo ? 'Desativar' : 'Reativar'}
-                </a>
+                </button>
               )}
             </span>
           </div>

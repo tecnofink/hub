@@ -208,16 +208,17 @@ function AbaComentarios({ pid, tarefaId, podeEditar, papel }: { pid: string; tar
               </span>
               <span style={{ flex: 1 }} />
               {meu && editando !== c.id && (
-                <a className="acao" onClick={() => { setEditando(c.id); setTextoEdicao(c.texto); }} style={{ fontSize: '0.72rem', color: 'var(--tf-ink-3)' }}>editar</a>
+                <button type="button" className="acao foco-tf" onClick={() => { setEditando(c.id); setTextoEdicao(c.texto); }} style={{ fontSize: '0.72rem', color: 'var(--tf-ink-3)' }}>editar</button>
               )}
               {podeExcluir && (
-                <a
-                  className="acao"
+                <button
+                  type="button"
+                  className="acao foco-tf"
                   onClick={() => store.confirmar({ titulo: 'Excluir comentário?', texto: 'O comentário será removido da conversa.', cta: 'Excluir', danger: true, onConfirm: () => store.excluirComentario(pid, c.id) })}
                   style={{ fontSize: '0.72rem', color: 'var(--tf-crit)' }}
                 >
                   excluir
-                </a>
+                </button>
               )}
             </div>
             {editando === c.id ? (
@@ -282,13 +283,14 @@ function AbaAnexos({ pid, tarefa, podeEditar, papel }: { pid: string; tarefa: Ta
               {tamanhoLegivel(a.tamanho)}{a.em ? ' · ' + dbr(a.em) : ''}
             </span>
             {podeRemover && (
-              <a
-                className="acao"
+              <button
+                type="button"
+                className="acao foco-tf"
                 onClick={() => store.confirmar({ titulo: 'Remover anexo?', texto: `"${a.n}" será removido da tarefa e do armazenamento.`, cta: 'Remover', danger: true, onConfirm: () => store.removerAnexoTarefa(pid, tarefa.id, a) })}
                 style={{ fontSize: '0.78rem', color: 'var(--tf-crit)', flex: 'none', fontWeight: 700 }}
               >
                 ×
-              </a>
+              </button>
             )}
           </div>
         );

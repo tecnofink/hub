@@ -98,7 +98,7 @@ export function SecWorkshops({ lista, podeEditar, salvar }: { lista: PbWorkshop[
                 {w.produtos.sort((a, b) => a.ordem - b.ordem).map((p) => (
                   <span key={p.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, border: '1px solid var(--tf-line-2)', borderRadius: 999, padding: '4px 11px', fontSize: '0.78rem' }}>
                     {p.texto}
-                    {podeEditar && <a className="acao" onClick={() => up(w.id, (x) => ({ ...x, produtos: x.produtos.filter((y) => y.id !== p.id) }))} style={{ color: 'var(--tf-crit)', fontWeight: 700 }}>×</a>}
+                    {podeEditar && <button type="button" className="acao foco-tf" onClick={() => up(w.id, (x) => ({ ...x, produtos: x.produtos.filter((y) => y.id !== p.id) }))} style={{ color: 'var(--tf-crit)', fontWeight: 700 }}>×</button>}
                   </span>
                 ))}
                 {podeEditar && (

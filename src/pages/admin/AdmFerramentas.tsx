@@ -48,16 +48,16 @@ export default function AdmFerramentas() {
         {ordenadas.map((t, i) => (
           <div key={t.id} className="tf-card" style={{ padding: '18px 24px', display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
             <span style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 'none' }}>
-              <a
-                className="acao" title="Mover para cima"
+              <button type="button"
+                className="acao foco-tf" title="Mover para cima"
                 onClick={() => i > 0 && store.moverFerramenta(t.id, -1)}
                 style={{ color: i > 0 ? 'var(--tf-accent)' : 'var(--tf-line-2)', fontSize: '0.8rem', lineHeight: 1, cursor: i > 0 ? 'pointer' : 'default', padding: '4px 8px', margin: '-4px -8px' }}
-              >▲</a>
-              <a
-                className="acao" title="Mover para baixo"
+              >▲</button>
+              <button type="button"
+                className="acao foco-tf" title="Mover para baixo"
                 onClick={() => i < ordenadas.length - 1 && store.moverFerramenta(t.id, 1)}
                 style={{ color: i < ordenadas.length - 1 ? 'var(--tf-accent)' : 'var(--tf-line-2)', fontSize: '0.8rem', lineHeight: 1, cursor: i < ordenadas.length - 1 ? 'pointer' : 'default', padding: '4px 8px', margin: '-4px -8px' }}
-              >▼</a>
+              >▼</button>
             </span>
             {iconeNativo(t.rota) ? (
               <img src={iconeNativo(t.rota)!} alt={t.nome} style={{ height: 26, maxWidth: 46, objectFit: 'contain', flex: 'none' }} />
@@ -74,38 +74,38 @@ export default function AdmFerramentas() {
               {t.importada && <span className="tf-mono" style={{ fontSize: '0.58rem', marginLeft: 10, color: 'var(--tf-warn)' }}>IMPORTADA</span>}
               <div className="tf-small" style={{ fontSize: '0.78rem', marginTop: 2 }}>{t.desc}</div>
             </div>
-            <a onClick={() => store.toggleFerramenta(t.id)} className="acao" style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--tf-accent)', flex: 'none' }}>
+            <button type="button" onClick={() => store.toggleFerramenta(t.id)} className="acao foco-tf" style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--tf-accent)', flex: 'none' }}>
               {t.ativo ? 'Desativar' : 'Ativar'}
-            </a>
+            </button>
             {!t.fixa && (
-              <a
+              <button type="button"
                 onClick={() => store.confirmar({
                   titulo: 'Excluir ferramenta?',
                   texto: '"' + t.nome + '" será removida do hub em definitivo.',
                   cta: 'Excluir', danger: true,
                   onConfirm: () => store.excluirFerramenta(t.id),
                 })}
-                className="acao" style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--tf-crit)', flex: 'none' }}
+                className="acao foco-tf" style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--tf-crit)', flex: 'none' }}
               >
                 Excluir
-              </a>
+              </button>
             )}
           </div>
         ))}
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12 }}>
-        <a
+        <button type="button"
           onClick={() => store.confirmar({
             titulo: 'Restaurar ferramentas nativas?',
             texto: 'Todos os cadastros atuais serão removidos e o Produtividade (/tarefas) e o Marketing (/playbook) serão recriados. O Flux não é afetado (fixo em código).',
             cta: 'Restaurar', danger: true,
             onConfirm: () => store.restaurarFerramentas(),
           })}
-          className="acao" style={{ fontSize: '0.78rem', color: 'var(--tf-ink-3)' }}
+          className="acao foco-tf" style={{ fontSize: '0.78rem', color: 'var(--tf-ink-3)' }}
         >
           Restaurar ferramentas nativas
-        </a>
+        </button>
       </div>
 
       <div className="tf-card" style={{ padding: 26, marginTop: 14, borderStyle: 'dashed' }}>
