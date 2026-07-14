@@ -83,7 +83,7 @@ service cloud.firestore {
         && request.resource.data.ativo == true;
 
       // RF-07: o usuário edita o próprio perfil (nunca e-mail, papéis ou status)
-      allow update: if signedIn() && request.auth.uid == userId
+      allow update: if isActive() && request.auth.uid == userId
         && request.resource.data.diff(resource.data).affectedKeys()
              .hasOnly(['nome', 'cargo', 'empresa', 'depto', 'niver', 'apres', 'foto']);
 
@@ -94,8 +94,15 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['roles', 'ativo'])
         && (request.auth.uid != userId
             || !('ativo' in request.resource.data.diff(resource.data).affectedKeys()));
+      // fluxAdmin gere só papéis do Flux (avaliador/fluxAdmin) — nunca concede
+      // nem remove hubAdmin/admin (exclusivo do hubAdmin): impede auto-promoção
+      // e lockout do único admin do hub.
       allow update: if ehFluxAdmin()
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['roles']);
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['roles'])
+        && !('hubAdmin' in request.resource.data.roles)
+        && !('admin' in request.resource.data.roles)
+        && !('hubAdmin' in resource.data.roles)
+        && !('admin' in resource.data.roles);
     }
 
     // ── Ciclos (RF-12, RF-58: somente administradores do Flux) ──
@@ -114,7 +121,9 @@ service cloud.firestore {
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.tier == null
         && request.resource.data.resultado == null
-        && !('reprovado' in request.resource.data && request.resource.data.reprovado == true);
+        && !('reprovado' in request.resource.data && request.resource.data.reprovado == true)
+        // não pode semear notas do comitê na inscrição
+        && (!('notas' in request.resource.data) || request.resource.data.notas.size() == 0);
 
       // RF-22: exclusão pelo titular apenas sem resultado registrado
       allow delete: if isActive()
@@ -194,11 +203,13 @@ service cloud.firestore {
         && request.resource.data.papeis[request.auth.uid] == 'admin';
       // gestão de membros, arquivamento e edição: admin do projeto
       allow update: if isActive() && resource.data.papeis[request.auth.uid] == 'admin';
-      // sair do projeto: o próprio membro remove apenas a si mesmo
+      // sair do projeto: o próprio membro remove APENAS a si mesmo (não pode
+      // adulterar membrosIds/papeis de terceiros na mesma escrita)
       allow update: if isActive()
         && request.auth.uid in resource.data.membrosIds
-        && !(request.auth.uid in request.resource.data.membrosIds)
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['membrosIds', 'papeis']);
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['membrosIds', 'papeis'])
+        && request.resource.data.membrosIds == resource.data.membrosIds.removeAll([request.auth.uid])
+        && request.resource.data.papeis.diff(resource.data.papeis).affectedKeys().hasOnly([request.auth.uid]);
       // zona perigosa: excluir projeto — admin do projeto
       allow delete: if isActive() && resource.data.papeis[request.auth.uid] == 'admin';
     }
@@ -209,11 +220,28 @@ service cloud.firestore {
       allow read: if isActive()
         && (resource.data.uid == request.auth.uid
             || request.auth.uid in resource.data.membrosIds);
+      // criar o quadro: admin/editor do projeto livre (uid = dono do projeto),
+      // OU o TITULAR do pitch do Flux — impede sequestrar tarefas/{pid} alheio
       allow create: if isActive()
-        && (request.resource.data.uid == request.auth.uid
-            || (ehProjetoLivre(projectId) && papelNoProjeto(projectId) in ['admin', 'editor']));
-      // escrita: dono (Flux/criador) ou membro editor/admin do projeto livre; leitor não escreve
-      allow update, delete: if isActive()
+        && (
+          (ehProjetoLivre(projectId) && papelNoProjeto(projectId) in ['admin', 'editor']
+            && request.resource.data.uid == get(/databases/$(database)/documents/extraProjs/$(projectId)).data.uid)
+          || (exists(/databases/$(database)/documents/projects/$(projectId))
+              && get(/databases/$(database)/documents/projects/$(projectId)).data.uid == request.auth.uid
+              && request.resource.data.uid == request.auth.uid)
+        );
+      // editar: admin do projeto pode tudo (inclusive membros); titular do Flux e
+      // editor mexem no conteúdo, mas NÃO em uid/membrosIds (evita escalar acesso)
+      allow update: if isActive()
+        && (
+          (ehProjetoLivre(projectId) && papelNoProjeto(projectId) == 'admin')
+          || ((resource.data.uid == request.auth.uid
+               || (ehProjetoLivre(projectId) && papelNoProjeto(projectId) == 'editor'))
+              && !('uid' in request.resource.data.diff(resource.data).affectedKeys())
+              && !('membrosIds' in request.resource.data.diff(resource.data).affectedKeys()))
+        );
+      // excluir o quadro: dono (Flux/criador) ou admin/editor do projeto livre
+      allow delete: if isActive()
         && (resource.data.uid == request.auth.uid
             || (ehProjetoLivre(projectId) && papelNoProjeto(projectId) in ['admin', 'editor']));
 
@@ -247,9 +275,20 @@ service cloud.firestore {
       return isActive()
         && request.auth.uid in get(/databases/$(database)/documents/playbook/config).data.editores;
     }
+    // observador: vê tudo (só leitura). Leitor (demais ativos) NÃO vê Página da
+    // Feira (checklist), Stands 2027 nem as páginas de feira (playbookFeira).
+    function ehObservadorPlaybook() {
+      return isActive()
+        && request.auth.uid in get(/databases/$(database)/documents/playbook/config).data.get('observadores', []);
+    }
+    function podeVerTudoPlaybook() {
+      return ehEditorPlaybook() || ehObservadorPlaybook() || ehHubAdmin();
+    }
 
     match /playbook/{secao} {
-      allow read: if isActive();
+      // seções restritas (checklist/stands2027) só para quem vê tudo; demais, todo ativo
+      allow read: if isActive()
+        && (!(secao in ['checklist', 'stands2027']) || podeVerTudoPlaybook());
       // conteúdo só por editores — exceto Prospecção, colaborativa (qualquer ativo)
       allow write: if secao != 'config'
         && (ehEditorPlaybook() || (secao == 'prospeccao' && isActive()));
@@ -258,9 +297,8 @@ service cloud.firestore {
       allow write: if ehEditorPlaybook() || ehHubAdmin();
     }
     match /playbookFeira/{eventoId} {
-      // inclui leads (PII) e credenciais de portal: no Supabase eram
-      // "só-autenticado" — aqui todo acesso já exige conta ativa do grupo
-      allow read: if isActive();
+      // leads (PII) e credenciais de portal: leitura só para editor/observador
+      allow read: if podeVerTudoPlaybook();
       allow write: if ehEditorPlaybook();
     }
 
@@ -269,7 +307,8 @@ service cloud.firestore {
       allow read: if ehFluxAdmin() || ehHubAdmin();
       allow create: if isActive()
         && request.resource.data.quem == meDoc().nome
-        && request.resource.data.keys().hasAll(['ts', 'quem', 'acao', 'det', 'tipo', 'at']);
+        && request.resource.data.keys().hasOnly(['ts', 'quem', 'acao', 'det', 'tipo', 'at'])
+        && request.resource.data.at == request.time;
     }
   }
 }

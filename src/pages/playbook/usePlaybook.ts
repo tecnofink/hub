@@ -3,7 +3,7 @@
  * seção + gravação (regras do Firestore restringem escrita a editores/admins).
  */
 import { useEffect, useMemo, useState } from 'react';
-import { collection, doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { deleteObject, getDownloadURL, ref as sRef, uploadBytes } from 'firebase/storage';
 import { db, storage } from '../../lib/firebase';
 import { useStore } from '../../store/AppStore';
@@ -51,16 +51,10 @@ export function usePlaybook() {
   const [docs, setDocs] = useState<PlaybookDocs>(VAZIO);
   const [pronto, setPronto] = useState(false);
 
-  useEffect(() => {
-    return onSnapshot(collection(db, 'playbook'), (s) => {
-      const next = { ...VAZIO };
-      s.docs.forEach((d) => {
-        (next as unknown as Record<string, unknown>)[d.id] = { ...(VAZIO as unknown as Record<string, object>)[d.id], ...d.data() };
-      });
-      setDocs(next);
-      setPronto(true);
-    }, () => setPronto(true));
-  }, []);
+  // merge por seção — leitura é por DOCUMENTO (casa com as regras: seções
+  // abertas para todos; checklist/stands2027 só para editor/observador)
+  const setSecao = (id: string, data: object) =>
+    setDocs((prev) => ({ ...prev, [id]: { ...(VAZIO as unknown as Record<string, object>)[id], ...data } } as PlaybookDocs));
 
   // acesso gerido na própria ferramenta (cada uma cuida do seu):
   //  · editor    — escreve o conteúdo e gere os papéis (admin do hub: socorro)
@@ -71,6 +65,35 @@ export function usePlaybook() {
   const podeVerTudo = podeEditar || ehObservador || ehHubAdmin(me);
   const podeGerirEditores = podeEditar || ehHubAdmin(me);
   const papel: PapelPlaybook = podeEditar ? 'editor' : ehObservador ? 'observador' : 'leitor';
+
+  // seções visíveis a todos + config
+  useEffect(() => {
+    const abertas = ['config', 'eventos', 'catalogos', 'associacoes', 'prospeccao', 'brindes', 'workshops'];
+    const subs = abertas.map((id) => onSnapshot(
+      doc(db, 'playbook', id),
+      (s) => { if (s.exists()) setSecao(id, s.data()); },
+      () => { /* sem acesso/erro: mantém vazio */ },
+    ));
+    setPronto(true);
+    return () => subs.forEach((u) => u());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // seções restritas (Página da Feira / Stands 2027): só para quem vê tudo
+  useEffect(() => {
+    if (!podeVerTudo) {
+      setSecao('checklist', VAZIO.checklist);
+      setSecao('stands2027', VAZIO.stands2027);
+      return;
+    }
+    const subs = ['checklist', 'stands2027'].map((id) => onSnapshot(
+      doc(db, 'playbook', id),
+      (s) => { if (s.exists()) setSecao(id, s.data()); },
+      () => { /* mantém vazio */ },
+    ));
+    return () => subs.forEach((u) => u());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [podeVerTudo]);
 
   return useMemo(() => ({
     docs, pronto, podeEditar, podeVerTudo, podeGerirEditores, papel,

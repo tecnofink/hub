@@ -1,28 +1,52 @@
 rules_version = '2';
 
-// Anexos de evidência do resultado (RF-35). Portal interno: leitura para
-// qualquer colaborador autenticado; escrita limitada a 20 MB por arquivo.
+// Portal interno: o Storage cruza a autorização com o Firestore (a barreira de
+// domínio/conta ativa não pode viver só nas regras do Firestore). Qualquer conta
+// Google obtém token, então "request.auth != null" NÃO basta.
 service firebase.storage {
   match /b/{bucket}/o {
-    // evidências do resultado do Flux (RF-35)
+    // conta existente e ativa no portal
+    function ativo() {
+      return request.auth != null
+        && firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.ativo == true;
+    }
+    function tamanhoOk() {
+      return request.resource.size < 20 * 1024 * 1024;
+    }
+
+    // evidências do resultado do Flux (RF-35) — só o titular do projeto grava/apaga
     match /anexos/{projectId}/{fileName} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null
-        && request.resource.size < 20 * 1024 * 1024;
+      function donoDoProjeto() {
+        return ativo()
+          && firestore.get(/databases/(default)/documents/projects/$(projectId)).data.uid == request.auth.uid;
+      }
+      allow read: if ativo();
+      allow write: if donoDoProjeto() && tamanhoOk();
+      allow delete: if donoDoProjeto();
     }
 
-    // anexos de tarefas do Gestor (modelo do CRM: bucket anexos-tarefas)
+    // anexos de tarefas — só dono/membro do quadro (denormalizado em tarefas/{pid}.membrosIds).
+    // Fecha o IDOR: antes qualquer autenticado apagava/sobrescrevia anexos de qualquer projeto.
     match /anexos-tarefas/{projectId}/{taskId}/{fileName} {
-      allow read: if request.auth != null;
-      allow write, delete: if request.auth != null
-        && (request.resource == null || request.resource.size < 20 * 1024 * 1024);
+      function membroDoQuadro() {
+        return ativo()
+          && request.auth.uid in firestore.get(/databases/(default)/documents/tarefas/$(projectId)).data.membrosIds;
+      }
+      allow read: if membroDoQuadro();
+      allow write: if membroDoQuadro() && tamanhoOk();
+      allow delete: if membroDoQuadro();
     }
 
-    // documentos do Playbook (logística, stands e planilhas de leads)
+    // documentos do Playbook/Marketing (logística, stands, planilhas de leads) —
+    // gravação/exclusão só por editores; leitura para conta ativa.
     match /playbook/{caminho=**} {
-      allow read: if request.auth != null;
-      allow write, delete: if request.auth != null
-        && (request.resource == null || request.resource.size < 20 * 1024 * 1024);
+      function editorPlaybook() {
+        return ativo()
+          && request.auth.uid in firestore.get(/databases/(default)/documents/playbook/config).data.editores;
+      }
+      allow read: if ativo();
+      allow write: if editorPlaybook() && tamanhoOk();
+      allow delete: if editorPlaybook();
     }
   }
 }
