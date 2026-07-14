@@ -10,7 +10,7 @@ import { dbr, diasAte, mesesDoCiclo, mesesLabel, todayISO, diffDias } from '../.
 import { brl, brlK } from '../../lib/format';
 import { catNome, isAvaliado, score, tangValidado } from '../../lib/scoring';
 import type { Projeto } from '../../lib/types';
-import { Avatar, Badge, MetricStat, L } from '../../components/ui';
+import { Avatar, Badge, MetricStat, Modal, L } from '../../components/ui';
 import ALink from '../../components/ALink';
 import FluxPills from './FluxPills';
 import { colunaDe, statusDe, KB_COLS, ColunaId } from './statusProjeto';
@@ -157,8 +157,7 @@ export default function FluxHome() {
       </p>
 
       {reativar && (
-        <div onClick={() => setReativar(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(8,0,62,0.45)', zIndex: 250, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, animation: 'tfIn .2s ease both' }}>
-          <div onClick={(e) => e.stopPropagation()} className="tf-card" style={{ maxWidth: 460, width: '100%', padding: 28, boxShadow: 'var(--tf-shadow-lg)' }}>
+        <Modal onClose={() => setReativar(null)} maxWidth={460}>
             <h3 className="tf-h4" style={{ margin: '0 0 10px' }}>Reativar pitch do backlog</h3>
             <p className="tf-body" style={{ margin: '0 0 18px', fontSize: '0.92rem' }}>
               "{store.proj(reativar.pid)?.nome}" será reinscrito no {c.nome} e passa de novo pela triagem de acesso (RF-27). Defina o novo deadline de entrega — entre hoje e {dbr(c.fim)}.
@@ -185,16 +184,14 @@ export default function FluxHome() {
                 Reinscrever no ciclo →
               </button>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {avisoAtraso && (() => {
         const meus = state.projects.filter((p) => p.uid === me.id && p.ciclo === c.id && statusDe(p).k === 'atrasado');
         if (!meus.length) return null;
         return (
-          <div style={{ position: 'fixed', inset: 0, background: 'rgba(8,0,62,0.45)', zIndex: 260, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '84px 24px 24px', animation: 'tfIn .2s ease' }}>
-            <div className="tf-card" style={{ maxWidth: 460, width: '100%', padding: 28, boxShadow: 'var(--tf-shadow-lg)' }}>
+          <Modal onClose={() => setAvisoAtraso(false)} maxWidth={460} top>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <Badge kind="crit">atenção</Badge>
                 <h3 className="tf-h4" style={{ margin: 0 }}>{meus.length === 1 ? '1 projeto seu está atrasado' : meus.length + ' projetos seus estão atrasados'}</h3>
@@ -217,8 +214,7 @@ export default function FluxHome() {
                 <button onClick={() => { try { localStorage.setItem(`pf-flux-atraso-${c.id}-${todayISO()}`, '1'); } catch { /* ok */ } setAvisoAtraso(false); }} className="tf-btn tf-btn-ghost">Não mostrar de novo hoje</button>
                 <button onClick={() => setAvisoAtraso(false)} className="tf-btn tf-btn-accent">Ver no Flux</button>
               </div>
-            </div>
-          </div>
+        </Modal>
         );
       })()}
     </div>

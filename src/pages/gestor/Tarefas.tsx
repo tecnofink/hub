@@ -9,7 +9,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { useStore } from '../../store/AppStore';
 import { dbr, dbrCurto, diffDias, mesesNoIntervalo, mesAbrevAno, todayISO } from '../../lib/dates';
-import { Badge, L, Pill } from '../../components/ui';
+import { Badge, L, Modal, Pill } from '../../components/ui';
 import type { Tarefa, TaskStatusDerivado } from '../../lib/types';
 import TaskModal from './TaskModal';
 import { exibirResponsavel, ST_COLS, ST_LABEL, stCor, stDe } from './taskUtils';
@@ -394,8 +394,7 @@ export default function Tarefas() {
       {ntOn && <NovaTarefa pid={id} onFechar={() => setNtOn(false)} membros={membros} />}
 
       {overdueOn && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(8,0,62,0.45)', zIndex: 260, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '84px 24px 24px', animation: 'tfIn .2s ease both' }}>
-          <div className="tf-card" style={{ maxWidth: 480, width: '100%', padding: 28, boxShadow: 'var(--tf-shadow-lg)' }}>
+        <Modal onClose={() => setOverdueOn(false)} maxWidth={480} top>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <Badge kind="crit">atenção</Badge>
               <h3 className="tf-h4" style={{ margin: 0 }}>{atrasadas.length} tarefa{atrasadas.length > 1 ? 's' : ''} atrasada{atrasadas.length > 1 ? 's' : ''}</h3>
@@ -418,8 +417,7 @@ export default function Tarefas() {
               </button>
               <button onClick={() => setOverdueOn(false)} className="tf-btn tf-btn-accent">Ver tarefas</button>
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
     </div>
   );
@@ -449,8 +447,7 @@ function NovaTarefa({ pid, membros, onFechar }: { pid: string; membros: { id: st
   };
 
   return (
-    <div onClick={onFechar} style={{ position: 'fixed', inset: 0, background: 'rgba(8,0,62,0.45)', zIndex: 265, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, animation: 'tfIn .2s ease both' }}>
-      <div onClick={(e) => e.stopPropagation()} className="tf-card" style={{ maxWidth: 520, width: '100%', padding: 28, boxShadow: 'var(--tf-shadow-lg)' }}>
+    <Modal onClose={onFechar} maxWidth={520}>
         <h3 className="tf-h4" style={{ margin: '0 0 6px' }}>Nova tarefa</h3>
         <p className="tf-small" style={{ margin: '0 0 18px', fontSize: '0.76rem' }}>A tarefa nasce com o status "Não iniciada".</p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -493,8 +490,7 @@ function NovaTarefa({ pid, membros, onFechar }: { pid: string; membros: { id: st
           <button onClick={onFechar} className="tf-btn tf-btn-ghost">Cancelar</button>
           <button onClick={salvar} className="tf-btn tf-btn-accent">Adicionar tarefa</button>
         </div>
-      </div>
-    </div>
+    </Modal>
   );
 }
 

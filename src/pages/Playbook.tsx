@@ -11,7 +11,7 @@
  */
 import React, { useState } from 'react';
 import { useStore } from '../store/AppStore';
-import { Avatar, Badge, Mono } from '../components/ui';
+import { Avatar, Badge, Modal, Mono } from '../components/ui';
 import { usePlaybook, type PapelPlaybook } from './playbook/usePlaybook';
 import SecEventos from './playbook/SecEventos';
 import SecCatalogos from './playbook/SecCatalogos';
@@ -91,8 +91,7 @@ export default function Playbook() {
       </div>
 
       {papeisOn && pb.podeGerirEditores && (
-        <div onClick={() => setPapeisOn(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(8,0,62,0.45)', zIndex: 250, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '84px 24px 24px', overflowY: 'auto', animation: 'tfIn .2s ease' }}>
-          <div onClick={(e) => e.stopPropagation()} className="tf-card" style={{ maxWidth: 560, width: '100%', padding: '20px 24px', boxShadow: 'var(--tf-shadow-lg)' }}>
+        <Modal onClose={() => setPapeisOn(false)} maxWidth={560} top>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
               <Mono accent>[ PAPÉIS DO MARKETING ]</Mono>
               <button onClick={() => setPapeisOn(false)} className="tf-btn tf-btn-ghost" style={{ padding: '6px 12px' }}>Fechar</button>
@@ -126,8 +125,7 @@ export default function Playbook() {
               );
             })}
             </div>
-          </div>
-        </div>
+        </Modal>
       )}
 
       {/* hero */}
