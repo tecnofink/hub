@@ -6,7 +6,6 @@
 import { initializeApp } from 'firebase/app';
 import { connectAuthEmulator, getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { connectFirestoreEmulator, initializeFirestore } from 'firebase/firestore';
-import { connectFunctionsEmulator, getFunctions } from 'firebase/functions';
 import { connectStorageEmulator, getStorage } from 'firebase/storage';
 
 const env = import.meta.env;
@@ -23,7 +22,8 @@ export const app = initializeApp({
 export const auth = getAuth(app);
 export const db = initializeFirestore(app, { ignoreUndefinedProperties: true });
 export const storage = getStorage(app);
-export const functions = getFunctions(app, 'southamerica-east1');
+// as Functions são acionadas por gatilhos do Firestore (bootstrap/comandos),
+// não por chamadas do cliente — por isso o SDK firebase/functions não é incluído
 
 export const googleProvider = new GoogleAuthProvider();
 // dica de domínio para o seletor de contas do Workspace (a restrição real é nas regras)
@@ -33,7 +33,6 @@ if (env.VITE_USE_EMULATORS === 'true') {
   connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
   connectFirestoreEmulator(db, '127.0.0.1', 8080);
   connectStorageEmulator(storage, '127.0.0.1', 9199);
-  connectFunctionsEmulator(functions, '127.0.0.1', 5001);
 
   // atalhos de desenvolvimento/testes com os emuladores
   // (as contas do seed têm a senha demo1234; nunca entram no build de produção)

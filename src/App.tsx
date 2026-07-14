@@ -1,38 +1,41 @@
-import React from 'react';
+import React, { lazy } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AppStoreProvider } from './store/AppStore';
 import Shell, { RequireRole } from './components/Shell';
 import Login from './pages/Login';
-import Hub from './pages/Hub';
-import Perfil from './pages/Perfil';
-import Playbook from './pages/Playbook';
-import Ferramenta from './pages/Ferramenta';
-import FluxHome from './pages/flux/FluxHome';
-import ComoFunciona from './pages/flux/ComoFunciona';
-import Inscrever from './pages/flux/Inscrever';
-import Confirmar from './pages/flux/Confirmar';
-import Projeto from './pages/flux/Projeto';
-import Resultado from './pages/flux/Resultado';
-import Ranking from './pages/flux/Ranking';
-import Categorias from './pages/flux/Categorias';
-import Historico from './pages/flux/Historico';
-import Gestor from './pages/gestor/Gestor';
-import Tarefas from './pages/gestor/Tarefas';
-import ProjetoAdmin from './pages/gestor/ProjetoAdmin';
-import ComiteLayout from './pages/comite/ComiteLayout';
-import Acesso from './pages/comite/Acesso';
-import Fila from './pages/comite/Fila';
-import Avaliar from './pages/comite/Avaliar';
-import AdminLayout from './pages/admin/AdminLayout';
-import AdmPainel from './pages/admin/AdmPainel';
-import AdmUsuarios from './pages/admin/AdmUsuarios';
-import AdmUsuariosHub from './pages/admin/AdmUsuariosHub';
-import AdmCiclos from './pages/admin/AdmCiclos';
-import AdmPitches from './pages/admin/AdmPitches';
-import AdmAcessos from './pages/admin/AdmAcessos';
-import AdmLogs from './pages/admin/AdmLogs';
-import AdmDominios from './pages/admin/AdmDominios';
-import AdmFerramentas from './pages/admin/AdmFerramentas';
+
+// páginas carregadas sob demanda (code-splitting por rota) — o chunk de entrada
+// deixa de trazer as ~35 telas de uma vez; cada grupo baixa ao ser aberto
+const Hub = lazy(() => import('./pages/Hub'));
+const Perfil = lazy(() => import('./pages/Perfil'));
+const Playbook = lazy(() => import('./pages/Playbook'));
+const Ferramenta = lazy(() => import('./pages/Ferramenta'));
+const FluxHome = lazy(() => import('./pages/flux/FluxHome'));
+const ComoFunciona = lazy(() => import('./pages/flux/ComoFunciona'));
+const Inscrever = lazy(() => import('./pages/flux/Inscrever'));
+const Confirmar = lazy(() => import('./pages/flux/Confirmar'));
+const Projeto = lazy(() => import('./pages/flux/Projeto'));
+const Resultado = lazy(() => import('./pages/flux/Resultado'));
+const Ranking = lazy(() => import('./pages/flux/Ranking'));
+const Categorias = lazy(() => import('./pages/flux/Categorias'));
+const Historico = lazy(() => import('./pages/flux/Historico'));
+const Gestor = lazy(() => import('./pages/gestor/Gestor'));
+const Tarefas = lazy(() => import('./pages/gestor/Tarefas'));
+const ProjetoAdmin = lazy(() => import('./pages/gestor/ProjetoAdmin'));
+const ComiteLayout = lazy(() => import('./pages/comite/ComiteLayout'));
+const Acesso = lazy(() => import('./pages/comite/Acesso'));
+const Fila = lazy(() => import('./pages/comite/Fila'));
+const Avaliar = lazy(() => import('./pages/comite/Avaliar'));
+const AdminLayout = lazy(() => import('./pages/admin/AdminLayout'));
+const AdmPainel = lazy(() => import('./pages/admin/AdmPainel'));
+const AdmUsuarios = lazy(() => import('./pages/admin/AdmUsuarios'));
+const AdmUsuariosHub = lazy(() => import('./pages/admin/AdmUsuariosHub'));
+const AdmCiclos = lazy(() => import('./pages/admin/AdmCiclos'));
+const AdmPitches = lazy(() => import('./pages/admin/AdmPitches'));
+const AdmAcessos = lazy(() => import('./pages/admin/AdmAcessos'));
+const AdmLogs = lazy(() => import('./pages/admin/AdmLogs'));
+const AdmDominios = lazy(() => import('./pages/admin/AdmDominios'));
+const AdmFerramentas = lazy(() => import('./pages/admin/AdmFerramentas'));
 
 export default function App() {
   return (

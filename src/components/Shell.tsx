@@ -1,5 +1,5 @@
 /** Shell autenticado: cabeçalho com navegação contextual, rodapé, toast e modal. */
-import React, { useEffect } from 'react';
+import React, { Suspense, useEffect } from 'react';
 import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useStore } from '../store/AppStore';
 import { dbr, todayISO } from '../lib/dates';
@@ -82,6 +82,15 @@ export function ToastModal() {
         </Modal>
       )}
     </>
+  );
+}
+
+/** Fallback leve enquanto o chunk da rota (lazy) baixa — não empurra o layout. */
+function CarregandoRota() {
+  return (
+    <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <span className="tf-mono">[ CARREGANDO… ]</span>
+    </div>
   );
 }
 
@@ -207,7 +216,9 @@ export default function Shell() {
       </header>
 
       <main style={{ flex: 1 }}>
-        <Outlet />
+        <Suspense fallback={<CarregandoRota />}>
+          <Outlet />
+        </Suspense>
       </main>
 
       <footer style={{ borderTop: '1px solid var(--tf-line)', background: 'var(--tf-bg-pure)' }}>
