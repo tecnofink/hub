@@ -1,5 +1,5 @@
 /** Componentes de UI compartilhados — primitivas do DS Tecnofink. */
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { iniciais } from '../lib/format';
 
 /** Badge de status (tf-badge do DS). */
@@ -45,6 +45,50 @@ export function Pill({ on, onClick, children, style }: { on: boolean; onClick: (
     >
       {children}
     </button>
+  );
+}
+
+/**
+ * Modal acessível compartilhado: overlay + card, fecha com Escape ou clique no
+ * fundo, foco inicial no primeiro controle, focus trap (Tab cicla dentro) e
+ * semântica de diálogo (role=dialog + aria-modal). Substitui o boilerplate de
+ * overlay repetido pelas telas. `top` ancora no topo (avisos); senão centraliza.
+ */
+export function Modal({ onClose, children, maxWidth = 480, top, labelId }: { onClose: () => void; children: React.ReactNode; maxWidth?: number; top?: boolean; labelId?: string }) {
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const anterior = document.activeElement as HTMLElement | null;
+    const foco = () => cardRef.current?.querySelectorAll<HTMLElement>(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+    );
+    foco()?.[0]?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { e.stopPropagation(); onClose(); return; }
+      if (e.key === 'Tab') {
+        const els = foco(); if (!els || els.length === 0) return;
+        const primeiro = els[0]; const ultimo = els[els.length - 1];
+        if (e.shiftKey && document.activeElement === primeiro) { e.preventDefault(); ultimo.focus(); }
+        else if (!e.shiftKey && document.activeElement === ultimo) { e.preventDefault(); primeiro.focus(); }
+      }
+    };
+    document.addEventListener('keydown', onKey, true);
+    return () => { document.removeEventListener('keydown', onKey, true); anterior?.focus?.(); };
+  }, [onClose]);
+
+  return (
+    <div
+      onClick={onClose} role="presentation"
+      style={{ position: 'fixed', inset: 0, background: 'rgba(8,0,62,0.45)', zIndex: 250, display: 'flex', alignItems: top ? 'flex-start' : 'center', justifyContent: 'center', padding: top ? '84px 24px 24px' : 24, overflowY: 'auto', animation: 'tfIn .2s ease' }}
+    >
+      <div
+        ref={cardRef} onClick={(e) => e.stopPropagation()}
+        role="dialog" aria-modal="true" aria-labelledby={labelId}
+        className="tf-card" style={{ maxWidth, width: '100%', padding: 28, boxShadow: 'var(--tf-shadow-lg)' }}
+      >
+        {children}
+      </div>
+    </div>
   );
 }
 

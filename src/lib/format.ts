@@ -22,7 +22,8 @@ export function arred(x: number): number {
 }
 
 export function iniciais(nome: string): string {
-  const p = nome.trim().split(/\s+/);
+  const p = (nome ?? '').trim().split(/\s+/).filter(Boolean);
+  if (!p.length) return '?';
   return (p[0][0] + (p[1] ? p[1][0] : '')).toUpperCase();
 }
 

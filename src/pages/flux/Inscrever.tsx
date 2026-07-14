@@ -40,7 +40,7 @@ export default function Inscrever() {
 
   return (
     <div className="anim-in" style={{ maxWidth: 920, margin: '0 auto', padding: '48px 32px 80px' }}>
-      <a onClick={() => nav('/flux')} className="back-link">← FLUX / {c.nome}</a>
+      <button type="button" onClick={() => nav('/flux')} className="back-link foco-tf">← FLUX / {c.nome}</button>
       <h1 className="tf-h2" style={{ margin: '14px 0 8px' }}>Inscrever pitch</h1>
       <p className="tf-body" style={{ margin: '0 0 30px', maxWidth: 640 }}>
         Descreva seu projeto de IA. Depois de enviado, o pitch <strong>não poderá ser editado</strong> — mas o produto final pode ser um pouco diferente do descrito.

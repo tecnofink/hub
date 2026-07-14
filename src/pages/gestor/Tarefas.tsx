@@ -130,7 +130,7 @@ export default function Tarefas() {
   return (
     <div className="anim-in" style={{ maxWidth: 1320, margin: '0 auto', padding: '40px 32px 80px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
-        <a onClick={() => nav('/tarefas')} className="back-link">← PRODUTIVIDADE / MEUS PROJETOS</a>
+        <button type="button" onClick={() => nav('/tarefas')} className="back-link foco-tf">← PRODUTIVIDADE / MEUS PROJETOS</button>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           {livre && papel === 'admin' && (
             <button onClick={() => nav('/tarefas/' + id + '/admin')} className="tf-btn tf-btn-ghost">Gerenciar projeto</button>

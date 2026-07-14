@@ -117,7 +117,10 @@ function AbaLeads({ eventoId, feira, salvar, podeEditar }: { eventoId: string; f
       ['Nome', 'Empresa', 'Cargo', 'E-mail', 'Telefone', 'Origem', 'Obs'],
       ...leads.manuais.map((l) => [l.nome, l.empresa, l.cargo, l.email, l.telefone, l.origem, l.obs].map((x) => x ?? '')),
     ];
-    const csv = '﻿' + linhas.map((l) => l.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(';')).join('\r\n');
+    // neutraliza injeção de fórmula (CSV injection): células iniciadas por
+    // = + - @ recebem apóstrofo para o Excel/Sheets tratarem como texto
+    const seguro = (c: string) => (/^[=+\-@]/.test(c) ? "'" + c : c);
+    const csv = '﻿' + linhas.map((l) => l.map((c) => `"${seguro(String(c)).replace(/"/g, '""')}"`).join(';')).join('\r\n');
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
     a.download = 'leads.csv';

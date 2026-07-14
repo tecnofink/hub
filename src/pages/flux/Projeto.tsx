@@ -40,7 +40,7 @@ export default function Projeto() {
 
   return (
     <div className="anim-in" style={{ maxWidth: 1100, margin: '0 auto', padding: '48px 32px 80px' }}>
-      <a onClick={() => nav('/flux')} className="back-link">← FLUX / {cc ? cc.nome : 'BACKLOG'}</a>
+      <button type="button" onClick={() => nav('/flux')} className="back-link foco-tf">← FLUX / {cc ? cc.nome : 'BACKLOG'}</button>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 24, marginTop: 14, flexWrap: 'wrap' }}>
         <div style={{ flex: 1, minWidth: 'min(320px, 100%)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>

@@ -50,7 +50,7 @@ export default function Resultado() {
 
   return (
     <div className="anim-in" style={{ maxWidth: 920, margin: '0 auto', padding: '48px 32px 80px' }}>
-      <a onClick={() => nav('/flux/projeto/' + p.id)} className="back-link">← PROJETO / {p.nome.toUpperCase()}</a>
+      <button type="button" onClick={() => nav('/flux/projeto/' + p.id)} className="back-link foco-tf">← PROJETO / {p.nome.toUpperCase()}</button>
       <h1 className="tf-h2" style={{ margin: '14px 0 8px' }}>Registrar resultado</h1>
       <p className="tf-body" style={{ margin: '0 0 26px', maxWidth: 640 }}>
         Informe o que o projeto realmente entregou. O retorno tangível só entra no cálculo depois da <strong>validação dos três membros do comitê</strong>.

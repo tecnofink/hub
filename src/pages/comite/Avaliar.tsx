@@ -75,7 +75,7 @@ export default function Avaliar() {
 
   return (
     <div style={{ marginTop: 30 }}>
-      <a onClick={() => nav('/comite/fila')} className="back-link">← FILA DE AVALIAÇÃO</a>
+      <button type="button" onClick={() => nav('/comite/fila')} className="back-link foco-tf">← FILA DE AVALIAÇÃO</button>
       <div className="tf-card" style={{ padding: 26, marginTop: 16 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
           <Avatar nome={u.nome} cor={store.cor(u.id)} size={36} fontSize="0.64rem" />

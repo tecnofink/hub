@@ -4,7 +4,7 @@ import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useStore } from '../store/AppStore';
 import { dbr, todayISO } from '../lib/dates';
 import { ehFluxAdmin, ehHubAdmin, faviconDe, rotaNormalizada } from '../lib/roles';
-import { Avatar } from './ui';
+import { Avatar, Modal } from './ui';
 import ALink from './ALink';
 
 function NavPill({ on, to, children, outline }: { on: boolean; to: string; children: React.ReactNode; outline?: boolean }) {
@@ -66,22 +66,20 @@ export function ToastModal() {
         </div>
       )}
       {modal && (
-        <div onClick={fecharModal} style={{ position: 'fixed', inset: 0, background: 'rgba(8,0,62,0.45)', zIndex: 250, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, animation: 'tfIn .2s ease both' }}>
-          <div onClick={(e) => e.stopPropagation()} className="tf-card" style={{ maxWidth: 480, width: '100%', padding: 30, boxShadow: 'var(--tf-shadow-lg)' }}>
-            <h3 className="tf-h4" style={{ margin: '0 0 10px' }}>{modal.titulo}</h3>
-            <p className="tf-body" style={{ margin: '0 0 24px', whiteSpace: 'pre-line' }}>{modal.texto}</p>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
-              <button onClick={fecharModal} className="tf-btn tf-btn-ghost">Cancelar</button>
-              <button
-                onClick={() => { const fn = modal.onConfirm; fecharModal(); fn(); }}
-                className="tf-btn"
-                style={{ background: modal.danger ? 'var(--tf-crit)' : 'var(--tf-accent)', color: '#fff' }}
-              >
-                {modal.cta}
-              </button>
-            </div>
+        <Modal onClose={fecharModal} labelId="modal-conf-titulo">
+          <h3 id="modal-conf-titulo" className="tf-h4" style={{ margin: '0 0 10px' }}>{modal.titulo}</h3>
+          <p className="tf-body" style={{ margin: '0 0 24px', whiteSpace: 'pre-line' }}>{modal.texto}</p>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+            <button onClick={fecharModal} className="tf-btn tf-btn-ghost">Cancelar</button>
+            <button
+              onClick={() => { const fn = modal.onConfirm; fecharModal(); fn(); }}
+              className="tf-btn"
+              style={{ background: modal.danger ? 'var(--tf-crit)' : 'var(--tf-accent)', color: '#fff' }}
+            >
+              {modal.cta}
+            </button>
           </div>
-        </div>
+        </Modal>
       )}
     </>
   );

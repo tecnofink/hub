@@ -49,7 +49,7 @@ export default function ProjetoAdmin() {
 
   return (
     <div className="anim-in" style={{ maxWidth: 860, margin: '0 auto', padding: '48px 32px 80px' }}>
-      <a onClick={() => nav('/tarefas/' + id)} className="back-link">← PRODUTIVIDADE / {p.nome.toUpperCase()}</a>
+      <button type="button" onClick={() => nav('/tarefas/' + id)} className="back-link foco-tf">← PRODUTIVIDADE / {p.nome.toUpperCase()}</button>
       <h1 className="tf-h2" style={{ margin: '14px 0 8px' }}>Gerenciar projeto</h1>
       <p className="tf-body" style={{ margin: '0 0 28px', maxWidth: 620 }}>
         Membros e papéis de "{p.nome}". O seletor lista as contas já criadas no portal — quem ainda não fez o primeiro login não aparece.
