@@ -140,7 +140,7 @@ export default function Hub() {
               <Badge kind="live">{t.importada ? '● importada' : '● ativa'}</Badge>
             </div>
             <h3 className="tf-h4" style={{ margin: '4px 0 0' }}>{t.nome}</h3>
-            <p className="tf-small" style={{ margin: 0, flex: 1 }}>{t.desc}</p>
+            <p className="tf-small" style={{ margin: 0, flex: 1, color: 'var(--tf-ink)', fontSize: '0.95rem', fontWeight: 500 }}>{t.desc}</p>
             <span style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--tf-accent)' }}>Abrir →</span>
           </CardFerramenta>
         ))}
