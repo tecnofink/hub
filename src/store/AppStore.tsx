@@ -91,7 +91,7 @@ interface StoreApi {
   logout(): Promise<void>;
   salvarPerfil(dados: Partial<Usuario>): void;
 
-  inscreverPitch(d: PitchDraft): Projeto;
+  inscreverPitch(d: PitchDraft): Promise<Projeto>;
   excluirPitch(pid: string): void;
   reativarBacklog(pid: string, deadline: string): void;
   registrarResultado(pid: string, dados: ResultadoInput, arquivos: File[]): Promise<void>;
@@ -470,13 +470,18 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
           just: d.just.trim(), criadoEm: todayISO(), tier: null, resultado: null, notas: {},
         };
         const { id: _id, ...docData } = novo;
-        setDoc(ref, docData)
-          .then(() => {
+        // Aguarda a gravação: só confirma (log + toast + navegação no chamador)
+        // se realmente persistir. Em falha, sinaliza o erro E propaga, para o
+        // chamador manter o rascunho e não navegar a uma ficha inexistente —
+        // assim o pitch nunca é perdido em silêncio.
+        return setDoc(ref, docData).then(
+          () => {
             addLog('Pitch inscrito', novo.nome, 'flux');
             showToast('Pitch enviado! O comitê vai definir o acesso ao Claude — e um projeto com o mesmo nome já foi aberto em Produtividade.');
-          })
-          .catch(falha);
-        return novo;
+            return novo;
+          },
+          (e) => { falha(e); throw e; },
+        );
       },
 
       excluirPitch: (pid) => {

@@ -11,6 +11,7 @@ export default function Confirmar() {
   const store = useStore();
   const { me, cicloAtivo: c, pitchDraft: d, setPitchDraft } = store;
   const nav = useNavigate();
+  const [enviando, setEnviando] = React.useState(false);
 
   if (!me || !c || !d.nome.trim()) return <Navigate to="/flux" replace />;
 
@@ -27,10 +28,18 @@ export default function Confirmar() {
     ['JUSTIFICATIVA', d.just],
   ];
 
-  const confirmar = () => {
-    const novo = store.inscreverPitch(d);
-    setPitchDraft(PITCH_DRAFT_VAZIO);
-    nav('/flux/projeto/' + novo.id);
+  const confirmar = async () => {
+    if (enviando) return;
+    setEnviando(true);
+    try {
+      // só limpa o rascunho e navega DEPOIS que a gravação confirma
+      const novo = await store.inscreverPitch(d);
+      setPitchDraft(PITCH_DRAFT_VAZIO);
+      nav('/flux/projeto/' + novo.id);
+    } catch {
+      // erro já sinalizado por toast; mantém o rascunho intacto p/ reenviar
+      setEnviando(false);
+    }
   };
 
   return (
@@ -53,8 +62,8 @@ export default function Confirmar() {
         ))}
       </div>
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 22 }}>
-        <button onClick={() => nav('/flux/inscrever')} className="tf-btn tf-btn-ghost">← Voltar e editar</button>
-        <button onClick={confirmar} className="tf-btn tf-btn-accent" style={{ padding: '12px 24px' }}>Confirmar e enviar pitch →</button>
+        <button onClick={() => nav('/flux/inscrever')} disabled={enviando} className="tf-btn tf-btn-ghost">← Voltar e editar</button>
+        <button onClick={confirmar} disabled={enviando} className="tf-btn tf-btn-accent" style={{ padding: '12px 24px', opacity: enviando ? 0.7 : 1 }}>{enviando ? 'Enviando…' : 'Confirmar e enviar pitch →'}</button>
       </div>
     </div>
   );
