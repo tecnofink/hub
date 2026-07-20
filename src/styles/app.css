@@ -102,8 +102,11 @@ html { overflow-x: clip; }
   .m-only { display: inline-block !important; }
   /* header do Shell em 2 linhas: marca + ações em cima, navegação rolável embaixo */
   .m-header { height: auto !important; min-height: 52px; flex-wrap: wrap; padding: 8px 16px !important; row-gap: 4px; gap: 10px !important; }
-  .m-nav { order: 10; flex-basis: 100%; flex-wrap: wrap; }
-  .m-nav > a { padding: 7px 12px !important; font-size: 0.8rem !important; }
+  /* nav vai para uma linha própria de largura total (o !important vence o
+     flex:1 inline do <nav>), sempre horizontal e alinhada à esquerda —
+     nunca empilha na vertical, igual nos dois temas */
+  .m-nav { order: 10; flex: 0 0 100% !important; flex-wrap: wrap; justify-content: flex-start; }
+  .m-nav > a { padding: 7px 12px !important; font-size: 0.8rem !important; flex: none; }
   .m-ml-auto { margin-left: auto; }
   .g-1col-900 { grid-template-columns: 1fr !important; }
 }
