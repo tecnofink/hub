@@ -103,7 +103,7 @@ export default function Ranking() {
           {rows.map((r, i) => {
             const top = i < 3;
             const fg = r.mine ? '#fff' : 'var(--tf-ink)';
-            const sub2 = r.mine ? 'rgba(255,255,255,0.72)' : 'var(--tf-ink-3)';
+            const sub2 = r.mine ? 'rgba(255,255,255,0.85)' : 'var(--tf-ink-3)';
             return (
               <div key={r.key} style={{ display: 'grid', gridTemplateColumns: GRID, minWidth: 1020, gap: 0, padding: '15px 24px', borderBottom: '1px solid var(--tf-line)', alignItems: 'center', background: r.mine ? 'var(--tf-accent)' : top ? 'var(--tf-accent-soft)' : 'transparent' }}>
                 <span style={{ display: 'flex', alignItems: 'center' }}>

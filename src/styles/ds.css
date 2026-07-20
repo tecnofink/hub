@@ -23,7 +23,7 @@
 
   /* texto */
   --tf-ink:       #18182A;   /* texto principal */
-  --tf-ink-2:     #4A4A5A;   /* texto secundário */
+  --tf-ink-2:     #3C3C4A;   /* texto secundário (contraste alto — pedido da presidência) */
   --tf-ink-3:     #5C5C68;   /* texto terciário / legendas (AA — contraste forte) */
 
   /* marca — navy */
@@ -80,8 +80,8 @@
   --tf-line-2:    #353551;
 
   --tf-ink:       #F1F1F6;
-  --tf-ink-2:     #B7B7C6;
-  --tf-ink-3:     #A6A6B5;  /* texto terciário / legendas (AA — contraste forte) */
+  --tf-ink-2:     #D2D2DE;  /* texto secundário (contraste alto — pedido da presidência) */
+  --tf-ink-3:     #B6B6C5;  /* texto terciário / legendas (AA — contraste forte) */
 
   --tf-accent:      #4F7CFF;  /* azul royal — navy Tecnofink clareado p/ fundo escuro */
   --tf-accent-2:    #3A5FE0;
@@ -161,7 +161,7 @@ h1.tf, h2.tf, h3.tf {
   font-size: 0.78rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--tf-ink-3);
+  color: var(--tf-ink-2); /* era ink-3; presidência pediu rótulos mais legíveis */
   font-weight: 500;
 }
 

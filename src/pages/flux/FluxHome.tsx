@@ -270,7 +270,7 @@ function KanbanCard({ p, col, onReativar }: { p: Projeto; col: ColunaId; onReati
 
   const atrasado = statusDe(p).k === 'atrasado';
   const fg = mine ? '#fff' : 'var(--tf-ink)';
-  const sub = mine ? 'rgba(255,255,255,0.72)' : 'var(--tf-ink-3)';
+  const sub = mine ? 'rgba(255,255,255,0.85)' : 'var(--tf-ink-3)';
 
   const cardStyle: React.CSSProperties = {
     background: atrasado
@@ -290,7 +290,7 @@ function KanbanCard({ p, col, onReativar }: { p: Projeto; col: ColunaId; onReati
   return (
     <Envelope>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-        <span style={{ fontFamily: 'var(--tf-font-mono)', fontSize: '0.56rem', letterSpacing: '0.05em', textTransform: 'uppercase', color: mine ? 'rgba(255,255,255,0.6)' : 'var(--tf-ink-3)' }}>{catNome(p.cat)}</span>
+        <span style={{ fontFamily: 'var(--tf-font-mono)', fontSize: '0.56rem', letterSpacing: '0.05em', textTransform: 'uppercase', color: mine ? 'rgba(255,255,255,0.78)' : 'var(--tf-ink-3)' }}>{catNome(p.cat)}</span>
         {mine && <span style={{ fontFamily: 'var(--tf-font-mono)', fontSize: '0.54rem', letterSpacing: '0.06em', padding: '3px 8px', borderRadius: 999, background: 'rgba(255,255,255,0.16)', color: '#fff', flex: 'none' }}>MEU PROJETO</span>}
       </div>
       <div style={{ fontFamily: 'var(--tf-font-body)', fontWeight: 700, fontSize: '0.95rem', lineHeight: 1.3, color: fg }}>{p.nome}</div>
