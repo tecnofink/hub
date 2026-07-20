@@ -57,7 +57,7 @@ function CardFluxDestaque({ c }: { c: Ciclo | null }) {
         <div style={{ flex: 1, minWidth: 'min(280px, 100%)' }}>
           <span className="tf-mono" style={{ fontSize: '0.6rem', color: 'var(--tf-accent)' }}>[ FERRAMENTA EM DESTAQUE · PROGRAMA DE INOVAÇÃO COM IA ]</span>
           <h3 className="tf-h3" style={{ margin: '6px 0 6px' }}>Flux</h3>
-          <p className="tf-small" style={{ margin: 0, maxWidth: 620 }}>{FLUX_FIXO.desc}</p>
+          <p className="tf-small" style={{ margin: 0, maxWidth: 620, color: 'var(--tf-ink)', fontSize: '1rem', fontWeight: 500, lineHeight: 1.5 }}>{FLUX_FIXO.desc}</p>
           <span style={{ display: 'inline-flex', gap: 14, alignItems: 'center', flexWrap: 'wrap', marginTop: 12 }}>
             <span style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--tf-accent)' }}>Abrir o Flux →</span>
             <button
