@@ -374,6 +374,23 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
       }).catch(() => { /* log nunca bloqueia o fluxo */ });
     };
 
+    // Falha de inscrição de pitch: a escrita rejeitada não gera evento no
+    // Firestore, então quem a enxerga é o cliente. Guarda o erro + o rascunho
+    // completo (diagnóstico e recuperação); uma Cloud Function avisa os admins.
+    const registrarFalhaInscricao = (d: PitchDraft, e: unknown) => {
+      if (!me) return;
+      const err = e as { code?: string; message?: string };
+      setDoc(doc(collection(db, 'logsFalhas')), {
+        em: serverTimestamp(), ts: logTimestamp(), quem: me.nome, uid: me.id,
+        contexto: 'inscricao-pitch',
+        erroCodigo: err?.code ?? '', erroMsg: String(err?.message ?? e),
+        ciclo: cicloAtivo?.id ?? '',
+        pitchNome: d.nome, pitchCat: d.cat ?? null, pitchValor: num(d.valor), pitchPer: d.per,
+        pitchDeadline: d.deadline, pitchIntang: [...d.intang], pitchJust: d.just,
+        userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
+      }).catch(() => { /* registro de falha nunca bloqueia nem lança */ });
+    };
+
     const quadroDeFn = (pid: string): QuadroProjeto => {
       const q = tarefas[pid];
       if (q) return q;
@@ -480,7 +497,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
             showToast('Pitch enviado! O comitê vai definir o acesso ao Claude — e um projeto com o mesmo nome já foi aberto em Produtividade.');
             return novo;
           },
-          (e) => { falha(e); throw e; },
+          (e) => { registrarFalhaInscricao(d, e); falha(e); throw e; },
         );
       },
 

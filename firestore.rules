@@ -310,5 +310,17 @@ service cloud.firestore {
         && request.resource.data.keys().hasOnly(['ts', 'quem', 'acao', 'det', 'tipo', 'at'])
         && request.resource.data.at == request.time;
     }
+
+    // Registro de FALHAS de inscrição capturadas no cliente: a escrita
+    // rejeitada não chega ao banco, então não há gatilho para observá-la — quem
+    // a enxerga é o app. Qualquer conta autenticada registra a PRÓPRIA falha
+    // (de propósito sem exigir isActive(), para capturar até problemas de estado
+    // da conta). Só admins leem; ninguém edita; hubAdmin pode limpar.
+    match /logsFalhas/{id} {
+      allow read: if ehFluxAdmin() || ehHubAdmin();
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
+      allow update: if false;
+      allow delete: if ehHubAdmin();
+    }
   }
 }

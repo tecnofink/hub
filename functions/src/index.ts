@@ -48,6 +48,14 @@ async function emailsPorPapel(role: string): Promise<string[]> {
   return snap.docs.map((d) => d.data().email as string);
 }
 
+async function emailsPorPapeis(roles: string[]): Promise<string[]> {
+  const snap = await db().collection('users')
+    .where('ativo', '==', true)
+    .where('roles', 'array-contains-any', roles)
+    .get();
+  return [...new Set(snap.docs.map((d) => d.data().email as string))];
+}
+
 function logSistema(acao: string, det: string, tipo: 'admin' | 'avaliacao' | 'flux') {
   const agora = new Date();
   const ts = agora.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'America/Sao_Paulo' })
@@ -66,6 +74,30 @@ export const aoInscreverPitch = onDocumentCreated('projects/{pid}', async (event
     assunto: 'Pitch inscrito no Flux — ' + p.nome,
     corpo: `Olá, ${u.nome}!\n\nSeu pitch "${p.nome}" foi inscrito com sucesso.\nDeadline definido: ${dbr(p.deadline)}.\n\nO comitê vai avaliar o acesso ao Claude — você recebe um aviso assim que a triagem for concluída. Um projeto com o mesmo nome já foi aberto no Gestor de Tarefas.`,
   });
+});
+
+/* ── Alerta aos admins quando uma INSCRIÇÃO de pitch FALHA no cliente ───────
+   A escrita rejeitada não cria doc em projects (não há evento lá para ouvir);
+   o app registra a falha em logsFalhas e este gatilho avisa fluxAdmin/hubAdmin,
+   com o erro e os dados do rascunho já preservados para diagnóstico. */
+export const aoFalharInscricao = onDocumentCreated('logsFalhas/{id}', async (event) => {
+  const f = event.data?.data();
+  if (!f || f.contexto !== 'inscricao-pitch') return;
+  const destino = await emailsPorPapeis(['fluxAdmin', 'hubAdmin', 'admin']);
+  if (!destino.length) return;
+  await enviar({
+    para: destino,
+    assunto: 'Falha ao inscrever pitch no Flux — ' + (f.pitchNome || 'sem nome'),
+    corpo: `Uma inscrição de pitch FALHOU e não foi salva no banco.\n\n`
+      + `Colaborador: ${f.quem} (${f.uid})\n`
+      + `Pitch: ${f.pitchNome || '—'}\n`
+      + `Quando: ${f.ts}\n`
+      + `Erro: ${f.erroCodigo || 'sem código'} — ${f.erroMsg || '—'}\n`
+      + `Navegador: ${f.userAgent || '—'}\n\n`
+      + `Os dados do rascunho ficaram guardados na coleção logsFalhas para diagnóstico e recuperação. `
+      + `O app agora mantém o rascunho e mostra o erro na tela — peça ao colaborador para tentar novamente.`,
+  });
+  await logSistema('Falha de inscrição', (f.pitchNome || 'sem nome') + ' — ' + (f.erroCodigo || f.erroMsg || 'erro'), 'flux');
 });
 
 /* ── RF-51 · decisão da triagem e resultado aguardando avaliação ───────── */
