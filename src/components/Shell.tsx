@@ -134,13 +134,13 @@ export default function Shell() {
 
   useEffect(() => {
     document.title = (ferramentaAtual?.nome ?? tituloDe(loc.pathname)) + ' · Tecnofink';
-    // favicon por contexto: badge do Flux no Flux, logo do Gestor nas tarefas,
-    // livro no Playbook, Tecnofink no resto
+    // favicon por contexto: badge do Flux no Flux, prancheta na Produtividade,
+    // quadro de planejamento no Marketing, Tecnofink no resto
     const noFlux = loc.pathname.startsWith('/flux') || loc.pathname.startsWith('/comite') || loc.pathname.startsWith('/admin/flux');
     const noGestor = loc.pathname.startsWith('/tarefas');
     const noPlaybook = loc.pathname.startsWith('/playbook');
     const icone = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
-    if (icone) icone.href = noFlux ? '/brand/flux-badge.png' : noGestor ? '/brand/gestor-badge.png' : noPlaybook ? '/brand/playbook-badge.png' : '/brand/tecnofink-icon-transparent.png';
+    if (icone) icone.href = noFlux ? '/brand/flux-badge.png' : noGestor ? '/brand/produtividade-badge.png' : noPlaybook ? '/brand/marketing-badge.png' : '/brand/tecnofink-icon-transparent.png';
   }, [loc.pathname, ferramentaAtual?.nome]);
 
   if (!authReady) return <Splash />;
@@ -185,8 +185,8 @@ export default function Shell() {
             style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'none', border: 'none', cursor: 'pointer', padding: 0, flex: 'none' }}
           >
             {fluxCtx && <img src="/brand/flux-badge.png" alt="Flux" style={{ width: 26, height: 26 }} />}
-            {emGestor && <img src="/brand/gestor-badge.png" alt="Produtividade" style={{ height: 22 }} />}
-            {emPlaybook && <img src="/brand/playbook-badge.png" alt="Marketing" style={{ height: 26 }} />}
+            {emGestor && <img src="/brand/produtividade-badge.png" alt="Produtividade" style={{ height: 26 }} />}
+            {emPlaybook && <img src="/brand/marketing-badge.png" alt="Marketing" style={{ height: 26 }} />}
             {ferramentaAtual && (
               faviconDe(ferramentaAtual.rota)
                 ? <img src={faviconDe(ferramentaAtual.rota)!} alt={ferramentaAtual.nome} style={{ width: 24, height: 24, borderRadius: 6 }} />

@@ -131,7 +131,7 @@ export default function Playbook() {
       {/* hero */}
       <div style={{ margin: '34px 0 8px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
-          <img src="/brand/playbook-badge.png" alt="Marketing" style={{ height: 46 }} />
+          <img src="/brand/marketing-badge.png" alt="Marketing" style={{ height: 46 }} />
           <span className="tf-mono" style={{ color: 'var(--tf-accent)' }}>[ MARKETING · TECNOFINK · 2026 ]</span>
         </div>
         <h1 className="tf-h2" style={{ margin: '10px 0 8px' }}>Marketing de feiras e eventos</h1>

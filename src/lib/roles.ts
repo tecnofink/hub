@@ -48,7 +48,7 @@ export function faviconDe(rota: string): string | null {
 /** Logos das ferramentas nativas com rota interna (marca própria em /brand). */
 export function iconeNativo(rota: string): string | null {
   const r = rotaNormalizada(rota);
-  if (r === '/tarefas' || r.startsWith('/tarefas/')) return '/brand/gestor-badge.png';
-  if (r === '/playbook' || r.startsWith('/playbook/')) return '/brand/playbook-badge.png';
+  if (r === '/tarefas' || r.startsWith('/tarefas/')) return '/brand/produtividade-badge.png';
+  if (r === '/playbook' || r.startsWith('/playbook/')) return '/brand/marketing-badge.png';
   return null;
 }

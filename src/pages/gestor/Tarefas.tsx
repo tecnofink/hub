@@ -145,7 +145,7 @@ export default function Tarefas() {
         {flux ? (
           <img src="/brand/flux-badge.png" alt="Projeto do Flux" style={{ width: 42, height: 42 }} />
         ) : (
-          <img src="/brand/gestor-badge.png" alt="Projeto livre" style={{ height: 36 }} />
+          <img src="/brand/produtividade-badge.png" alt="Projeto livre" style={{ height: 36 }} />
         )}
         <div style={{ flex: 1, minWidth: 240 }}>
           <span className="tf-mono" style={{ color: 'var(--tf-accent)' }}>
