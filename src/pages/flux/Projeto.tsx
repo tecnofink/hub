@@ -120,7 +120,7 @@ export default function Projeto() {
                 <div style={{ fontSize: '0.92rem' }}>{p.intang.length ? p.intang.join(' · ') : '—'}</div>
               </div>
               <div style={{ gridColumn: '1 / -1' }}>
-                <div className="tf-mono" style={{ fontSize: '0.6rem', marginBottom: 4 }}>JUSTIFICATIVA — POR QUE A IA FOI ESSENCIAL</div>
+                <div className="tf-mono" style={{ fontSize: '0.6rem', marginBottom: 4 }}>JUSTIFICATIVA — POR QUE A IA SERÁ ESSENCIAL</div>
                 <div style={{ fontSize: '0.92rem', lineHeight: 1.55, color: 'var(--tf-ink-2)' }}>{p.just}</div>
               </div>
             </div>

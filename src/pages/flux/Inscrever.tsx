@@ -124,7 +124,7 @@ export default function Inscrever() {
         </div>
 
         <div>
-          <L>Justificativa · por que a IA foi essencial?</L>
+          <L>Justificativa · por que a IA será essencial?</L>
           <textarea className="f-textarea" rows={4} value={d.just} onChange={(e) => up({ just: e.target.value })} placeholder="Descreva brevemente o problema a ser resolvido e o papel da IA na solução." />
         </div>
 
