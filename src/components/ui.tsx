@@ -56,6 +56,11 @@ export function Pill({ on, onClick, children, style }: { on: boolean; onClick: (
  */
 export function Modal({ onClose, children, maxWidth = 480, top, labelId }: { onClose: () => void; children: React.ReactNode; maxWidth?: number; top?: boolean; labelId?: string }) {
   const cardRef = useRef<HTMLDivElement>(null);
+  // guarda o onClose mais recente sem re-assinar o efeito: se dependêssemos de
+  // [onClose], um pai que recria a função a cada render devolveria o foco ao 1º
+  // campo a cada tecla digitada (o efeito rodava de novo e chamava foco).
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   useEffect(() => {
     const anterior = document.activeElement as HTMLElement | null;
@@ -64,7 +69,7 @@ export function Modal({ onClose, children, maxWidth = 480, top, labelId }: { onC
     );
     foco()?.[0]?.focus();
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') { e.stopPropagation(); onClose(); return; }
+      if (e.key === 'Escape') { e.stopPropagation(); onCloseRef.current(); return; }
       if (e.key === 'Tab') {
         const els = foco(); if (!els || els.length === 0) return;
         const primeiro = els[0]; const ultimo = els[els.length - 1];
@@ -74,7 +79,9 @@ export function Modal({ onClose, children, maxWidth = 480, top, labelId }: { onC
     };
     document.addEventListener('keydown', onKey, true);
     return () => { document.removeEventListener('keydown', onKey, true); anterior?.focus?.(); };
-  }, [onClose]);
+    // montagem-única: foco inicial + trap; onClose acessado via ref (acima)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div
