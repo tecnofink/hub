@@ -123,7 +123,12 @@ service cloud.firestore {
         && request.resource.data.resultado == null
         && !('reprovado' in request.resource.data && request.resource.data.reprovado == true)
         // não pode semear notas do comitê na inscrição
-        && (!('notas' in request.resource.data) || request.resource.data.notas.size() == 0);
+        && (!('notas' in request.resource.data) || request.resource.data.notas.size() == 0)
+        // pitch preso ao ciclo ATIVO e deadline dentro do ciclo (antes só o
+        // cliente validava; com repo público a regra é a fronteira real)
+        && get(/databases/$(database)/documents/cycles/$(request.resource.data.ciclo)).data.status == 'ativo'
+        && request.resource.data.deadline >= get(/databases/$(database)/documents/cycles/$(request.resource.data.ciclo)).data.inicio
+        && request.resource.data.deadline <= get(/databases/$(database)/documents/cycles/$(request.resource.data.ciclo)).data.fim;
 
       // RF-22: exclusão pelo titular apenas sem resultado registrado
       allow delete: if isActive()
@@ -146,6 +151,10 @@ service cloud.firestore {
         && request.resource.data.ciclo != 'backlog'
         && request.resource.data.tier == null
         && request.resource.data.resultado == null
+        // reativação só para o ciclo ATIVO, com deadline dentro dele
+        && get(/databases/$(database)/documents/cycles/$(request.resource.data.ciclo)).data.status == 'ativo'
+        && request.resource.data.deadline >= get(/databases/$(database)/documents/cycles/$(request.resource.data.ciclo)).data.inicio
+        && request.resource.data.deadline <= get(/databases/$(database)/documents/cycles/$(request.resource.data.ciclo)).data.fim
         && request.resource.data.diff(resource.data).affectedKeys()
              .hasOnly(['ciclo', 'backlogDe', 'deadline', 'criadoEm', 'tier', 'resultado', 'reprovado', 'notas']);
 
@@ -200,7 +209,11 @@ service cloud.firestore {
       allow create: if isActive()
         && request.resource.data.uid == request.auth.uid
         && request.auth.uid in request.resource.data.membrosIds
-        && request.resource.data.papeis[request.auth.uid] == 'admin';
+        && request.resource.data.papeis[request.auth.uid] == 'admin'
+        // impede colisão de ID com um pitch do Flux: o namespace tarefas/{id} é
+        // compartilhado, então criar extraProjs/{idDePitch} sequestraria/destruiria
+        // o quadro do pitch alheio. IDs auto-gerados nunca colidem — seguro.
+        && !exists(/databases/$(database)/documents/projects/$(projId));
       // gestão de membros, arquivamento e edição: admin do projeto
       allow update: if isActive() && resource.data.papeis[request.auth.uid] == 'admin';
       // sair do projeto: o próprio membro remove APENAS a si mesmo (não pode
@@ -318,7 +331,17 @@ service cloud.firestore {
     // da conta). Só admins leem; ninguém edita; hubAdmin pode limpar.
     match /logsFalhas/{id} {
       allow read: if ehFluxAdmin() || ehHubAdmin();
-      allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
+      // só conta do DOMÍNIO autorizado (não exige isActive, para capturar até
+      // falhas de estado da conta), forma fixa e campos limitados — fecha o
+      // flood/e-mail-bombing por conta externa e o payload gigante.
+      allow create: if signedIn()
+        && request.resource.data.uid == request.auth.uid
+        && emailDomain() in allowedDomains()
+        && request.resource.data.contexto == 'inscricao-pitch'
+        && request.resource.data.keys().hasOnly(['em', 'ts', 'quem', 'uid', 'contexto', 'erroCodigo', 'erroMsg', 'ciclo', 'pitchNome', 'pitchCat', 'pitchValor', 'pitchPer', 'pitchDeadline', 'pitchIntang', 'pitchJust', 'userAgent'])
+        && request.resource.data.pitchNome.size() < 300
+        && request.resource.data.erroMsg.size() < 2000
+        && request.resource.data.pitchJust.size() < 5000;
       allow update: if false;
       allow delete: if ehHubAdmin();
     }

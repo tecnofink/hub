@@ -85,19 +85,22 @@ export const aoFalharInscricao = onDocumentCreated('logsFalhas/{id}', async (eve
   if (!f || f.contexto !== 'inscricao-pitch') return;
   const destino = await emailsPorPapeis(['fluxAdmin', 'hubAdmin', 'admin']);
   if (!destino.length) return;
+  // campos vêm do cliente: tira quebras de linha e neutraliza URLs (evita
+  // phishing auto-linkado no cliente de e-mail) e trunca cada um
+  const lim = (v: unknown, n: number) => String(v ?? '—').replace(/[\r\n\t]+/g, ' ').replace(/https?:\/\/\S+/gi, '[link]').slice(0, n);
   await enviar({
     para: destino,
-    assunto: 'Falha ao inscrever pitch no Flux — ' + (f.pitchNome || 'sem nome'),
+    assunto: 'Falha ao inscrever pitch no Flux — ' + lim(f.pitchNome, 80),
     corpo: `Uma inscrição de pitch FALHOU e não foi salva no banco.\n\n`
-      + `Colaborador: ${f.quem} (${f.uid})\n`
-      + `Pitch: ${f.pitchNome || '—'}\n`
-      + `Quando: ${f.ts}\n`
-      + `Erro: ${f.erroCodigo || 'sem código'} — ${f.erroMsg || '—'}\n`
-      + `Navegador: ${f.userAgent || '—'}\n\n`
+      + `Colaborador: ${lim(f.quem, 120)} (${lim(f.uid, 40)})\n`
+      + `Pitch: ${lim(f.pitchNome, 120)}\n`
+      + `Quando: ${lim(f.ts, 40)}\n`
+      + `Erro: ${lim(f.erroCodigo, 60)} — ${lim(f.erroMsg, 500)}\n`
+      + `Navegador: ${lim(f.userAgent, 200)}\n\n`
       + `Os dados do rascunho ficaram guardados na coleção logsFalhas para diagnóstico e recuperação. `
       + `O app agora mantém o rascunho e mostra o erro na tela — peça ao colaborador para tentar novamente.`,
   });
-  await logSistema('Falha de inscrição', (f.pitchNome || 'sem nome') + ' — ' + (f.erroCodigo || f.erroMsg || 'erro'), 'flux');
+  await logSistema('Falha de inscrição', lim(f.pitchNome, 80) + ' — ' + lim(f.erroCodigo || f.erroMsg, 80), 'flux');
 });
 
 /* ── RF-51 · decisão da triagem e resultado aguardando avaliação ───────── */
@@ -198,6 +201,15 @@ export const lembretesDeadline = onSchedule(
    Apaga o quadro de tarefas, a thread de comentários e os anexos no Storage. */
 export const aoExcluirProjetoLivre = onDocumentDeleted('extraProjs/{pid}', async (event) => {
   const pid = event.params.pid;
+  // defesa em profundidade contra colisão de ID: a cascata abaixo apaga por id,
+  // e o quadro de um PITCH do Flux vive em tarefas/{id} com o mesmo namespace.
+  // A regra de create de extraProjs já impede a colisão; ainda assim, nunca
+  // destruímos o quadro de um pitch existente.
+  if ((await db().doc('projects/' + pid).get()).exists) {
+    logger.warn('aoExcluirProjetoLivre: pid colide com um pitch do Flux — cascata abortada', { pid });
+    await logSistema('Projeto livre excluído', pid + ' — cascata abortada (id colide com pitch do Flux)', 'admin');
+    return;
+  }
   const quadroRef = db().doc('tarefas/' + pid);
   // comentários (subcoleção) primeiro
   const comentarios = await quadroRef.collection('comentarios').get();

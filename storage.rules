@@ -40,11 +40,24 @@ service firebase.storage {
     // documentos do Playbook/Marketing (logística, stands, planilhas de leads) —
     // gravação/exclusão só por editores; leitura para conta ativa.
     match /playbook/{caminho=**} {
-      function editorPlaybook() {
-        return ativo()
-          && request.auth.uid in firestore.get(/databases/(default)/documents/playbook/config).data.editores;
+      function cfgPlaybook() {
+        return firestore.get(/databases/(default)/documents/playbook/config).data;
       }
-      allow read: if ativo();
+      function editorPlaybook() {
+        return ativo() && request.auth.uid in cfgPlaybook().editores;
+      }
+      // leads (PII: nome/e-mail/telefone) ficam em playbook/leads/** — leitura só
+      // por editor/observador/hubAdmin, espelhando a fronteira do Firestore
+      // (playbookFeira). Sem isto, QUALQUER ativo listava e baixava as planilhas.
+      function podeVerRestrito() {
+        return ativo() && (
+          request.auth.uid in cfgPlaybook().editores
+          || request.auth.uid in cfgPlaybook().get('observadores', [])
+          || firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.roles.hasAny(['hubAdmin', 'admin'])
+        );
+      }
+      allow read: if ativo()
+        && (!caminho.matches('leads/.*') || podeVerRestrito());
       allow write: if editorPlaybook() && tamanhoOk();
       allow delete: if editorPlaybook();
     }

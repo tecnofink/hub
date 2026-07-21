@@ -462,7 +462,6 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
       const flux = proj(pid);
       const livre = extraProjs.find((x) => x.id === pid);
       const dono = flux?.uid ?? livre?.uid ?? me.id;
-      const membrosIds = opts?.membrosIds ?? livre?.membrosIds ?? [dono];
       const ref = doc(db, 'tarefas', pid);
       return runTransaction(db, async (tx) => {
         const snap = await tx.get(ref);
@@ -470,7 +469,15 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
           ? { etapas: (snap.data().etapas ?? []) as Etapa[], tasks: (snap.data().tasks ?? []) as Tarefa[] }
           : quadroDeFn(pid);
         const novo = mut(base);
-        if (novo) tx.set(ref, { etapas: novo.etapas, tasks: novo.tasks, uid: dono, membrosIds });
+        if (!novo) return;
+        // preserva a denormalização (uid/membrosIds) DO PRÓPRIO DOC no servidor;
+        // só sobrescreve membrosIds quando a mutação é explicitamente de membros
+        // (opts.membrosIds). Evita que uma edição de conteúdo com estado local
+        // defasado apague o acesso de um membro ao quadro.
+        const uidFinal = snap.exists() ? ((snap.data().uid as string) ?? dono) : dono;
+        const membrosFinal = opts?.membrosIds
+          ?? (snap.exists() ? ((snap.data().membrosIds as string[]) ?? [uidFinal]) : (livre?.membrosIds ?? [dono]));
+        tx.set(ref, { etapas: novo.etapas, tasks: novo.tasks, uid: uidFinal, membrosIds: membrosFinal });
       });
     };
 
@@ -551,7 +558,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
         deleteDoc(doc(db, 'projects', pid))
           .then(() => {
             addLog('Pitch excluído', p.nome + (p.tier ? ' (administradores notificados)' : ''), p.tier ? 'admin' : 'flux');
-            showToast(p.tier ? 'Pitch excluído. Administradores notificados por e-mail para rever os acessos ao Claude.' : 'Pitch excluído.');
+            showToast(p.tier ? 'Pitch excluído. Os administradores vão revisar os acessos ao Claude.' : 'Pitch excluído.');
           })
           .catch(falha);
       },
