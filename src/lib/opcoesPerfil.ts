@@ -6,10 +6,12 @@ import type { Usuario } from './types';
 
 export const EMPRESAS = ['Tecnofink Matriz', 'Tecnofink Itaboraí', 'Powerpoxi'];
 
+// ordenados alfabeticamente (pt-BR) — o .sort mantém a ordem mesmo se alguém
+// acrescentar um departamento novo à lista no futuro
 export const DEPTOS = [
   'Presidência e Conselho', 'Engenharia', 'Comercial', 'Financeiro', 'Controladoria',
   'RH e DP', 'Compras', 'Inovação, Marketing e Estratégia', 'Operações', 'Qualidade e Segurança',
-];
+].sort((a, b) => a.localeCompare(b, 'pt-BR'));
 
 /** Perfil completo: cargo preenchido + empresa e departamento dentro das listas. */
 export function perfilCompleto(u: Pick<Usuario, 'cargo' | 'empresa' | 'depto'>): boolean {
