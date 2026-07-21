@@ -4,8 +4,13 @@ import { useNavigate } from 'react-router-dom';
 import { useStore } from '../store/AppStore';
 import { ehFluxAdmin, ehHubAdmin } from '../lib/roles';
 import { Avatar, L } from '../components/ui';
+import { AXEL } from '../lib/axel';
 
-const EMPRESAS = ['Tecnofink LTDA', 'Tecnofink Engenharia', 'Grupo Tecnofink Participações'];
+const EMPRESAS = ['Tecnofink Matriz', 'Tecnofink Itaboraí', 'Powerpoxi'];
+const DEPTOS = [
+  'Engenharia', 'Comercial', 'Financeiro', 'Controladoria', 'RH e DP',
+  'Compras', 'Inovação, Marketing e Estratégia', 'Operações', 'Qualidade e Segurança',
+];
 
 export default function Perfil() {
   const { me, cor, salvarPerfil } = useStore();
@@ -23,8 +28,13 @@ export default function Perfil() {
 
   return (
     <div className="anim-in" style={{ maxWidth: 1000, margin: '0 auto', padding: '56px 32px 80px' }}>
-      <span className="tf-mono">[ MEU PERFIL ]</span>
-      <h1 className="tf-h2" style={{ margin: '12px 0 34px' }}>Perfil</h1>
+      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 24, flexWrap: 'wrap', margin: '0 0 34px' }}>
+        <div>
+          <span className="tf-mono">[ SUA CONTA ]</span>
+          <h1 className="tf-h2" style={{ margin: '12px 0 0' }}>Meu perfil</h1>
+        </div>
+        <img src={AXEL.gestor} alt="Axel, o mascote do Flux, de skate" style={{ height: 'clamp(96px, 13vw, 132px)', width: 'auto', flex: 'none' }} />
+      </div>
       <div className="g-1col-760" style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: 24, alignItems: 'start' }}>
         <div className="tf-card" style={{ padding: 30, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, textAlign: 'center' }}>
           <div style={{ position: 'relative' }}>
@@ -48,12 +58,19 @@ export default function Perfil() {
             <div><L>E-mail · não editável</L><input className="f-input" value={me.email} disabled /></div>
             <div><L>Cargo</L><input className="f-input" value={f.cargo} onChange={on('cargo')} placeholder="Ex.: Analista" /></div>
             <div>
-              <L>Empresa do grupo</L>
+              <L>Empresa / unidade</L>
               <select className="f-select" value={f.empresa} onChange={on('empresa')}>
+                {!EMPRESAS.includes(f.empresa) && <option value={f.empresa}>{f.empresa || 'Selecione…'}</option>}
                 {EMPRESAS.map((e) => <option key={e} value={e}>{e}</option>)}
               </select>
             </div>
-            <div><L>Departamento</L><input className="f-input" value={f.depto} onChange={on('depto')} placeholder="Ex.: Operações" /></div>
+            <div>
+              <L>Departamento</L>
+              <select className="f-select" value={f.depto} onChange={on('depto')}>
+                {!DEPTOS.includes(f.depto) && <option value={f.depto}>{f.depto || 'Selecione…'}</option>}
+                {DEPTOS.map((d) => <option key={d} value={d}>{d}</option>)}
+              </select>
+            </div>
             <div><L>Aniversário · opcional</L><input className="f-input" value={f.niver} onChange={on('niver')} placeholder="dd/mm" /></div>
           </div>
           <div style={{ marginTop: 18 }}>
