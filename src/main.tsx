@@ -21,3 +21,10 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     </ErrorBoundary>
   </React.StrictMode>,
 );
+
+// re-arma o guarda anti-loop após um boot saudável: se sobrevivemos alguns
+// segundos sem erro de chunk, um próximo deploy pode disparar reload de novo.
+// (um erro persistente reapareceria antes disto, mantendo o guarda ativo)
+setTimeout(() => {
+  try { sessionStorage.removeItem('pf-reload-chunk'); } catch { /* sem storage */ }
+}, 8000);

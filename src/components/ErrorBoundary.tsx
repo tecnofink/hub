@@ -16,6 +16,18 @@ export default class ErrorBoundary extends React.Component<Props, State> {
   }
 
   componentDidCatch(erro: unknown, info: unknown) {
+    const msg = String((erro as { message?: string })?.message ?? erro);
+    // falha ao baixar um chunk lazy (deploy trocou os hashes com a aba aberta):
+    // recarrega UMA vez para pegar os assets novos, em vez de mostrar erro
+    if (/dynamically imported module|module script failed|Failed to fetch|ChunkLoadError|error loading/i.test(msg)) {
+      try {
+        if (!sessionStorage.getItem('pf-reload-chunk')) {
+          sessionStorage.setItem('pf-reload-chunk', '1');
+          window.location.reload();
+          return;
+        }
+      } catch { window.location.reload(); return; }
+    }
     // sem serviço de monitoramento ainda; ao menos deixa rastro no console
     console.error('[ErrorBoundary] erro de render capturado:', erro, info);
   }

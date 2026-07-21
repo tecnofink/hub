@@ -189,9 +189,25 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
   const [tema, setTema] = useState<'light' | 'dark'>(temaInicial);
   const [toast, setToast] = useState<ToastDef | null>(null);
   const [modal, setModal] = useState<ModalDef | null>(null);
-  const [pitchDraft, setPitchDraft] = useState<PitchDraft>(PITCH_DRAFT_VAZIO);
+  // rascunho do pitch persiste na sessão: se a página recarregar no meio da
+  // inscrição (ex.: recuperação de chunk velho após deploy), o que foi digitado
+  // não se perde — o usuário não precisa refazer.
+  const [pitchDraft, setPitchDraft] = useState<PitchDraft>(() => {
+    try {
+      const s = sessionStorage.getItem('pf-pitch-draft');
+      if (s) return { ...PITCH_DRAFT_VAZIO, ...JSON.parse(s) };
+    } catch { /* sem storage */ }
+    return PITCH_DRAFT_VAZIO;
+  });
   const [axelFila, setAxelFila] = useState<NoticiaAxel[]>([]);
   const toastTimer = useRef<number | null>(null);
+
+  useEffect(() => {
+    try {
+      if (pitchDraft.nome && pitchDraft.nome.trim()) sessionStorage.setItem('pf-pitch-draft', JSON.stringify(pitchDraft));
+      else sessionStorage.removeItem('pf-pitch-draft');
+    } catch { /* sem storage */ }
+  }, [pitchDraft]);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', tema);
