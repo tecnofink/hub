@@ -12,6 +12,7 @@ import { dbr, diffDias, hojeExtenso, todayISO } from '../lib/dates';
 import { primeiroNome } from '../lib/format';
 import { faviconDe, iconeNativo, rotaNormalizada } from '../lib/roles';
 import { faseDoFlux } from '../lib/faseFlux';
+import { AXEL } from '../lib/axel';
 import { Badge } from '../components/ui';
 import ALink from '../components/ALink';
 import type { Ciclo, Ferramenta } from '../lib/types';
@@ -68,10 +69,14 @@ function CardFluxDestaque({ c }: { c: Ciclo | null }) {
             </button>
           </span>
         </div>
-        <div style={{ flex: 'none', minWidth: 'min(230px, 100%)', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 9, textAlign: 'right' }}>
-          <Badge kind={ind.badge}>{ind.rotulo}</Badge>
-          <span style={{ fontFamily: 'var(--tf-font-display)', fontWeight: 700, fontSize: '1.9rem', letterSpacing: '-0.02em', lineHeight: 1, color: 'var(--tf-accent)' }}>{ind.valor}</span>
-          <span className="tf-mono" style={{ fontSize: '0.6rem' }}>{ind.linha.toUpperCase()}</span>
+        <div style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: 18, minWidth: 'min(230px, 100%)' }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 9, textAlign: 'right' }}>
+            <Badge kind={ind.badge}>{ind.rotulo}</Badge>
+            <span style={{ fontFamily: 'var(--tf-font-display)', fontWeight: 700, fontSize: '1.9rem', letterSpacing: '-0.02em', lineHeight: 1, color: 'var(--tf-accent)' }}>{ind.valor}</span>
+            <span className="tf-mono" style={{ fontSize: '0.6rem' }}>{ind.linha.toUpperCase()}</span>
+          </div>
+          {/* Axel voando — só com ciclo ativo, à direita da informação de dias */}
+          {c && <img src={AXEL.ciclo} alt="" aria-hidden="true" style={{ height: 112, width: 'auto', flex: 'none' }} />}
         </div>
       </div>
 

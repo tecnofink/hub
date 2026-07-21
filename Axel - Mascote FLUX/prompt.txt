@@ -1,0 +1,26 @@
+Temos uma mudança grande a fazer no visual da plataforma, a designer desenvolveu vária versões do mascote em atividades diferentes e vamos aplica-las ao flux, a relação de imagem por situação esta abaixo. Antes de implementar no sistema você deve me mostrar no local host para validar, por ser uma tarefa grande ela deve ser bem validada antes de ser colocada on-line. As imagens do mascote devem ser inseridas da seguinte forma:
+
+1.png - inscrever pitch
+Ao clicar em inscrever pitch o mascote da imagem 1.png aparece ao lado do cabeçalho alinhado a direita com a caixa onde o usuário preenche a identificação
+
+2.png - em desenvolvimento
+3.png - backlog
+4.png - concluído
+7.png - inscrito
+8.png - aguardando avaliação
+10.png - reprovado
+as imagens acima devem ser aplicadas no dashboard do flux substituindo o [ vazio ] em cada coluna. se a etapa do kanban já tem pitch registrado o mascote não aparece.
+Toda vez que o projeto do usuário mudar de etapa deve ser disparado um pop up na tela deste usuário dando a noticia com o mascote correspondente a etapa em destaque grande e centralizado
+
+11.png - ranking
+quando o ranking global estiver vazio a tela deve mostrar esta imagem substituindo a mensagem que existe no fundo hoje
+
+5.png - ganhou acesso ao claude enterprise
+6.png - ganhou acesso ao claude basic 
+Quando o usuário receber um acesso ao claude (registrado no flux) deve ser disparado o pop up dando a noticia com o mascote correspondente ao acesso dado.
+
+9.png - Ciclo ativo na home page
+Apenas se tiver um ciclo do flux ativo este mascote deve aparecer na home page a direita dos dias restantes para inscrição ou a informação que ali estiver.
+
+
+Na página como funciona todas essas versões do mascote devem ser dispostas de forma orgânica e espaçada por todo o scroll da pagina, sem repetir o mesmo mascote duas vezes

@@ -9,6 +9,7 @@ import { Navigate } from 'react-router-dom';
 import { useStore } from '../store/AppStore';
 import { ThemeToggleBtn, ToastModal } from '../components/Shell';
 import { Erro } from '../components/ui';
+import { AXEL } from '../lib/axel';
 
 export default function Login() {
   const { logado, authReady, loginErro, loginGoogle } = useStore();
@@ -22,6 +23,7 @@ export default function Login() {
       <ThemeToggleBtn fixed />
       <div className="anim-pop" style={{ width: '100%', maxWidth: 460 }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, marginBottom: 26 }}>
+          <img src={AXEL.login} alt="Axel, o mascote do Flux, segurando o planeta Terra" style={{ height: 'clamp(110px, 18vh, 150px)', width: 'auto' }} />
           <img src="/brand/tecnofink-logo-transparent.png" alt="Tecnofink" className="tf-logo" style={{ height: 30 }} />
           <span className="tf-mono">[ HUB DE FERRAMENTAS DE IA ]</span>
         </div>

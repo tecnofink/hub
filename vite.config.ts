@@ -3,7 +3,9 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
-  server: { port: 5173 },
+  // host explícito em IPv4: sem ele o Node pode resolver "localhost" para ::1
+  // (só IPv6) e o navegador que tenta 127.0.0.1 recebe ERR_CONNECTION_REFUSED
+  server: { host: '127.0.0.1', port: 5173 },
   build: {
     rollupOptions: {
       output: {

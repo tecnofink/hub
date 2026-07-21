@@ -2,6 +2,7 @@
 import React from 'react';
 import { useStore } from '../../store/AppStore';
 import { CATS, rankingDoCiclo } from '../../lib/scoring';
+import { AXEL_CATEGORIA } from '../../lib/axel';
 import { Avatar } from '../../components/ui';
 import FluxPills from './FluxPills';
 
@@ -24,7 +25,11 @@ export default function Categorias() {
           const u = lider ? store.byId(lider.p.uid) : null;
           return (
             <div key={ct.id} style={{ background: 'var(--tf-bg-pure)', padding: '26px 22px', display: 'flex', flexDirection: 'column', gap: 14, minHeight: 250 }}>
-              <span className="tf-mono" style={{ fontSize: '0.58rem', color: 'var(--tf-accent)', minHeight: 28 }}>{ct.nome.toUpperCase()}</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, minHeight: 28 }}>
+                <span className="tf-mono" style={{ fontSize: '0.58rem', color: 'var(--tf-accent)' }}>{ct.nome.toUpperCase()}</span>
+                {/* com líder, o Axel da categoria vira uma marca discreta no canto */}
+                {lider && u && <img src={AXEL_CATEGORIA[ct.id]} alt="" aria-hidden="true" loading="lazy" style={{ height: 44, width: 'auto', flex: 'none', marginTop: -8 }} />}
+              </div>
               {lider && u ? (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10, flex: 1 }}>
                   <Avatar nome={u.nome} cor={store.cor(u.id)} size={38} fontSize="0.68rem" />
@@ -39,9 +44,8 @@ export default function Categorias() {
                   </div>
                 </div>
               ) : (
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: 8, border: '1px dashed var(--tf-line-2)', borderRadius: 10, padding: 16, textAlign: 'center' }}>
-                  <span className="tf-mono" style={{ fontSize: '0.56rem' }}>[ EM DISPUTA ]</span>
-                  <p className="tf-small" style={{ margin: 0, fontSize: '0.74rem' }}>Nenhum projeto avaliado nesta categoria ainda.</p>
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '6px 4px' }}>
+                  <img src={AXEL_CATEGORIA[ct.id]} alt={'Categoria ' + ct.nome + ' em disputa — nenhum projeto avaliado ainda'} loading="lazy" style={{ height: 176, width: 'auto', maxWidth: '92%', objectFit: 'contain' }} />
                 </div>
               )}
             </div>

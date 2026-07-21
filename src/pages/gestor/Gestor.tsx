@@ -10,6 +10,7 @@ import { Badge, L } from '../../components/ui';
 import ALink from '../../components/ALink';
 import { statusDe } from '../flux/statusProjeto';
 import { stDe } from './taskUtils';
+import { AXEL } from '../../lib/axel';
 
 const PAPEL_L: Record<string, string> = { admin: 'ADMIN', editor: 'EDITOR', leitor: 'LEITOR' };
 
@@ -79,7 +80,8 @@ export default function Gestor() {
       )}
 
       {meus.length === 0 && (
-        <div style={{ border: '1px dashed var(--tf-line-2)', borderRadius: 12, padding: '44px 32px', textAlign: 'center', background: 'var(--tf-bg-pure)', marginTop: 26 }}>
+        <div style={{ border: '1px dashed var(--tf-line-2)', borderRadius: 12, padding: '36px 32px', textAlign: 'center', background: 'var(--tf-bg-pure)', marginTop: 26 }}>
+          <img src={AXEL.gestor} alt="Axel no skate, pronto para acelerar seus projetos" loading="lazy" style={{ height: 175, width: 'auto', marginBottom: 12 }} />
           <h3 className="tf-h4" style={{ margin: '0 0 8px' }}>Nenhum projeto ainda</h3>
           <p className="tf-small" style={{ margin: '0 auto', maxWidth: 480 }}>Inscreva um pitch no Flux — ele aparece aqui automaticamente — ou crie um projeto livre com o botão acima.</p>
         </div>

@@ -3,6 +3,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../store/AppStore';
 import { dbr } from '../../lib/dates';
+import { AXEL } from '../../lib/axel';
 import { Badge } from '../../components/ui';
 import FluxPills from './FluxPills';
 
@@ -21,7 +22,8 @@ export default function Historico() {
         Ciclos encerrados, com projetos, pontuações e rankings congelados no encerramento. A pontuação não acumula entre ciclos.
       </p>
       {encerrados.length === 0 && (
-        <div style={{ border: '1px dashed var(--tf-line-2)', borderRadius: 12, padding: '44px 32px', textAlign: 'center', background: 'var(--tf-bg-pure)' }}>
+        <div style={{ border: '1px dashed var(--tf-line-2)', borderRadius: 12, padding: '36px 32px', textAlign: 'center', background: 'var(--tf-bg-pure)' }}>
+          <img src={AXEL.historico} alt="Axel tocando violão na lua, esperando o primeiro ciclo se encerrar" loading="lazy" style={{ height: 190, width: 'auto', maxWidth: '90%', objectFit: 'contain', marginBottom: 12 }} />
           <p className="tf-small" style={{ margin: 0 }}>Nenhum ciclo encerrado ainda.</p>
         </div>
       )}

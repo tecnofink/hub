@@ -14,6 +14,15 @@ import { Avatar, Badge, MetricStat, Modal, L } from '../../components/ui';
 import ALink from '../../components/ALink';
 import FluxPills from './FluxPills';
 import { colunaDe, statusDe, KB_COLS, ColunaId } from './statusProjeto';
+import { AXEL, AXEL_COLUNA } from '../../lib/axel';
+
+/** Altura do mascote por coluna, calibrada para o CAPACETE do Axel ter o mesmo
+    tamanho em todas as artes (enquadramentos diferem: as verticais estreitas
+    estouravam quando dimensionadas pela largura). Reprovado é deitado (arte
+    larga) — fica no teto que a largura da coluna permite. */
+const ALTURA_MASCOTE: Record<ColunaId, number> = {
+  inscrito: 138, dev: 205, aval: 180, conc: 150, rep: 145, back: 142,
+};
 
 export default function FluxHome() {
   const store = useStore();
@@ -43,8 +52,9 @@ export default function FluxHome() {
   if (!c) {
     return (
       <div className="anim-in" style={{ maxWidth: 1320, margin: '0 auto', padding: '48px 32px 80px' }}>
-        <div style={{ maxWidth: 640, margin: '60px auto', textAlign: 'center' }}>
-          <span className="tf-mono">[ FLUX ]</span>
+        <div style={{ maxWidth: 640, margin: '48px auto', textAlign: 'center' }}>
+          <img src={AXEL.semCiclo} alt="Axel sentado no foguete, aguardando o próximo ciclo" style={{ height: 180, width: 'auto', marginBottom: 14 }} />
+          <div><span className="tf-mono">[ FLUX ]</span></div>
           <h1 className="tf-h2" style={{ margin: '14px 0 12px' }}>Nenhum ciclo ativo</h1>
           <p className="tf-body" style={{ margin: '0 0 26px' }}>O próximo ciclo do programa de inovação ainda não foi aberto. O histórico dos ciclos anteriores continua disponível.</p>
           <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -139,8 +149,8 @@ export default function FluxHome() {
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '10px 12px 12px' }}>
                   {cards.length === 0 && (
-                    <div style={{ border: '1px dashed var(--tf-line-2)', borderRadius: 10, padding: '22px 14px', textAlign: 'center' }}>
-                      <span className="tf-mono" style={{ fontSize: '0.56rem' }}>[ VAZIO ]</span>
+                    <div style={{ textAlign: 'center', padding: '24px 8px 6px' }}>
+                      <img src={AXEL_COLUNA[col.id]} alt={'Axel — nenhum projeto em ' + col.label} loading="lazy" style={{ height: ALTURA_MASCOTE[col.id], width: 'auto', maxWidth: '88%', objectFit: 'contain' }} />
                     </div>
                   )}
                   {cards.map((p) => (

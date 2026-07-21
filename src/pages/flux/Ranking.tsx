@@ -8,7 +8,8 @@ import { useStore } from '../../store/AppStore';
 import { dbr } from '../../lib/dates';
 import { brl, brlK, iniciais } from '../../lib/format';
 import { catNome, critNota, isAvaliado, rankingDoCiclo, tangValidado } from '../../lib/scoring';
-import { Avatar, Badge, Vazio } from '../../components/ui';
+import { Avatar, Badge } from '../../components/ui';
+import { AXEL } from '../../lib/axel';
 import FluxPills from './FluxPills';
 
 const MEDALS = ['🥇', '🥈', '🥉'];
@@ -90,8 +91,8 @@ export default function Ranking() {
       )}
 
       {rows.length === 0 ? (
-        <div style={{ marginTop: 24 }}>
-          <Vazio mono="[ RANKING VAZIO ]" titulo="Nenhum projeto avaliado ainda" texto="Os projetos entram no ranking em tempo real assim que os três membros do comitê validam o tangível e completam as notas." />
+        <div style={{ marginTop: 30, textAlign: 'center' }}>
+          <img src={AXEL.ranking} alt="Pódio do ranking ainda vazio — os projetos entram aqui assim que o comitê completa as avaliações" style={{ width: 'min(660px, 94%)', height: 'auto' }} />
         </div>
       ) : (
         <div className="tf-card" style={{ marginTop: 24, padding: 0, overflow: 'auto' }}>

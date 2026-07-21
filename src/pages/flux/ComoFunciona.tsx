@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { useStore } from '../../store/AppStore';
 import { dbr, todayISO } from '../../lib/dates';
 import { CATS, INTANGIVEIS, RUBRICA } from '../../lib/scoring';
+import { AXEL } from '../../lib/axel';
 import FluxPills from './FluxPills';
 
 const PILARES = [
@@ -17,10 +18,10 @@ const PILARES = [
 ];
 
 const PASSOS = [
-  { n: '1', t: 'Inscrição', d: 'Você inscreve seu pitch: nome do projeto, categoria, justificativa, retorno financeiro estimado e o seu próprio deadline de entrega.' },
-  { n: '2', t: 'Execução', d: 'O projeto é executado dentro do prazo que você definiu. Ao concluir, você registra o resultado real obtido.' },
-  { n: '3', t: 'Avaliação', d: 'O comitê valida o retorno tangível e dá notas de 0 a 5 para impacto, alcance e retorno intangível. A pontualidade é automática.' },
-  { n: '4', t: 'Ranking', d: 'A pontuação pondera os 5 critérios. O ranking global e por categoria é publicado em tempo real, e zera a cada novo ciclo.' },
+  { n: '1', t: 'Inscrição', d: 'Você inscreve seu pitch: nome do projeto, categoria, justificativa, retorno financeiro estimado e o seu próprio deadline de entrega.', img: AXEL.inscrever },
+  { n: '2', t: 'Execução', d: 'O projeto é executado dentro do prazo que você definiu. Ao concluir, você registra o resultado real obtido.', img: AXEL.dev },
+  { n: '3', t: 'Avaliação', d: 'O comitê valida o retorno tangível e dá notas de 0 a 5 para impacto, alcance e retorno intangível. A pontualidade é automática.', img: AXEL.aval },
+  { n: '4', t: 'Ranking', d: 'A pontuação pondera os 5 critérios. O ranking global e por categoria é publicado em tempo real, e zera a cada novo ciclo.', img: AXEL.ranking },
 ];
 
 const CRITERIOS = [
@@ -50,9 +51,18 @@ const REGRAS = [
   { t: 'Boas práticas viram referência', d: 'Projetos bem avaliados são compartilhados com toda a empresa como casos de sucesso.' },
 ];
 
-const Secao = ({ num, titulo, children }: { num: string; titulo: string; children?: React.ReactNode }) => (
+/** Cabeçalho de seção; o mascote opcional vagueia pela página — ora colado ao
+    título (lado 'esq'), ora na borda direita — para o passeio ficar orgânico. */
+const Secao = ({ num, titulo, mascote, children }: {
+  num: string; titulo: string;
+  mascote?: { img: string; h?: number; lado?: 'esq' | 'dir' };
+  children?: React.ReactNode;
+}) => (
   <div style={{ marginTop: 40 }}>
-    <span className="tf-mono" style={{ color: 'var(--tf-accent)' }}>[ {num} · {titulo} ]</span>
+    <div style={{ display: 'flex', alignItems: 'flex-end', gap: 22, justifyContent: mascote?.lado === 'esq' ? 'flex-start' : 'space-between' }}>
+      <span className="tf-mono" style={{ color: 'var(--tf-accent)', order: mascote?.lado === 'esq' ? 1 : 0 }}>[ {num} · {titulo} ]</span>
+      {mascote && <img src={mascote.img} alt="" aria-hidden="true" loading="lazy" style={{ height: mascote.h ?? 104, width: 'auto', flex: 'none', marginBottom: -10, order: mascote.lado === 'esq' ? 0 : 1 }} />}
+    </div>
     {children}
   </div>
 );
@@ -68,13 +78,16 @@ export default function ComoFunciona() {
     <div className="anim-in" style={{ maxWidth: 1100, margin: '0 auto', padding: '48px 32px 80px' }}>
       <FluxPills comBadge />
 
-      {/* hero — o significado do nome (slide 1) */}
-      <div style={{ margin: '40px 0 0' }}>
-        <span className="tf-mono" style={{ color: 'var(--tf-accent)' }}>[ FLUX · PROGRAMA DE INOVAÇÃO COM IA ]</span>
-        <h1 className="tf-h2" style={{ margin: '12px 0 10px' }}>Como funciona o Flux?</h1>
-        <p className="tf-lead" style={{ margin: 0, maxWidth: 760 }}>
-          Do latim <em>fluxus</em> — fluxo, movimento contínuo, estado de transformação constante. Na física, <em>flux</em> é a medida da energia em movimento: força com direção e propósito. É o que este programa propõe — transformar a IA em energia real dentro da Tecnofink, projeto a projeto, colaborador a colaborador.
-        </p>
+      {/* hero — o significado do nome (slide 1), com o Axel em pleno voo */}
+      <div style={{ margin: '40px 0 0', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 26, flexWrap: 'wrap' }}>
+        <div style={{ flex: 1, minWidth: 'min(520px, 100%)' }}>
+          <span className="tf-mono" style={{ color: 'var(--tf-accent)' }}>[ FLUX · PROGRAMA DE INOVAÇÃO COM IA ]</span>
+          <h1 className="tf-h2" style={{ margin: '12px 0 10px' }}>Como funciona o Flux?</h1>
+          <p className="tf-lead" style={{ margin: 0, maxWidth: 760 }}>
+            Do latim <em>fluxus</em> — fluxo, movimento contínuo, estado de transformação constante. Na física, <em>flux</em> é a medida da energia em movimento: força com direção e propósito. É o que este programa propõe — transformar a IA em energia real dentro da Tecnofink, projeto a projeto, colaborador a colaborador.
+          </p>
+        </div>
+        <img src={AXEL.ciclo} alt="Axel, o mascote do Flux, voando" style={{ height: 'clamp(130px, 16vw, 188px)', width: 'auto', flex: 'none' }} />
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 12, marginTop: 22 }}>
         {PILARES.map((p) => (
@@ -90,7 +103,10 @@ export default function ComoFunciona() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(230px,1fr))', gap: 12, marginTop: 16 }}>
           {PASSOS.map((p) => (
             <div key={p.n} className="tf-card" style={{ padding: '20px 20px 18px' }}>
-              <span style={{ display: 'inline-flex', width: 34, height: 34, borderRadius: '50%', background: 'var(--tf-accent)', color: '#fff', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--tf-font-display)', fontWeight: 700 }}>{p.n}</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10 }}>
+                <span style={{ display: 'inline-flex', width: 34, height: 34, borderRadius: '50%', background: 'var(--tf-accent)', color: '#fff', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--tf-font-display)', fontWeight: 700, flex: 'none' }}>{p.n}</span>
+                <img src={p.img} alt="" aria-hidden="true" loading="lazy" style={{ height: 66, width: 'auto', flex: 'none', marginTop: -4 }} />
+              </div>
               <div style={{ fontFamily: 'var(--tf-font-display)', fontWeight: 700, fontSize: '1.05rem', margin: '10px 0 6px' }}>{p.t}</div>
               <p className="tf-small" style={{ margin: 0, fontSize: '0.82rem' }}>{p.d}</p>
             </div>
@@ -99,7 +115,7 @@ export default function ComoFunciona() {
       </Secao>
 
       {/* critérios e pesos (slides 2 e 6) */}
-      <Secao num="02" titulo="OS 5 CRITÉRIOS E SEUS PESOS">
+      <Secao num="02" titulo="OS 5 CRITÉRIOS E SEUS PESOS" mascote={{ img: AXEL.conc, h: 116 }}>
         <div className="tf-card" style={{ marginTop: 16, padding: '22px 26px', display: 'flex', flexDirection: 'column', gap: 16 }}>
           {CRITERIOS.map((cr) => (
             <div key={cr.nome} className="g-1col" style={{ display: 'grid', gridTemplateColumns: '170px 64px 1fr', gap: 14, alignItems: 'center' }}>
@@ -117,7 +133,7 @@ export default function ComoFunciona() {
       </Secao>
 
       {/* tangível (slide 7) */}
-      <Secao num="03" titulo="COMO PONTUA O RETORNO TANGÍVEL">
+      <Secao num="03" titulo="COMO PONTUA O RETORNO TANGÍVEL" mascote={{ img: AXEL.enterprise, h: 108, lado: 'esq' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: 12, marginTop: 16 }}>
           <div className="tf-card" style={{ padding: '20px 22px' }}>
             <span className="tf-mono" style={{ fontSize: '0.6rem' }}>FÓRMULA · NORMALIZAÇÃO RELATIVA</span>
@@ -142,7 +158,7 @@ export default function ComoFunciona() {
       </Secao>
 
       {/* intangível (slide 8) */}
-      <Secao num="04" titulo="COMO O COMITÊ AVALIA O INTANGÍVEL">
+      <Secao num="04" titulo="COMO O COMITÊ AVALIA O INTANGÍVEL" mascote={{ img: AXEL.basic, h: 110 }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: 12, marginTop: 16 }}>
           <div className="tf-card" style={{ padding: '20px 22px' }}>
             <span className="tf-mono" style={{ fontSize: '0.6rem' }}>ESCALA DE AVALIAÇÃO · 0 A 5</span>
@@ -170,7 +186,7 @@ export default function ComoFunciona() {
       </Secao>
 
       {/* categorias (slide 5 / RF-17) */}
-      <Secao num="05" titulo="CATEGORIAS DE PROJETO">
+      <Secao num="05" titulo="CATEGORIAS DE PROJETO" mascote={{ img: AXEL.back, h: 102, lado: 'esq' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(210px,1fr))', gap: 12, marginTop: 16 }}>
           {CATS.map((cat) => (
             <div key={cat.id} className="tf-card" style={{ padding: '18px 20px' }}>
@@ -182,7 +198,7 @@ export default function ComoFunciona() {
       </Secao>
 
       {/* regras gerais (slide 13) */}
-      <Secao num="06" titulo="REGRAS GERAIS DO PROGRAMA">
+      <Secao num="06" titulo="REGRAS GERAIS DO PROGRAMA" mascote={{ img: AXEL.rep, h: 88 }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: 12, marginTop: 16 }}>
           {REGRAS.map((r) => (
             <div key={r.t} className="tf-card" style={{ padding: '16px 20px' }}>
@@ -194,7 +210,8 @@ export default function ComoFunciona() {
       </Secao>
 
       {/* fecho (slides 14 e 15) */}
-      <div className="tf-card" style={{ marginTop: 44, padding: '36px 32px', textAlign: 'center', background: 'var(--tf-bg-2)' }}>
+      <div className="tf-card" style={{ marginTop: 44, padding: '30px 32px 36px', textAlign: 'center', background: 'var(--tf-bg-2)' }}>
+        <img src={AXEL.inscrito} alt="" aria-hidden="true" loading="lazy" style={{ height: 148, width: 'auto', marginBottom: 6 }} />
         <p style={{ fontFamily: 'var(--tf-font-display)', fontSize: '1.25rem', fontWeight: 600, lineHeight: 1.5, maxWidth: 680, margin: '0 auto', color: 'var(--tf-ink)' }}>
           “Não sabemos se nossa função será substituída pela IA. Mas certamente seremos substituídos por <span style={{ color: 'var(--tf-accent)' }}>alguém que sabe utilizá-la</span>.”
         </p>

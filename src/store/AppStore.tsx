@@ -16,6 +16,8 @@ import { addDias, logTimestamp, todayISO } from '../lib/dates';
 import { brl, GCOLORS, num, primeiroNome } from '../lib/format';
 import { isAvaliado, rankingDoCiclo, setComiteMembros, tangValidado } from '../lib/scoring';
 import { ehFluxAdmin, ehHubAdmin } from '../lib/roles';
+import { noticiaAcesso, noticiaEtapa, type NoticiaAxel } from '../lib/axel';
+import { colunaDe } from '../pages/flux/statusProjeto';
 import type {
   Anexo, AnexoTarefa, AppState, Ciclo, Comentario, Etapa, Ferramenta, LogEntry, LogTipo,
   NotaTrio, PapelProjeto, Periodicidade, Projeto, ProjetoLivre, QuadroProjeto,
@@ -69,6 +71,10 @@ interface StoreApi {
   /** Coleções principais carregadas para o usuário logado. */
   dataReady: boolean;
   loginErro: string | null;
+
+  /** Notícia do Axel em exibição (popup de etapa/acesso do Flux) e avanço da fila. */
+  axelNoticia: NoticiaAxel | null;
+  axelProximo(): void;
 
   byId(id: string): Usuario | undefined;
   proj(id: string): Projeto | undefined;
@@ -184,6 +190,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
   const [toast, setToast] = useState<ToastDef | null>(null);
   const [modal, setModal] = useState<ModalDef | null>(null);
   const [pitchDraft, setPitchDraft] = useState<PitchDraft>(PITCH_DRAFT_VAZIO);
+  const [axelFila, setAxelFila] = useState<NoticiaAxel[]>([]);
   const toastTimer = useRef<number | null>(null);
 
   useEffect(() => {
@@ -356,6 +363,38 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [me?.id, dataReady, primeiroLogin]);
 
+  // ── Axel: notícias de mudança de etapa e de acesso ao Claude ─────────────
+  // Compara a coluna do kanban e o tier dos MEUS projetos com a última foto
+  // salva no navegador (localStorage). Mudou → enfileira popup. A primeira
+  // carga (sem foto anterior) só registra a base, sem disparar nada.
+  useEffect(() => {
+    if (!me || !dataReady) return;
+    const chave = 'pf-axel-' + me.id;
+    let antes: Record<string, { col: string; tier: string | null }> | null = null;
+    try {
+      const bruto = localStorage.getItem(chave);
+      if (bruto) antes = JSON.parse(bruto);
+    } catch { /* sem storage: sem notícias persistentes */ }
+
+    const agora: Record<string, { col: string; tier: string | null }> = {};
+    const novas: NoticiaAxel[] = [];
+    for (const p of projects) {
+      if (p.uid !== me.id) continue;
+      const col = colunaDe(p);
+      const tier = p.tier ?? null;
+      agora[p.id] = { col, tier };
+      const ant = antes?.[p.id];
+      if (!ant) continue; // primeiro uso ou projeto recém-criado: só registra
+      const ganhouAcesso = !ant.tier && tier ? tier : null;
+      if (ganhouAcesso) novas.push(noticiaAcesso(ganhouAcesso, p.nome));
+      // a entrada em "dev" causada pelo próprio acesso já está na notícia acima
+      if (ant.col !== col && !(ganhouAcesso && col === 'dev')) novas.push(noticiaEtapa(col, p.nome));
+    }
+    try { localStorage.setItem(chave, JSON.stringify(agora)); } catch { /* ok */ }
+    if (novas.length) setAxelFila((f) => [...f, ...novas]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projects, me?.id, dataReady]);
+
   const state = useMemo<AppState>(() => ({
     uid, tema, users, projects, cycles, domains, tools, extraProjs, tarefas, access, logs,
   }), [uid, tema, users, projects, cycles, domains, tools, extraProjs, tarefas, access, logs]);
@@ -440,6 +479,8 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
 
     return {
       state, me, cicloAtivo, authReady, logado: !!uid, dataReady, loginErro, byId, proj,
+      axelNoticia: axelFila[0] ?? null,
+      axelProximo: () => setAxelFila((f) => f.slice(1)),
       cor: (id: string) => {
         const i = users.findIndex((u) => u.id === id);
         return GCOLORS[(i < 0 ? 0 : i) % GCOLORS.length];
@@ -954,7 +995,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
       },
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state, me, authReady, dataReady, loginErro, toast, modal, pitchDraft]);
+  }, [state, me, authReady, dataReady, loginErro, toast, modal, pitchDraft, axelFila]);
 
   return <Ctx.Provider value={api}>{children}</Ctx.Provider>;
 }

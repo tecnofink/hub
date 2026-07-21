@@ -116,6 +116,22 @@ function tituloDe(path: string): string {
   return 'HUB';
 }
 
+/** Popup do Axel: notícia de mudança de etapa ou de acesso ao Claude (fila do store). */
+export function AxelModal() {
+  const { axelNoticia, axelProximo } = useStore();
+  if (!axelNoticia) return null;
+  return (
+    <Modal onClose={axelProximo} maxWidth={520} labelId="axel-titulo">
+      <div style={{ textAlign: 'center', padding: '10px 6px 4px' }}>
+        <img src={axelNoticia.img} alt="" style={{ maxHeight: 'min(320px, 42vh)', maxWidth: '84%', width: 'auto' }} />
+        <h3 id="axel-titulo" className="tf-h3" style={{ margin: '16px 0 8px' }}>{axelNoticia.titulo}</h3>
+        <p className="tf-body" style={{ margin: '0 auto 22px', maxWidth: 400 }}>{axelNoticia.texto}</p>
+        <button onClick={axelProximo} className="tf-btn tf-btn-accent foco-tf" style={{ padding: '12px 28px' }}>Entendi!</button>
+      </div>
+    </Modal>
+  );
+}
+
 /** Layout autenticado (RF-05: sessão + "Sair"; RF-11: tema; navegação contextual). */
 export default function Shell() {
   const { me, state, authReady, logado, dataReady, logout } = useStore();
@@ -233,6 +249,7 @@ export default function Shell() {
         </div>
       </footer>
       <ToastModal />
+      <AxelModal />
     </div>
   );
 }

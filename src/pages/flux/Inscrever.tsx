@@ -6,6 +6,7 @@ import { dbr, mesesDoCiclo, todayISO } from '../../lib/dates';
 import { brl, num } from '../../lib/format';
 import { CATS, INTANGIVEIS } from '../../lib/scoring';
 import { Erro, L, Mono, Pill } from '../../components/ui';
+import { AXEL } from '../../lib/axel';
 
 export default function Inscrever() {
   const store = useStore();
@@ -41,10 +42,16 @@ export default function Inscrever() {
   return (
     <div className="anim-in" style={{ maxWidth: 920, margin: '0 auto', padding: '48px 32px 80px' }}>
       <button type="button" onClick={() => nav('/flux')} className="back-link foco-tf">← FLUX / {c.nome}</button>
-      <h1 className="tf-h2" style={{ margin: '14px 0 8px' }}>Inscrever pitch</h1>
-      <p className="tf-body" style={{ margin: '0 0 30px', maxWidth: 640 }}>
-        Descreva seu projeto de IA. Depois de enviado, o pitch <strong>não poderá ser editado</strong> — mas o produto final pode ser um pouco diferente do descrito.
-      </p>
+      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 22, flexWrap: 'wrap', margin: '14px 0 22px' }}>
+        <div style={{ flex: 1, minWidth: 'min(420px, 100%)' }}>
+          <h1 className="tf-h2" style={{ margin: '0 0 8px' }}>Inscrever pitch</h1>
+          <p className="tf-body" style={{ margin: 0, maxWidth: 640 }}>
+            Descreva seu projeto de IA. Depois de enviado, o pitch <strong>não poderá ser editado</strong> — mas o produto final pode ser um pouco diferente do descrito.
+          </p>
+        </div>
+        {/* Axel no laptop — ao lado do cabeçalho, alinhado à direita com o card de identificação */}
+        <img src={AXEL.inscrever} alt="Axel, o mascote do Flux, preparando um pitch no laptop" style={{ height: 'clamp(120px, 17vw, 178px)', width: 'auto', flex: 'none', marginBottom: -2 }} />
+      </div>
 
       <div className="tf-card" style={{ padding: 34, display: 'flex', flexDirection: 'column', gap: 26 }}>
         <div>
