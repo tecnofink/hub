@@ -1,6 +1,6 @@
 /** Componentes de UI compartilhados — primitivas do DS Tecnofink. */
 import React, { useEffect, useRef, useState } from 'react';
-import { iniciais } from '../lib/format';
+import { iniciais, fotoNaMedida } from '../lib/format';
 
 /** Badge de status (tf-badge do DS). */
 export function Badge({ kind, children, style }: { kind: 'live' | 'warn' | 'crit' | 'neutral'; children: React.ReactNode; style?: React.CSSProperties }) {
@@ -24,7 +24,7 @@ export function Avatar({ nome, cor, foto, size = 30, fontSize }: { nome: string;
   const [erroFoto, setErroFoto] = useState(false);
   useEffect(() => { setErroFoto(false); }, [foto]);
   if (foto && !erroFoto) {
-    return <img src={foto} alt={nome} referrerPolicy="no-referrer" onError={() => setErroFoto(true)} style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', flex: 'none' }} />;
+    return <img src={fotoNaMedida(foto, size)} alt={nome} referrerPolicy="no-referrer" onError={() => setErroFoto(true)} style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', flex: 'none' }} />;
   }
   return (
     <span style={{ width: size, height: size, borderRadius: '50%', background: cor, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--tf-font-mono)', fontSize: fontSize ?? '0.6rem', flex: 'none' }}>

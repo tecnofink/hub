@@ -27,6 +27,19 @@ export function iniciais(nome: string): string {
   return (p[0][0] + (p[1] ? p[1][0] : '')).toUpperCase();
 }
 
+/**
+ * Ajusta a rendição da foto do Google (lh3.googleusercontent.com) ao tamanho de
+ * exibição em telas retina (2×), com piso de 128px. Isso também contorna a
+ * miniatura padrão `=s96-c`, que às vezes volta como monograma (a letra em
+ * círculo) por cache velho depois de a pessoa trocar a foto no Google — os
+ * demais tamanhos servem a foto real. URLs sem o sufixo `=sNN` ficam intactas.
+ */
+export function fotoNaMedida(url: string | undefined, size: number): string | undefined {
+  if (!url) return url;
+  const alvo = Math.max(128, Math.round(size * 2));
+  return url.replace(/=s\d+(-c)?$/, '=s' + alvo + '-c');
+}
+
 export function primeiroNome(nome: string): string {
   return nome.trim().split(/\s+/)[0];
 }
