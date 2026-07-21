@@ -1,5 +1,5 @@
 /** Componentes de UI compartilhados — primitivas do DS Tecnofink. */
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { iniciais } from '../lib/format';
 
 /** Badge de status (tf-badge do DS). */
@@ -19,8 +19,12 @@ export function MetricStat({ value, label, critical }: { value: string; label: s
 
 /** Avatar circular — foto do Google Workspace (RF-06) ou iniciais coloridas. */
 export function Avatar({ nome, cor, foto, size = 30, fontSize }: { nome: string; cor: string; foto?: string; size?: number; fontSize?: string }) {
-  if (foto) {
-    return <img src={foto} alt={nome} referrerPolicy="no-referrer" style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', flex: 'none' }} />;
+  // se a foto do Google não carregar (403 por referrer, expirada, rede), cai
+  // nas iniciais em vez de mostrar imagem quebrada; reseta se a URL mudar
+  const [erroFoto, setErroFoto] = useState(false);
+  useEffect(() => { setErroFoto(false); }, [foto]);
+  if (foto && !erroFoto) {
+    return <img src={foto} alt={nome} referrerPolicy="no-referrer" onError={() => setErroFoto(true)} style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', flex: 'none' }} />;
   }
   return (
     <span style={{ width: size, height: size, borderRadius: '50%', background: cor, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--tf-font-mono)', fontSize: fontSize ?? '0.6rem', flex: 'none' }}>

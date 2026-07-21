@@ -247,6 +247,9 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
           setAuthReady(true);
           return;
         }
+        // atualiza o perfil do Google (foto/nome) antes de sincronizar: sem
+        // isto, uma foto trocada no Google só aparece quando o token renova
+        try { await u.reload(); } catch { /* offline/sessão expirada: usa o cache */ }
         const uref = doc(db, 'users', u.uid);
         const snap = await getDoc(uref);
         if (!snap.exists()) {
