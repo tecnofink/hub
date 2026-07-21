@@ -7,8 +7,8 @@ import type { Usuario } from './types';
 export const EMPRESAS = ['Tecnofink Matriz', 'Tecnofink Itaboraí', 'Powerpoxi'];
 
 export const DEPTOS = [
-  'Engenharia', 'Comercial', 'Financeiro', 'Controladoria', 'RH e DP',
-  'Compras', 'Inovação, Marketing e Estratégia', 'Operações', 'Qualidade e Segurança',
+  'Presidência e Conselho', 'Engenharia', 'Comercial', 'Financeiro', 'Controladoria',
+  'RH e DP', 'Compras', 'Inovação, Marketing e Estratégia', 'Operações', 'Qualidade e Segurança',
 ];
 
 /** Perfil completo: cargo preenchido + empresa e departamento dentro das listas. */
