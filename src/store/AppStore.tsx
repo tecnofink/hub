@@ -254,8 +254,8 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
           await setDoc(uref, {
             nome: u.displayName ?? (u.email ?? '').split('@')[0],
             email: u.email, foto: u.photoURL ?? '',
-            cargo: '', depto: '', empresa: 'Tecnofink LTDA',
-            roles: ['user'], ativo: true, apres: '', niver: '',
+            cargo: '', depto: '', empresa: 'Tecnofink Matriz',
+            roles: ['user'], ativo: true, apres: '', niver: '', perfilPendente: true,
           });
           setPrimeiroLogin(true);
         } else if (snap.data().ativo !== true) {
@@ -355,7 +355,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (me && primeiroLogin) {
       setPrimeiroLogin(false);
-      showToast('Bem-vindo(a), ' + primeiroNome(me.nome) + '! Complete cargo e empresa do grupo no seu Perfil (LGPD: campos pessoais são opcionais).');
+      showToast('Bem-vindo(a) ao portal, ' + primeiroNome(me.nome) + '!');
     } else if (me && dataReady && sessionStorage.getItem('pf-saudou') !== me.id) {
       sessionStorage.setItem('pf-saudou', me.id);
       showToast('Bem-vindo(a), ' + primeiroNome(me.nome) + '!');
@@ -513,7 +513,8 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
 
       salvarPerfil: (dados) => {
         if (!me) return;
-        updateDoc(doc(db, 'users', me.id), dados as Record<string, unknown>)
+        // salvar o perfil sempre encerra a pendência de conclusão
+        updateDoc(doc(db, 'users', me.id), { ...dados, perfilPendente: false } as Record<string, unknown>)
           .then(() => showToast('Perfil atualizado.'))
           .catch(falha);
       },

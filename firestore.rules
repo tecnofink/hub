@@ -85,7 +85,7 @@ service cloud.firestore {
       // RF-07: o usuário edita o próprio perfil (nunca e-mail, papéis ou status)
       allow update: if isActive() && request.auth.uid == userId
         && request.resource.data.diff(resource.data).affectedKeys()
-             .hasOnly(['nome', 'cargo', 'empresa', 'depto', 'niver', 'apres', 'foto']);
+             .hasOnly(['nome', 'cargo', 'empresa', 'depto', 'niver', 'apres', 'foto', 'perfilPendente']);
 
       // RF-55 (revisto): admin do HUB gere contas (ativo) e papéis do portal;
       // admin do FLUX gere apenas papéis (comitê/fluxAdmin, via UI do Flux).

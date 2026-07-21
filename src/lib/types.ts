@@ -19,6 +19,8 @@ export interface Usuario {
   ativo: boolean;
   apres: string;
   niver: string; // dd/mm, opcional
+  /** true enquanto a pessoa não confirmou o perfil (1º acesso ou migração). */
+  perfilPendente?: boolean;
 }
 
 export type CategoriaId = 'produtividade' | 'qualidade' | 'experiencia' | 'inovacao' | 'reducao';

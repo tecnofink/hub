@@ -6,6 +6,7 @@ import { dbr, todayISO } from '../lib/dates';
 import { ehFluxAdmin, ehHubAdmin, faviconDe, rotaNormalizada } from '../lib/roles';
 import { Avatar, Modal } from './ui';
 import ALink from './ALink';
+import PerfilPendenteModal from './PerfilPendenteModal';
 
 function NavPill({ on, to, children, outline }: { on: boolean; to: string; children: React.ReactNode; outline?: boolean }) {
   return (
@@ -250,6 +251,8 @@ export default function Shell() {
       </footer>
       <ToastModal />
       <AxelModal />
+      {/* renderizado por último: fica por cima até o perfil ser concluído */}
+      <PerfilPendenteModal />
     </div>
   );
 }

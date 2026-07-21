@@ -5,12 +5,7 @@ import { useStore } from '../store/AppStore';
 import { ehFluxAdmin, ehHubAdmin } from '../lib/roles';
 import { Avatar, L } from '../components/ui';
 import { AXEL } from '../lib/axel';
-
-const EMPRESAS = ['Tecnofink Matriz', 'Tecnofink Itaboraí', 'Powerpoxi'];
-const DEPTOS = [
-  'Engenharia', 'Comercial', 'Financeiro', 'Controladoria', 'RH e DP',
-  'Compras', 'Inovação, Marketing e Estratégia', 'Operações', 'Qualidade e Segurança',
-];
+import { EMPRESAS, DEPTOS } from '../lib/opcoesPerfil';
 
 export default function Perfil() {
   const { me, cor, salvarPerfil } = useStore();
