@@ -1,7 +1,7 @@
 /** C2 · Inscrição de pitch (RF-16..19): formulário completo com conversor ao vivo. */
 import React, { useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
-import { useStore } from '../../store/AppStore';
+import { useStore, useUI } from '../../store/AppStore';
 import { dbr, mesesDoCiclo, todayISO } from '../../lib/dates';
 import { brl, num } from '../../lib/format';
 import { CATS, INTANGIVEIS } from '../../lib/scoring';
@@ -10,7 +10,8 @@ import { AXEL } from '../../lib/axel';
 
 export default function Inscrever() {
   const store = useStore();
-  const { me, cicloAtivo: c, pitchDraft: d, setPitchDraft } = store;
+  const { me, cicloAtivo: c } = store;
+  const { pitchDraft: d, setPitchDraft } = useUI();
   const nav = useNavigate();
   const [erro, setErro] = useState<string | null>(null);
 

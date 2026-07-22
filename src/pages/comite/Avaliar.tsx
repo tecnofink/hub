@@ -7,7 +7,7 @@
  */
 import React, { useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
-import { useStore } from '../../store/AppStore';
+import { useStore, useUI } from '../../store/AppStore';
 import { dbr, mesesDoCiclo } from '../../lib/dates';
 import { brl, num, primeiroNome } from '../../lib/format';
 import { catNome, comiteMembros, nValidacoes, pontualidade, RUBRICA, tangValidado } from '../../lib/scoring';
@@ -15,6 +15,7 @@ import { Avatar, Badge, Erro, Mono } from '../../components/ui';
 
 export default function Avaliar() {
   const store = useStore();
+  const ui = useUI();
   const { me, state } = store;
   const { id } = useParams();
   const nav = useNavigate();
@@ -49,8 +50,8 @@ export default function Avaliar() {
 
   const confirmarAjuste = () => {
     const v = num(ajuste);
-    if (!v || v <= 0) return store.showToast('Informe um valor válido em R$ por ciclo.');
-    if (v >= declarado) return store.showToast('O valor ajustado precisa ser menor que o declarado (' + brl(declarado) + ').');
+    if (!v || v <= 0) return ui.showToast('Informe um valor válido em R$ por ciclo.');
+    if (v >= declarado) return ui.showToast('O valor ajustado precisa ser menor que o declarado (' + brl(declarado) + ').');
     store.validarTangivel(p.id, v);
     setAjusteOn(false);
     setAjuste('');
@@ -176,7 +177,7 @@ export default function Avaliar() {
             Resultado registrado após o deadline. Cabe ao comitê aceitar (Pontualidade 0) ou desclassificar — não há desclassificação automática.
           </span>
           <button
-            onClick={() => store.confirmar({
+            onClick={() => ui.confirmar({
               titulo: 'Desclassificar este projeto?',
               texto: '"' + p.nome + '" será marcado como Reprovado e sai do ranking do ciclo. A decisão é do comitê e fica registrada nos logs de auditoria.',
               cta: 'Desclassificar', danger: true,

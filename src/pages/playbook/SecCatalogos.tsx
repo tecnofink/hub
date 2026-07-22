@@ -6,7 +6,7 @@
 import React, { useState } from 'react';
 import type { PbCatalogo, PbDocCatalogos, PbGrupoCatalogo } from '../../lib/playbook';
 import { MetricStat } from '../../components/ui';
-import { useStore } from '../../store/AppStore';
+import { useUI } from '../../store/AppStore';
 import { pbId } from './usePlaybook';
 import { BotaoRemover, NumeroBlur, SecHead } from './comum';
 
@@ -17,7 +17,7 @@ export default function SecCatalogos({ dados, podeEditar, salvar }: {
   podeEditar: boolean;
   salvar: (d: PbDocCatalogos) => void;
 }) {
-  const store = useStore();
+  const ui = useUI();
   const [consumoAberto, setConsumoAberto] = useState(false);
   const [novoNome, setNovoNome] = useState('');
   const [novoGrupo, setNovoGrupo] = useState<PbGrupoCatalogo>('gerais');
@@ -119,7 +119,7 @@ export default function SecCatalogos({ dados, podeEditar, salvar }: {
           </select>
           <button
             onClick={() => {
-              if (!novoNome.trim()) return store.showToast('Dê um nome ao catálogo.');
+              if (!novoNome.trim()) return ui.showToast('Dê um nome ao catálogo.');
               salvar({ ...dados, catalogos: [...dados.catalogos, { id: pbId(), nome: novoNome.trim(), grupo: novoGrupo, estoque: 0, consumoAnual: 0, isCustom: true, ordem: todos.reduce((a, c) => Math.max(a, c.ordem), 0) + 1 }] });
               setNovoNome('');
             }}

@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { deleteObject, getDownloadURL, ref as sRef, uploadBytes } from 'firebase/storage';
 import { db, storage } from '../../lib/firebase';
-import { useStore } from '../../store/AppStore';
+import { useStore, useUI } from '../../store/AppStore';
 import { ehHubAdmin } from '../../lib/roles';
 import type {
   PbArquivo, PbAssociacao, PbBrinde, PbConfig, PbDocCatalogos, PbDocChecklist,
@@ -47,6 +47,7 @@ export function pbId(): string {
 
 export function usePlaybook() {
   const store = useStore();
+  const ui = useUI();
   const { me } = store;
   const [docs, setDocs] = useState<PlaybookDocs>(VAZIO);
   const [pronto, setPronto] = useState(false);
@@ -99,7 +100,7 @@ export function usePlaybook() {
     docs, pronto, podeEditar, podeVerTudo, podeGerirEditores, papel,
     /** regrava o documento inteiro da seção (documentos pequenos, edição rara) */
     salvar: <K extends keyof PlaybookDocs>(secao: K, dados: PlaybookDocs[K]) => {
-      setDoc(doc(db, 'playbook', secao), dados).catch((e) => store.showToast(msg(e)));
+      setDoc(doc(db, 'playbook', secao), dados).catch((e) => ui.showToast(msg(e)));
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [docs, pronto, podeEditar, podeVerTudo, podeGerirEditores, papel, me?.id]);
@@ -107,7 +108,7 @@ export function usePlaybook() {
 
 /** Documento da "página da feira" de um evento (checklist/logística/leads/portal). */
 export function useFeira(eventoId: string | null) {
-  const store = useStore();
+  const ui = useUI();
   const [feira, setFeira] = useState<PbFeira>(FEIRA_VAZIA);
 
   useEffect(() => {
@@ -126,7 +127,7 @@ export function useFeira(eventoId: string | null) {
 
   const salvar = (nova: PbFeira) => {
     if (!eventoId) return;
-    setDoc(doc(db, 'playbookFeira', eventoId), nova).catch((e) => store.showToast(msg(e)));
+    setDoc(doc(db, 'playbookFeira', eventoId), nova).catch((e) => ui.showToast(msg(e)));
   };
 
   return { feira, salvar };

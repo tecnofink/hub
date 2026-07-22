@@ -1,7 +1,7 @@
 /** [04] Associações · [05] Prospecção · [06] Brindes. */
 import React from 'react';
 import type { PbAssociacao, PbBrinde, PbDocProspeccao, PbParticipacao } from '../../lib/playbook';
-import { useStore } from '../../store/AppStore';
+import { useUI } from '../../store/AppStore';
 import { pbId } from './usePlaybook';
 import { BotaoRemover, CampoBlur, NumeroBlur, SecHead } from './comum';
 
@@ -64,7 +64,7 @@ export function SecAssociacoes({ lista, podeEditar, salvar }: { lista: PbAssocia
 const PARTICIPACOES: PbParticipacao[] = ['A avaliar', 'Stand', 'Presença de equipe', 'Stand + equipe'];
 
 export function SecProspeccao({ dados, podeEditar, salvar }: { dados: PbDocProspeccao; podeEditar: boolean; salvar: (d: PbDocProspeccao) => void }) {
-  const store = useStore();
+  const ui = useUI();
   return (
     <section>
       <SecHead id="avaliacao" num="05" titulo="Prospecção" sub="Sugestões de novos eventos por setor da indústria — avalie a forma de participação." />
@@ -132,7 +132,7 @@ export function SecProspeccao({ dados, podeEditar, salvar }: { dados: PbDocProsp
             <button
               onClick={() => {
                 const ultimo = [...dados.setores].sort((a, b) => a.ordem - b.ordem)[dados.setores.length - 1];
-                store.confirmar({
+                ui.confirmar({
                   titulo: 'Remover setor?', texto: `"${ultimo.nome}" e os eventos dele saem da prospecção.`, cta: 'Remover', danger: true,
                   onConfirm: () => salvar({ setores: dados.setores.filter((x) => x.id !== ultimo.id), eventos: dados.eventos.filter((x) => x.setorId !== ultimo.id) }),
                 });

@@ -1,6 +1,6 @@
 /** E5 · Acesso dos pitches (RF-24, P12): triagem com os mesmos poderes do comitê. */
 import React from 'react';
-import { useStore } from '../../store/AppStore';
+import { useStore, useUI } from '../../store/AppStore';
 import { dbr, mesesDoCiclo } from '../../lib/dates';
 import { brl } from '../../lib/format';
 import { catNome } from '../../lib/scoring';
@@ -8,6 +8,7 @@ import { Avatar, Vazio } from '../../components/ui';
 
 export default function AdmPitches() {
   const store = useStore();
+  const ui = useUI();
   const { state, cicloAtivo: c } = store;
   const fila = state.projects.filter((p) => c && p.ciclo === c.id && !p.tier && !p.reprovado);
   const meses = c ? mesesDoCiclo(c.inicio, c.fim) : 3.5;
@@ -38,7 +39,7 @@ export default function AdmPitches() {
                 </div>
                 <div style={{ display: 'flex', gap: 8, flex: 'none', alignItems: 'center', flexWrap: 'wrap' }}>
                   <button
-                    onClick={() => store.confirmar({
+                    onClick={() => ui.confirmar({
                       titulo: 'Enviar pitch para o backlog?',
                       texto: '"' + p.nome + '" sai deste ciclo e fica guardado no Backlog de Projetos. O titular pode reativá-lo quando um novo ciclo abrir as inscrições.',
                       cta: 'Enviar para o backlog',
@@ -49,7 +50,7 @@ export default function AdmPitches() {
                     Backlog
                   </button>
                   <button
-                    onClick={() => store.confirmar({
+                    onClick={() => ui.confirmar({
                       titulo: 'Reprovar este pitch?',
                       texto: '"' + p.nome + '" será marcado como Reprovado e não participa do ranking deste ciclo. A decisão fica registrada nos logs de auditoria.',
                       cta: 'Reprovar pitch', danger: true,

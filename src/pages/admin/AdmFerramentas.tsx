@@ -4,12 +4,13 @@
  * O ícone das ferramentas é automático (favicon do site da rota externa).
  */
 import React, { useState } from 'react';
-import { useStore } from '../../store/AppStore';
+import { useStore, useUI } from '../../store/AppStore';
 import { faviconDe, iconeNativo } from '../../lib/roles';
 import { Badge, L, Mono } from '../../components/ui';
 
 export default function AdmFerramentas() {
   const store = useStore();
+  const ui = useUI();
   const { state } = store;
   const [f, setF] = useState({ nome: '', desc: '', rota: '' });
   const [erro, setErro] = useState<string | null>(null);
@@ -79,7 +80,7 @@ export default function AdmFerramentas() {
             </button>
             {!t.fixa && (
               <button type="button"
-                onClick={() => store.confirmar({
+                onClick={() => ui.confirmar({
                   titulo: 'Excluir ferramenta?',
                   texto: '"' + t.nome + '" será removida do hub em definitivo.',
                   cta: 'Excluir', danger: true,
@@ -96,7 +97,7 @@ export default function AdmFerramentas() {
 
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12 }}>
         <button type="button"
-          onClick={() => store.confirmar({
+          onClick={() => ui.confirmar({
             titulo: 'Restaurar ferramentas nativas?',
             texto: 'Todos os cadastros atuais serão removidos e o Produtividade (/tarefas) e o Marketing (/playbook) serão recriados. O Flux não é afetado (fixo em código).',
             cta: 'Restaurar', danger: true,

@@ -1,11 +1,12 @@
 /** E4 · Ciclos (RF-58): editar datas, encerrar (congela ranking) e criar novo ciclo. */
 import React, { useState } from 'react';
-import { useStore } from '../../store/AppStore';
+import { useStore, useUI } from '../../store/AppStore';
 import { addDias, dbr, todayISO } from '../../lib/dates';
 import { Badge, L, Mono } from '../../components/ui';
 
 export default function AdmCiclos() {
   const store = useStore();
+  const ui = useUI();
   const { state, cicloAtivo: c } = store;
   const [ce, setCe] = useState(() => (c ? { nome: c.nome, inicio: c.inicio, limite: c.limite, fim: c.fim } : { nome: '', inicio: '', limite: '', fim: '' }));
   const [nc, setNc] = useState(() => ({
@@ -38,7 +39,7 @@ export default function AdmCiclos() {
           {dateGrid(ce, setCe)}
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginTop: 20, flexWrap: 'wrap' }}>
             <button
-              onClick={() => store.confirmar({
+              onClick={() => ui.confirmar({
                 titulo: 'Encerrar o ' + c.nome + '?',
                 texto: 'O ranking será congelado e arquivado no histórico. Projetos sem resultado ficam fora do ranking até decisão do comitê. Um novo ciclo poderá ser criado em seguida.',
                 cta: 'Encerrar ciclo', danger: true,
@@ -50,7 +51,7 @@ export default function AdmCiclos() {
             </button>
             <button
               onClick={() => {
-                if (!ce.nome.trim() || !ce.inicio || !ce.limite || !ce.fim) return store.showToast('Preencha nome e as três datas do ciclo.');
+                if (!ce.nome.trim() || !ce.inicio || !ce.limite || !ce.fim) return ui.showToast('Preencha nome e as três datas do ciclo.');
                 store.salvarCiclo({ nome: ce.nome.trim(), inicio: ce.inicio, limite: ce.limite, fim: ce.fim });
               }}
               className="tf-btn tf-btn-accent"
@@ -66,7 +67,7 @@ export default function AdmCiclos() {
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 18 }}>
             <button
               onClick={() => {
-                if (!nc.nome.trim() || !nc.inicio || !nc.limite || !nc.fim) return store.showToast('Preencha nome e as três datas do novo ciclo.');
+                if (!nc.nome.trim() || !nc.inicio || !nc.limite || !nc.fim) return ui.showToast('Preencha nome e as três datas do novo ciclo.');
                 store.criarCiclo({ nome: nc.nome.trim(), inicio: nc.inicio, limite: nc.limite, fim: nc.fim });
               }}
               className="tf-btn tf-btn-accent"

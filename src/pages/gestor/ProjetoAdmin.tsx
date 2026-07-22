@@ -5,7 +5,7 @@
  */
 import React, { useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
-import { useStore } from '../../store/AppStore';
+import { useStore, useUI } from '../../store/AppStore';
 import type { PapelProjeto } from '../../lib/types';
 import { Avatar, Erro, L, Mono } from '../../components/ui';
 
@@ -17,6 +17,7 @@ const PAPEIS: { id: PapelProjeto; nome: string; desc: string }[] = [
 
 export default function ProjetoAdmin() {
   const store = useStore();
+  const ui = useUI();
   const { me, state } = store;
   const { id } = useParams();
   const nav = useNavigate();
@@ -72,7 +73,7 @@ export default function ProjetoAdmin() {
                     className="f-select" style={{ width: '100%', maxWidth: 170, padding: '8px 10px' }} autoFocus value={papel}
                     onChange={(e) => {
                       const err = store.alterarPapelMembro(id, u!.id, e.target.value as PapelProjeto);
-                      if (err) store.showToast(err);
+                      if (err) ui.showToast(err);
                       setEditandoPapel(null);
                     }}
                     onBlur={() => setEditandoPapel(null)}
@@ -97,7 +98,7 @@ export default function ProjetoAdmin() {
                   onClick={() => {
                     if (ultimoAdmin) return;
                     const ehEu = u!.id === me.id;
-                    store.confirmar({
+                    ui.confirmar({
                       titulo: ehEu ? 'Sair do projeto?' : 'Remover membro?',
                       texto: ehEu
                         ? 'Você perderá o acesso a "' + p.nome + '" — outro administrador precisará convidá-lo de novo.'
@@ -105,7 +106,7 @@ export default function ProjetoAdmin() {
                       cta: ehEu ? 'Sair do projeto' : 'Remover', danger: true,
                       onConfirm: () => {
                         const err = store.removerMembro(id, u!.id);
-                        if (err) store.showToast(err);
+                        if (err) ui.showToast(err);
                         else if (ehEu) nav('/tarefas');
                       },
                     });
@@ -157,7 +158,7 @@ export default function ProjetoAdmin() {
             </p>
           </div>
           <button
-            onClick={() => store.confirmar({
+            onClick={() => ui.confirmar({
               titulo: (p.arquivado ? 'Desarquivar' : 'Arquivar') + ' "' + p.nome + '"?',
               texto: p.arquivado ? 'O projeto volta a aparecer para todos os membros.' : 'O projeto sai da lista de todos os membros. Os dados permanecem e é possível desarquivar depois.',
               cta: p.arquivado ? 'Desarquivar' : 'Arquivar projeto',
@@ -178,7 +179,7 @@ export default function ProjetoAdmin() {
             <input className="f-input" style={{ maxWidth: 320 }} value={nomeConfirma} onChange={(e) => setNomeConfirma(e.target.value)} placeholder={p.nome} />
             <button
               disabled={nomeConfirma !== p.nome}
-              onClick={() => store.confirmar({
+              onClick={() => ui.confirmar({
                 titulo: 'Excluir "' + p.nome + '" permanentemente?',
                 texto: 'Projeto, tarefas, comentários e anexos serão apagados em definitivo para todos os membros.',
                 cta: 'Excluir permanentemente', danger: true,

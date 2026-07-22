@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import type { PbFeira, PbLeadManual, PbLeadOrigem, PbLogisticaDoc } from '../../lib/playbook';
 import { brl } from '../../lib/format';
-import { useStore } from '../../store/AppStore';
+import { useUI } from '../../store/AppStore';
 import { pbId } from './usePlaybook';
 import { CampoBlur, NumeroBlur, UploadCampo } from './comum';
 import { L } from '../../components/ui';
@@ -30,7 +30,7 @@ export default function AbasFeira({ aba, eventoId, feira, salvar, podeEditar }: 
 
 /* ── Logística & Stand ── */
 function AbaLogistica({ eventoId, feira, salvar, podeEditar }: { eventoId: string; feira: PbFeira; salvar: (f: PbFeira) => void; podeEditar: boolean }) {
-  const store = useStore();
+  const ui = useUI();
   const log = feira.logistica;
   const setLog = (patch: Partial<PbFeira['logistica']>) => salvar({ ...feira, logistica: { ...log, ...patch } });
   const totalCustos = log.custos.reduce((a, c) => a + c.valor, 0);
@@ -91,7 +91,7 @@ function AbaLogistica({ eventoId, feira, salvar, podeEditar }: { eventoId: strin
               <CampoBlur valor={c.descricao} onSalvar={(v) => setLog({ custos: log.custos.map((x) => (x.id === c.id ? { ...x, descricao: v } : x)) })} desabilitado={!podeEditar} placeholder="Descrição" style={{ flex: 1, padding: '8px 11px', fontSize: '0.84rem' }} />
               <NumeroBlur valor={c.valor} onSalvar={(v) => setLog({ custos: log.custos.map((x) => (x.id === c.id ? { ...x, valor: v ?? 0 } : x)) })} desabilitado={!podeEditar} largura={120} placeholder="R$" />
               {podeEditar && (
-                <button type="button" className="acao foco-tf" onClick={() => store.confirmar({ titulo: 'Remover custo?', texto: c.descricao || 'Item de custo', cta: 'Remover', danger: true, onConfirm: () => setLog({ custos: log.custos.filter((x) => x.id !== c.id) }) })} style={{ color: 'var(--tf-crit)', fontWeight: 700 }}>×</button>
+                <button type="button" className="acao foco-tf" onClick={() => ui.confirmar({ titulo: 'Remover custo?', texto: c.descricao || 'Item de custo', cta: 'Remover', danger: true, onConfirm: () => setLog({ custos: log.custos.filter((x) => x.id !== c.id) }) })} style={{ color: 'var(--tf-crit)', fontWeight: 700 }}>×</button>
               )}
             </div>
           ))}
@@ -108,7 +108,7 @@ function AbaLogistica({ eventoId, feira, salvar, podeEditar }: { eventoId: strin
 
 /* ── Captação de Leads (PII — visível apenas dentro do portal logado) ── */
 function AbaLeads({ eventoId, feira, salvar, podeEditar }: { eventoId: string; feira: PbFeira; salvar: (f: PbFeira) => void; podeEditar: boolean }) {
-  const store = useStore();
+  const ui = useUI();
   const leads = feira.leads;
   const setLeads = (patch: Partial<PbFeira['leads']>) => salvar({ ...feira, leads: { ...leads, ...patch } });
 
@@ -176,7 +176,7 @@ function AbaLeads({ eventoId, feira, salvar, podeEditar }: { eventoId: string; f
                 {campo('obs', '—')}
                 <span style={{ textAlign: 'center' }}>
                   {podeEditar && (
-                    <button type="button" className="acao foco-tf" onClick={() => store.confirmar({ titulo: 'Remover lead?', texto: (l.nome || 'Lead sem nome') + ' será removido.', cta: 'Remover', danger: true, onConfirm: () => setLeads({ manuais: leads.manuais.filter((x) => x.id !== l.id) }) })} style={{ color: 'var(--tf-crit)', fontWeight: 700 }}>×</button>
+                    <button type="button" className="acao foco-tf" onClick={() => ui.confirmar({ titulo: 'Remover lead?', texto: (l.nome || 'Lead sem nome') + ' será removido.', cta: 'Remover', danger: true, onConfirm: () => setLeads({ manuais: leads.manuais.filter((x) => x.id !== l.id) }) })} style={{ color: 'var(--tf-crit)', fontWeight: 700 }}>×</button>
                   )}
                 </span>
               </div>

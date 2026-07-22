@@ -5,7 +5,7 @@
  */
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useStore } from '../../store/AppStore';
+import { useStore, useUI } from '../../store/AppStore';
 import { Badge, L } from '../../components/ui';
 import ALink from '../../components/ALink';
 import { statusDe } from '../flux/statusProjeto';
@@ -16,6 +16,7 @@ const PAPEL_L: Record<string, string> = { admin: 'ADMIN', editor: 'EDITOR', leit
 
 export default function Gestor() {
   const store = useStore();
+  const ui = useUI();
   const { me, state, cicloAtivo: c } = store;
   const nav = useNavigate();
   const [npOn, setNpOn] = useState(false);
@@ -33,7 +34,7 @@ export default function Gestor() {
   ];
 
   const criar = () => {
-    if (!npNome.trim()) return store.showToast('Dê um nome ao projeto.');
+    if (!npNome.trim()) return ui.showToast('Dê um nome ao projeto.');
     const id = store.criarProjetoLivre(npNome, npDesc);
     setNpOn(false);
     setNpNome('');

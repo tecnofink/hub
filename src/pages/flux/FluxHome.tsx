@@ -5,7 +5,7 @@
  */
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useStore } from '../../store/AppStore';
+import { useStore, useUI } from '../../store/AppStore';
 import { dbr, diasAte, mesesDoCiclo, mesesLabel, todayISO, diffDias } from '../../lib/dates';
 import { brl, brlK } from '../../lib/format';
 import { catNome, isAvaliado, score, tangValidado } from '../../lib/scoring';
@@ -26,6 +26,7 @@ const ALTURA_MASCOTE: Record<ColunaId, number> = {
 
 export default function FluxHome() {
   const store = useStore();
+  const ui = useUI();
   const { me, state, cicloAtivo: c } = store;
   const nav = useNavigate();
   const kbRef = useRef<HTMLDivElement>(null);
@@ -183,7 +184,7 @@ export default function FluxHome() {
               <button
                 onClick={() => {
                   if (!reativar.deadline || reativar.deadline < hoje || reativar.deadline > c.fim) {
-                    store.showToast('O deadline precisa estar entre hoje e ' + dbr(c.fim) + '.');
+                    ui.showToast('O deadline precisa estar entre hoje e ' + dbr(c.fim) + '.');
                     return;
                   }
                   store.reativarBacklog(reativar.pid, reativar.deadline);

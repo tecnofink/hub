@@ -4,14 +4,15 @@
  * ferramenta gere o próprio acesso (Playbook: editores; Gestor: por projeto).
  */
 import React from 'react';
-import { useStore } from '../../store/AppStore';
+import { useStore, useUI } from '../../store/AppStore';
 import { ehHubAdmin } from '../../lib/roles';
 import { Avatar, Badge, Pill } from '../../components/ui';
 
-const GRID = '280px 1fr 170px 110px 110px';
+const GRID = '280px 1fr 170px 110px 150px';
 
 export default function AdmUsuariosHub() {
   const store = useStore();
+  const ui = useUI();
   const { me, state } = store;
   if (!me) return null;
 
@@ -45,10 +46,22 @@ export default function AdmUsuariosHub() {
             <span style={{ textAlign: 'center' }}>
               <Badge kind={u.ativo ? 'live' : 'crit'}>{u.ativo ? '● ATIVA' : 'DESATIVADA'}</Badge>
             </span>
-            <span style={{ textAlign: 'right' }}>
+            <span style={{ textAlign: 'right', display: 'flex', gap: 12, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
               {u.id !== me.id && ( // ninguém desativa a própria conta
                 <button type="button" onClick={() => store.toggleAtivo(u.id)} className="acao foco-tf" style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--tf-crit)' }}>
                   {u.ativo ? 'Desativar' : 'Reativar'}
+                </button>
+              )}
+              {u.id !== me.id && !u.ativo && ( // só conta desligada; LGPD, irreversível
+                <button type="button" className="acao foco-tf" style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--tf-crit)' }}
+                  onClick={() => ui.confirmar({
+                    titulo: 'Anonimizar ' + u.nome + '?',
+                    texto: 'Remove em definitivo nome, e-mail, foto e demais dados pessoais do cadastro, apaga os logs de falha de inscrição e substitui o nome nos rankings por "Usuário removido". Os pitches permanecem para a integridade do ranking, sem identificar a pessoa. Ação irreversível — use ao desligar o colaborador (LGPD).',
+                    cta: 'Anonimizar',
+                    danger: true,
+                    onConfirm: () => store.anonimizarUsuario(u.id),
+                  })}>
+                  Anonimizar
                 </button>
               )}
             </span>

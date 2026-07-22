@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import type { PbEvento, PbStatusEvento } from '../../lib/playbook';
 import { Badge, L } from '../../components/ui';
-import { useStore } from '../../store/AppStore';
+import { useUI } from '../../store/AppStore';
 import { pbId } from './usePlaybook';
 import { SecHead } from './comum';
 
@@ -14,7 +14,7 @@ export default function SecEventos({ lista, podeEditar, salvar }: {
   podeEditar: boolean;
   salvar: (dados: { lista: PbEvento[] }) => void;
 }) {
-  const store = useStore();
+  const ui = useUI();
   const [novoOn, setNovoOn] = useState(false);
   const [f, setF] = useState({ nome: '', local: '', data: '', tipo: 'nacional' as 'nacional' | 'internacional' });
 
@@ -25,7 +25,7 @@ export default function SecEventos({ lista, podeEditar, salvar }: {
   };
 
   const adicionar = () => {
-    if (!f.nome.trim()) return store.showToast('Dê um nome ao evento.');
+    if (!f.nome.trim()) return ui.showToast('Dê um nome ao evento.');
     const maiorOrdem = lista.reduce((a, x) => Math.max(a, x.ordem), 0);
     salvar({
       lista: [...lista, { id: pbId(), nome: f.nome.trim(), local: f.local.trim() || undefined, data: f.data.trim() || 'A definir', tipo: f.tipo, status: 'NÃO INICIADO', obs: '', isCustom: true, ordem: maiorOrdem + 1 }],
@@ -48,7 +48,7 @@ export default function SecEventos({ lista, podeEditar, salvar }: {
               <button
                 type="button"
                 className="acao foco-tf"
-                onClick={() => store.confirmar({
+                onClick={() => ui.confirmar({
                   titulo: 'Remover evento?', texto: `"${ev.nome}" e a página da feira dele (checklist, logística, leads e portal) serão removidos.`, cta: 'Remover', danger: true,
                   onConfirm: () => salvar({ lista: lista.filter((x) => x.id !== ev.id) }),
                 })}

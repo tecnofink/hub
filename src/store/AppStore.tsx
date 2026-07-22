@@ -4,7 +4,7 @@
  * As regras de papel são impostas no backend (firestore.rules); aqui a UI apenas
  * reflete e orquestra as escritas.
  */
-import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { onAuthStateChanged, signInWithPopup, signOut, User } from 'firebase/auth';
 import {
   arrayRemove, arrayUnion, collection, deleteDoc, deleteField, doc, getDoc, limit,
@@ -73,25 +73,11 @@ interface StoreApi {
   dataReady: boolean;
   loginErro: string | null;
 
-  /** Notícia do Axel em exibição (popup de etapa/acesso do Flux) e avanço da fila. */
-  axelNoticia: NoticiaAxel | null;
-  axelProximo(): void;
-
   byId(id: string): Usuario | undefined;
   proj(id: string): Projeto | undefined;
   cor(uid: string): string;
   corByNome(nome: string): string;
   quadroDe(pid: string): QuadroProjeto;
-
-  toast: ToastDef | null;
-  showToast(msg: string, acao?: { label: string; fn: () => void }): void;
-  fecharToast(): void;
-  modal: ModalDef | null;
-  confirmar(m: ModalDef): void;
-  fecharModal(): void;
-
-  pitchDraft: PitchDraft;
-  setPitchDraft(d: PitchDraft): void;
 
   toggleTema(): void;
   loginGoogle(): Promise<void>;
@@ -111,6 +97,8 @@ interface StoreApi {
 
   toggleAtivo(uid: string): void;
   toggleRole(uid: string, role: Role): void;
+  /** LGPD (#30): anonimiza um colaborador desligado — comando processado por Function. */
+  anonimizarUsuario(uid: string): void;
   addDominio(d: string): string | null;
   removeDominio(d: string): void;
   salvarCiclo(dados: { nome: string; inicio: string; limite: string; fim: string }): void;
@@ -153,7 +141,28 @@ interface StoreApi {
 
 type TaskStatusMovel = 'nao' | 'and' | 'rev' | 'conc';
 
+/**
+ * Estado transitório de UI, num contexto próprio (P#8): toast, modal, rascunho
+ * do pitch e fila do Axel mudam com alta frequência (o rascunho a cada tecla).
+ * Mantê-los fora do `api` evita recriar todo o objeto de dados/ações — e assim
+ * re-renderizar a árvore inteira — a cada digitação ou toast.
+ */
+interface UIApi {
+  toast: ToastDef | null;
+  showToast(msg: string, acao?: { label: string; fn: () => void }): void;
+  fecharToast(): void;
+  modal: ModalDef | null;
+  confirmar(m: ModalDef): void;
+  fecharModal(): void;
+  pitchDraft: PitchDraft;
+  setPitchDraft(d: PitchDraft): void;
+  /** Notícia do Axel em exibição (popup de etapa/acesso do Flux) e avanço da fila. */
+  axelNoticia: NoticiaAxel | null;
+  axelProximo(): void;
+}
+
 const Ctx = createContext<StoreApi | null>(null);
+const UICtx = createContext<UIApi | null>(null);
 
 function temaInicial(): 'light' | 'dark' {
   try {
@@ -177,7 +186,11 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
   const [primeiroLogin, setPrimeiroLogin] = useState(false);
 
   const [users, setUsers] = useState<Usuario[]>([]);
-  const [projects, setProjects] = useState<Projeto[]>([]);
+  // #7: pitches observados ao vivo = ciclo ativo + backlog (projCiclo, todos os
+  // autores) + os MEUS pitches de qualquer ciclo (projMeus). Ciclos encerrados
+  // ficam congelados em cycle.frozen; a ficha pública busca por id sob demanda.
+  const [projCiclo, setProjCiclo] = useState<Projeto[]>([]);
+  const [projMeus, setProjMeus] = useState<Projeto[]>([]);
   const [cycles, setCycles] = useState<Ciclo[]>([]);
   const [tools, setTools] = useState<Ferramenta[]>([]);
   const [domains, setDomains] = useState<string[]>([]);
@@ -185,7 +198,9 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
   const [tarefas, setTarefas] = useState<Record<string, QuadroProjeto>>({});
   const [access, setAccess] = useState<Record<string, { apl: boolean }>>({});
   const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [loadedCount, setLoadedCount] = useState(0);
+  // #19: coleções principais efetivamente carregadas (por nome, não contagem —
+  // dois eventos da mesma coleção não podem "completar" o carregamento).
+  const [carregadas, setCarregadas] = useState<Set<string>>(() => new Set());
 
   const [tema, setTema] = useState<'light' | 'dark'>(temaInicial);
   const [toast, setToast] = useState<ToastDef | null>(null);
@@ -302,39 +317,41 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
 
   /* ── Assinaturas em tempo real (kanban e ranking "ao vivo" — RF-29/RF-42) ── */
   const uid = perfilOk ? authUser?.uid ?? null : null;
+
+  // #19: marca uma coleção principal como carregada (idempotente).
+  const marca = useCallback((col: string) => {
+    setCarregadas((s) => (s.has(col) ? s : new Set(s).add(col)));
+  }, []);
+  // RF-04/RF-55: se o acesso for revogado com a sessão ABERTA, as regras
+  // derrubam as assinaturas — encerra a sessão com mensagem orientativa.
+  // No logout normal os listeners também recebem permission-denied antes do
+  // teardown; auth.currentUser distingue os dois casos.
+  const acessoRevogado = useCallback((e: { code?: string }) => {
+    if (!auth.currentUser) return; // logout normal — ruído esperado
+    if (String(e?.code ?? '').includes('permission-denied')) {
+      setLoginErro('Sua sessão foi encerrada — a conta foi desativada ou perdeu o acesso. Fale com um administrador do portal.');
+      void signOut(auth);
+    }
+  }, []);
+
   useEffect(() => {
     if (!uid) {
-      setUsers([]); setProjects([]); setCycles([]); setTools([]); setDomains([]);
-      setExtraProjs([]); setTarefas({}); setLoadedCount(0);
+      setUsers([]); setCycles([]); setTools([]); setDomains([]);
+      setExtraProjs([]); setTarefas({}); setCarregadas(new Set());
       return;
     }
-    const marca = () => setLoadedCount((n) => n + 1);
-    // RF-04/RF-55: se o acesso for revogado com a sessão ABERTA, as regras
-    // derrubam as assinaturas — encerra a sessão com mensagem orientativa.
-    // No logout normal os listeners também recebem permission-denied antes do
-    // teardown; auth.currentUser distingue os dois casos.
-    const acessoRevogado = (e: { code?: string }) => {
-      if (!auth.currentUser) return; // logout normal — ruído esperado
-      if (String(e?.code ?? '').includes('permission-denied')) {
-        setLoginErro('Sua sessão foi encerrada — a conta foi desativada ou perdeu o acesso. Fale com um administrador do portal.');
-        void signOut(auth);
-      }
-    };
     const subs = [
       onSnapshot(collection(db, 'users'), (s) => {
         const list = s.docs.map((d) => ({ id: d.id, ...d.data() }) as Usuario);
         // registro síncrono dos membros do comitê antes do re-render (P13)
         setComiteMembros(list.filter((x) => x.roles.includes('avaliador')).map((x) => x.id));
-        setUsers(list); marca();
-      }, acessoRevogado),
-      onSnapshot(collection(db, 'projects'), (s) => {
-        setProjects(s.docs.map((d) => ({ id: d.id, ...d.data() }) as Projeto)); marca();
+        setUsers(list); marca('users');
       }, acessoRevogado),
       onSnapshot(query(collection(db, 'cycles'), orderBy('inicio', 'desc')), (s) => {
-        setCycles(s.docs.map((d) => ({ id: d.id, ...d.data() }) as Ciclo)); marca();
+        setCycles(s.docs.map((d) => ({ id: d.id, ...d.data() }) as Ciclo)); marca('cycles');
       }, acessoRevogado),
       onSnapshot(collection(db, 'tools'), (s) => {
-        setTools(s.docs.map((d) => ({ id: d.id, ...d.data() }) as Ferramenta)); marca();
+        setTools(s.docs.map((d) => ({ id: d.id, ...d.data() }) as Ferramenta)); marca('tools');
       }, acessoRevogado),
       onSnapshot(doc(db, 'config', 'portal'), (s) => {
         setDomains((s.data()?.domains as string[]) ?? []);
@@ -348,7 +365,33 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
       }, acessoRevogado),
     ];
     return () => { subs.forEach((un) => un()); };
-  }, [uid]);
+  }, [uid, marca, acessoRevogado]);
+
+  // #7: listener de pitches escopado. Um ciclo ativo pode não existir (todos
+  // encerrados) — aí observamos só o backlog + os meus. Re-assina quando o
+  // ciclo ativo muda.
+  const cicloAtivoId = useMemo(() => cycles.find((c) => c.status === 'ativo')?.id ?? null, [cycles]);
+  useEffect(() => {
+    if (!uid) { setProjCiclo([]); setProjMeus([]); return; }
+    const ids = cicloAtivoId ? [cicloAtivoId, 'backlog'] : ['backlog'];
+    const subs = [
+      onSnapshot(query(collection(db, 'projects'), where('ciclo', 'in', ids)), (s) => {
+        setProjCiclo(s.docs.map((d) => ({ id: d.id, ...d.data() }) as Projeto)); marca('projects');
+      }, acessoRevogado),
+      onSnapshot(query(collection(db, 'projects'), where('uid', '==', uid)), (s) => {
+        setProjMeus(s.docs.map((d) => ({ id: d.id, ...d.data() }) as Projeto)); marca('projects');
+      }, acessoRevogado),
+    ];
+    return () => { subs.forEach((un) => un()); };
+  }, [uid, cicloAtivoId, marca, acessoRevogado]);
+
+  // união dos dois listeners de pitches, deduplicada por id (os meus prevalecem).
+  const projects = useMemo(() => {
+    const m = new Map<string, Projeto>();
+    for (const p of projCiclo) m.set(p.id, p);
+    for (const p of projMeus) m.set(p.id, p);
+    return [...m.values()];
+  }, [projCiclo, projMeus]);
 
   // assinaturas restritas a administradores (RF-54, RF-59)
   const me = uid ? users.find((x) => x.id === uid) ?? null : null;
@@ -370,7 +413,9 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
     return () => { subs.forEach((un) => un()); };
   }, [uid, souFluxAdmin, souHubAdmin]);
 
-  const dataReady = loadedCount >= 4;
+  // #19: pronto quando as 4 coleções principais chegaram (não apenas 4 eventos).
+  const dataReady = carregadas.has('users') && carregadas.has('projects')
+    && carregadas.has('cycles') && carregadas.has('tools');
 
   useEffect(() => {
     if (me && primeiroLogin) {
@@ -382,6 +427,30 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [me?.id, dataReady, primeiroLogin]);
+
+  // #18: a fila de avisos do Axel sobrevive ao fechamento da aba — reidrata do
+  // localStorage uma vez por login (antes do efeito de detecção, que faz append)
+  // e persiste a cada mudança. Sem isso, uma notícia enfileirada mas não vista
+  // se perdia ao recarregar.
+  const filaAxelReidratada = useRef<string | null>(null);
+  useEffect(() => {
+    // no logout limpa a fila em memória (o Provider não desmonta) — senão o
+    // próximo usuário na MESMA aba herdaria (e persistiria) os avisos do anterior
+    if (!me?.id) { filaAxelReidratada.current = null; setAxelFila([]); return; }
+    if (filaAxelReidratada.current === me.id) return;
+    filaAxelReidratada.current = me.id;
+    let arr: NoticiaAxel[] = [];
+    try {
+      const bruto = localStorage.getItem('pf-axel-fila-' + me.id);
+      const parsed = bruto ? JSON.parse(bruto) : null;
+      if (Array.isArray(parsed)) arr = parsed as NoticiaAxel[];
+    } catch { /* sem storage */ }
+    setAxelFila(arr); // SEMPRE define (mesmo vazio): zera resíduo do usuário anterior
+  }, [me?.id]);
+  useEffect(() => {
+    if (!me?.id) return;
+    try { localStorage.setItem('pf-axel-fila-' + me.id, JSON.stringify(axelFila)); } catch { /* sem storage */ }
+  }, [axelFila, me?.id]);
 
   // ── Axel: notícias de mudança de etapa e de acesso ao Claude ─────────────
   // Compara a coluna do kanban e o tier dos MEUS projetos com a última foto
@@ -506,8 +575,6 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
 
     return {
       state, me, cicloAtivo, authReady, logado: !!uid, dataReady, loginErro, byId, proj,
-      axelNoticia: axelFila[0] ?? null,
-      axelProximo: () => setAxelFila((f) => f.slice(1)),
       cor: (id: string) => {
         const i = users.findIndex((u) => u.id === id);
         return GCOLORS[(i < 0 ? 0 : i) % GCOLORS.length];
@@ -517,10 +584,6 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
         return i < 0 ? 'var(--tf-accent)' : GCOLORS[i % GCOLORS.length];
       },
       quadroDe: quadroDeFn,
-
-      toast, showToast, fecharToast: () => setToast(null),
-      modal, confirmar: setModal, fecharModal: () => setModal(null),
-      pitchDraft, setPitchDraft,
 
       toggleTema: () => setTema((t) => (t === 'dark' ? 'light' : 'dark')),
 
@@ -704,6 +767,18 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
         const tem = u.roles.includes(role);
         updateDoc(doc(db, 'users', id), { roles: tem ? arrayRemove(role) : arrayUnion(role) })
           .then(() => addLog('Papel ' + (tem ? 'removido' : 'atribuído'), u.nome + ' — ' + ({ avaliador: 'Comitê', fluxAdmin: 'Admin do Flux', hubAdmin: 'Admin do Hub', admin: 'Administrador (legado)', user: 'Usuário' }[role] ?? role), 'admin'))
+          .catch(falha);
+      },
+
+      // LGPD (#30): a Function anonimizarUsuario trata cadastro, logs de falha e
+      // rankings. O comando é a única via (política bloqueia invocação pública).
+      anonimizarUsuario: (id) => {
+        const u = byId(id);
+        setDoc(doc(collection(db, 'comandos')), { tipo: 'anonimizarUsuario', uid: id, por: me!.id, em: serverTimestamp() })
+          .then(() => {
+            addLog('Usuário anonimizado (LGPD)', u?.nome ?? id, 'admin');
+            showToast('Anonimização solicitada — cadastro e dados pessoais serão tratados em instantes.');
+          })
           .catch(falha);
       },
 
@@ -1025,13 +1100,34 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
       },
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state, me, authReady, dataReady, loginErro, toast, modal, pitchDraft, axelFila]);
+  }, [state, me, authReady, dataReady, loginErro]);
 
-  return <Ctx.Provider value={api}>{children}</Ctx.Provider>;
+  // #8: estado transitório de UI em contexto próprio — muda a cada tecla/toast
+  // sem recriar o `api` (que dispararia re-render de toda a árvore de dados).
+  const ui = useMemo<UIApi>(() => ({
+    toast, showToast, fecharToast: () => setToast(null),
+    modal, confirmar: setModal, fecharModal: () => setModal(null),
+    pitchDraft, setPitchDraft,
+    axelNoticia: axelFila[0] ?? null,
+    axelProximo: () => setAxelFila((f) => f.slice(1)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [toast, modal, pitchDraft, axelFila]);
+
+  return (
+    <Ctx.Provider value={api}>
+      <UICtx.Provider value={ui}>{children}</UICtx.Provider>
+    </Ctx.Provider>
+  );
 }
 
 export function useStore(): StoreApi {
   const api = useContext(Ctx);
   if (!api) throw new Error('useStore fora do AppStoreProvider');
   return api;
+}
+
+export function useUI(): UIApi {
+  const ui = useContext(UICtx);
+  if (!ui) throw new Error('useUI fora do AppStoreProvider');
+  return ui;
 }

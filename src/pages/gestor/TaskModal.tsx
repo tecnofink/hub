@@ -4,7 +4,7 @@
  * somente leitura para o papel leitor.
  */
 import React, { useEffect, useRef, useState } from 'react';
-import { useStore } from '../../store/AppStore';
+import { useStore, useUI } from '../../store/AppStore';
 import { dbr } from '../../lib/dates';
 import type { Comentario, PapelProjeto, QuadroProjeto, Tarefa, TaskStatus, Usuario } from '../../lib/types';
 import { Avatar, L, Pill } from '../../components/ui';
@@ -37,6 +37,7 @@ function TextoComLinks({ texto }: { texto: string }) {
 
 export default function TaskModal({ pid, tarefa, quadro, membros, papel, onFechar }: Props) {
   const store = useStore();
+  const ui = useUI();
   const { me, state } = store;
   const [aba, setAba] = useState<Aba>('detalhes');
   const podeEditar = papel === 'admin' || papel === 'editor';
@@ -55,14 +56,14 @@ export default function TaskModal({ pid, tarefa, quadro, membros, papel, onFecha
   }, [onFechar]);
 
   const salvar = () => {
-    if (!f.ti.trim() || !f.prazo) return store.showToast('Título e prazo são obrigatórios.');
+    if (!f.ti.trim() || !f.prazo) return ui.showToast('Título e prazo são obrigatórios.');
     const respNome = f.respId ? (store.byId(f.respId)?.nome ?? '') : tarefa.resp;
     store.editarTarefa(pid, tarefa.id, {
       ti: f.ti.trim(), desc: f.desc.trim() || undefined, et: f.et,
       respId: f.respId || undefined, resp: respNome,
       inicio: f.inicio || undefined, prazo: f.prazo, prio: f.prio, st: f.st,
     });
-    store.showToast('Tarefa atualizada.');
+    ui.showToast('Tarefa atualizada.');
     onFechar();
   };
 
@@ -143,7 +144,7 @@ export default function TaskModal({ pid, tarefa, quadro, membros, papel, onFecha
             <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginTop: 6, borderTop: '1px solid var(--tf-line)', paddingTop: 16, flexWrap: 'wrap' }}>
               {podeEditar ? (
                 <button
-                  onClick={() => store.confirmar({
+                  onClick={() => ui.confirmar({
                     titulo: 'Excluir esta tarefa?',
                     texto: `"${tarefa.ti}" será removida do quadro, com seus comentários e anexos. Essa ação não pode ser desfeita.`,
                     cta: 'Excluir tarefa', danger: true,
@@ -178,6 +179,7 @@ export default function TaskModal({ pid, tarefa, quadro, membros, papel, onFecha
 /* ── Comentários (thread em tempo real — CRM) ── */
 function AbaComentarios({ pid, tarefaId, podeEditar, papel }: { pid: string; tarefaId: string; podeEditar: boolean; papel: PapelProjeto }) {
   const store = useStore();
+  const ui = useUI();
   const { me } = store;
   const [comentarios, setComentarios] = useState<Comentario[]>([]);
   const [texto, setTexto] = useState('');
@@ -214,7 +216,7 @@ function AbaComentarios({ pid, tarefaId, podeEditar, papel }: { pid: string; tar
                 <button
                   type="button"
                   className="acao foco-tf"
-                  onClick={() => store.confirmar({ titulo: 'Excluir comentário?', texto: 'O comentário será removido da conversa.', cta: 'Excluir', danger: true, onConfirm: () => store.excluirComentario(pid, c.id) })}
+                  onClick={() => ui.confirmar({ titulo: 'Excluir comentário?', texto: 'O comentário será removido da conversa.', cta: 'Excluir', danger: true, onConfirm: () => store.excluirComentario(pid, c.id) })}
                   style={{ fontSize: '0.72rem', color: 'var(--tf-crit)' }}
                 >
                   excluir
@@ -256,6 +258,7 @@ function AbaComentarios({ pid, tarefaId, podeEditar, papel }: { pid: string; tar
 /* ── Anexos (upload real no Storage — CRM) ── */
 function AbaAnexos({ pid, tarefa, podeEditar, papel }: { pid: string; tarefa: Tarefa; podeEditar: boolean; papel: PapelProjeto }) {
   const store = useStore();
+  const ui = useUI();
   const { me } = store;
   const fileInput = useRef<HTMLInputElement>(null);
   const [enviando, setEnviando] = useState(false);
@@ -263,7 +266,7 @@ function AbaAnexos({ pid, tarefa, podeEditar, papel }: { pid: string; tarefa: Ta
 
   const enviar = async (files: File[]) => {
     const grandes = files.filter((f) => f.size > 20 * 1024 * 1024);
-    if (grandes.length) return store.showToast('Arquivos acima de 20 MB: ' + grandes.map((f) => f.name).join(', '));
+    if (grandes.length) return ui.showToast('Arquivos acima de 20 MB: ' + grandes.map((f) => f.name).join(', '));
     if (!files.length) return;
     setEnviando(true);
     try { await store.addAnexosTarefa(pid, tarefa.id, files); } finally { setEnviando(false); }
@@ -286,7 +289,7 @@ function AbaAnexos({ pid, tarefa, podeEditar, papel }: { pid: string; tarefa: Ta
               <button
                 type="button"
                 className="acao foco-tf"
-                onClick={() => store.confirmar({ titulo: 'Remover anexo?', texto: `"${a.n}" será removido da tarefa e do armazenamento.`, cta: 'Remover', danger: true, onConfirm: () => store.removerAnexoTarefa(pid, tarefa.id, a) })}
+                onClick={() => ui.confirmar({ titulo: 'Remover anexo?', texto: `"${a.n}" será removido da tarefa e do armazenamento.`, cta: 'Remover', danger: true, onConfirm: () => store.removerAnexoTarefa(pid, tarefa.id, a) })}
                 style={{ fontSize: '0.78rem', color: 'var(--tf-crit)', flex: 'none', fontWeight: 700 }}
               >
                 ×

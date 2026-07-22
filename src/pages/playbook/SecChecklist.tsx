@@ -6,7 +6,7 @@
  */
 import React, { useState } from 'react';
 import type { PbDocChecklist, PbEvento, PbFeira } from '../../lib/playbook';
-import { useStore } from '../../store/AppStore';
+import { useUI } from '../../store/AppStore';
 import { pbId, useFeira } from './usePlaybook';
 import { CampoBlur, SecHead } from './comum';
 import AbasFeira from './AbasFeira';
@@ -196,7 +196,7 @@ function AbaChecklist({ arvore, feira, podeEditar, salvarFeira, salvarArvore }: 
 
 /* ── Edição da árvore global (setores → categorias → itens) ── */
 function EditorEstrutura({ arvore, salvar }: { arvore: PbDocChecklist; salvar: (d: PbDocChecklist) => void }) {
-  const store = useStore();
+  const ui = useUI();
   const prox = (arr: { ordem: number }[]) => arr.reduce((a, x) => Math.max(a, x.ordem), 0) + 1;
 
   return (
@@ -209,7 +209,7 @@ function EditorEstrutura({ arvore, salvar }: { arvore: PbDocChecklist; salvar: (
             <button
               type="button"
               className="acao foco-tf"
-              onClick={() => store.confirmar({
+              onClick={() => ui.confirmar({
                 titulo: 'Remover setor?', texto: `As categorias de "${s.nome}" ficam soltas na seção Geral (não são apagadas).`, cta: 'Remover', danger: true,
                 onConfirm: () => salvar({ ...arvore, setores: arvore.setores.filter((x) => x.id !== s.id) }),
               })}
@@ -226,7 +226,7 @@ function EditorEstrutura({ arvore, salvar }: { arvore: PbDocChecklist; salvar: (
                   <button
                     type="button"
                     className="acao foco-tf"
-                    onClick={() => store.confirmar({
+                    onClick={() => ui.confirmar({
                       titulo: 'Remover categoria?', texto: `"${c.nome}" e os itens dela saem do checklist de todas as feiras.`, cta: 'Remover', danger: true,
                       onConfirm: () => salvar({ ...arvore, categorias: arvore.categorias.filter((x) => x.id !== c.id), itens: arvore.itens.filter((i) => i.categoriaId !== c.id) }),
                     })}

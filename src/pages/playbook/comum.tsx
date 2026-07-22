@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import type { PbArquivo } from '../../lib/playbook';
 import { removerArquivoPb, subirArquivoPb } from './usePlaybook';
-import { useStore } from '../../store/AppStore';
+import { useUI } from '../../store/AppStore';
 
 /** Cabeçalho de seção do playbook: [ NN · TÍTULO ]. */
 export function SecHead({ id, num, titulo, sub }: { id: string; num: string; titulo: string; sub?: string }) {
@@ -66,7 +66,7 @@ export function NumeroBlur({ valor, onSalvar, desabilitado, largura = 90, placeh
 
 /** Botão pequeno de remover (×) com confirmação. */
 export function BotaoRemover({ onConfirmar, titulo, texto, podeEditar }: { onConfirmar: () => void; titulo: string; texto: string; podeEditar: boolean }) {
-  const store = useStore();
+  const store = useUI();
   if (!podeEditar) return null;
   return (
     <button
@@ -93,7 +93,7 @@ export function UploadCampo({ rotulo, valor, pathPrefix, accept, podeEditar, onS
   podeEditar: boolean;
   onSalvar: (arq?: PbArquivo) => void;
 }) {
-  const store = useStore();
+  const store = useUI();
   const fileRef = useRef<HTMLInputElement>(null);
   const [linkOn, setLinkOn] = useState(false);
   const [enviando, setEnviando] = useState(false);

@@ -5,7 +5,10 @@
  */
 import React from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
-import { useStore } from '../../store/AppStore';
+import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
+import { useStore, useUI } from '../../store/AppStore';
+import { db } from '../../lib/firebase';
+import type { Projeto as ProjetoT } from '../../lib/types';
 import { dbr, mesesDoCiclo, todayISO } from '../../lib/dates';
 import { brl } from '../../lib/format';
 import { catNome, nValidacoes, score, tangValidado } from '../../lib/scoring';
@@ -16,16 +19,60 @@ const PASSOS = ['Inscrito', 'Acesso definido', 'Em execução', 'Resultado regis
 
 export default function Projeto() {
   const store = useStore();
+  const ui = useUI();
   const { me, state } = store;
   const { id } = useParams();
   const nav = useNavigate();
+  const cicloAtivoId = store.cicloAtivo?.id ?? null;
 
-  const p = id ? store.proj(id) : undefined;
-  if (!me || !p) return <Navigate to="/flux" replace />;
+  const pStore = id ? store.proj(id) : undefined;
+  // "em escopo" = ciclo ativo ou backlog: o listener ao vivo já traz o ciclo
+  // inteiro (todos os autores), então o score é exato sem busca extra.
+  const emEscopo = !!pStore && (pStore.ciclo === 'backlog' || pStore.ciclo === cicloAtivoId);
 
+  // #7: a ficha é pública e alcançável por id de QUALQUER ciclo. Fora de escopo
+  // (pitch de ciclo encerrado ou de outro autor) buscamos o doc e os pares do
+  // ciclo (para o score daquele ciclo) sob demanda. `busca` é indexada pelo id
+  // para não redirecionar nem mostrar dado velho ao trocar de projeto.
+  const [busca, setBusca] = React.useState<{ id: string; p?: ProjetoT; set?: ProjetoT[]; ausente?: boolean } | null>(null);
+  React.useEffect(() => {
+    if (!id || emEscopo) return; // em escopo: o store já tem tudo
+    let vivo = true;
+    (async () => {
+      try {
+        let proj = pStore;
+        if (!proj) {
+          const snap = await getDoc(doc(db, 'projects', id));
+          if (!snap.exists()) { if (vivo) setBusca({ id, ausente: true }); return; }
+          proj = { id: snap.id, ...snap.data() } as ProjetoT;
+        }
+        const ms = await getDocs(query(collection(db, 'projects'), where('ciclo', '==', proj.ciclo)));
+        const set = ms.docs.map((d) => ({ id: d.id, ...d.data() }) as ProjetoT);
+        if (vivo) setBusca({ id, p: proj, set });
+      } catch { if (vivo) setBusca({ id, ausente: true }); }
+    })();
+    return () => { vivo = false; };
+  }, [id, emEscopo, pStore]);
+
+  const achado = busca && busca.id === id ? busca : null; // só vale para o id atual
+  const p = pStore ?? achado?.p;
+  if (!me) return <Navigate to="/flux" replace />;
+  if (!p) {
+    // fora de escopo e a busca deste id ainda não resolveu → carregando;
+    // resolvida como ausente (ou sem id) → redireciona.
+    const carregando = !emEscopo && !!id && !(achado && achado.ausente);
+    return carregando
+      ? <div className="anim-in" style={{ maxWidth: 1100, margin: '0 auto', padding: '48px 32px', color: 'var(--tf-ink-2)' }}>Carregando projeto…</div>
+      : <Navigate to="/flux" replace />;
+  }
+
+  // score sobre o conjunto do PRÓPRIO ciclo. Em escopo o store já tem o ciclo
+  // todo; fora de escopo, só depois que os pares chegam — antes disso não
+  // calculamos (evita normalizar contra um único projeto).
+  const scoreSet = emEscopo ? state.projects : achado?.set;
   const u = store.byId(p.uid)!;
   const st = statusDe(p);
-  const sc = score(state.projects, p);
+  const sc = scoreSet ? score(scoreSet, p) : null;
   const cc = state.cycles.find((x) => x.id === p.ciclo);
   const emBacklog = p.ciclo === 'backlog';
   const meses = cc ? mesesDoCiclo(cc.inicio, cc.fim) : 3.5;
@@ -224,7 +271,7 @@ export default function Projeto() {
             <div>
               <button
                 onClick={() =>
-                  store.confirmar({
+                  ui.confirmar({
                     titulo: 'Excluir este pitch?',
                     texto: 'O pitch "' + p.nome + '" será removido do ciclo. Essa ação vale até o fim das inscrições e não pode ser desfeita.' + (p.tier ? '\n\nEste pitch já passou pela triagem de acesso — todos os administradores serão notificados para rever os acessos ao Claude.' : ''),
                     cta: 'Excluir pitch', danger: true,

@@ -57,8 +57,9 @@ service cloud.firestore {
     match /comandos/{comandoId} {
       // tipo amarrado ao papel já na regra (a Function é a 2ª barreira)
       allow create: if request.resource.data.por == request.auth.uid
-        && request.resource.data.tipo in ['encerrarCiclo', 'restaurarFerramentas']
+        && request.resource.data.tipo in ['encerrarCiclo', 'restaurarFerramentas', 'anonimizarUsuario']
         && ((request.resource.data.tipo == 'restaurarFerramentas' && ehHubAdmin())
+            || (request.resource.data.tipo == 'anonimizarUsuario' && ehHubAdmin())
             || (request.resource.data.tipo == 'encerrarCiclo' && ehFluxAdmin()));
       allow read: if ehFluxAdmin() || ehHubAdmin();
     }

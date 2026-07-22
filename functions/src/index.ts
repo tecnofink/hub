@@ -7,7 +7,7 @@
 import { initializeApp } from 'firebase-admin/app';
 import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import { setGlobalOptions } from 'firebase-functions/v2';
-import { onDocumentCreated, onDocumentDeleted, onDocumentUpdated } from 'firebase-functions/v2/firestore';
+import { onDocumentCreated, onDocumentDeleted, onDocumentUpdated, onDocumentWritten } from 'firebase-functions/v2/firestore';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import * as logger from 'firebase-functions/logger';
 import { enviar } from './email';
@@ -341,6 +341,58 @@ export const aoReceberComando = onDocumentCreated('comandos/{comandoId}', async 
     return;
   }
 
+  // comando do HUB (LGPD/RF — #30): anonimiza um colaborador desligado.
+  // Remove os identificadores pessoais do cadastro, apaga os logs de falha de
+  // inscrição (que guardam nome, conteúdo do pitch e userAgent) e substitui o
+  // nome congelado nos rankings por um pseudônimo. Os pitches em si permanecem
+  // ligados ao uid (chave pseudonimizada) para preservar a integridade do
+  // ranking; o nome exibido passa a resolver como "Usuário removido".
+  if (cmd.tipo === 'anonimizarUsuario') {
+    if (!autorAtivo || !(papeis.includes('hubAdmin') || papeis.includes('admin'))) {
+      await marcar({ status: 'erro', erro: 'autor não é administrador do hub' });
+      return;
+    }
+    const alvoId = String(cmd.uid ?? '');
+    if (!alvoId || alvoId === String(cmd.por ?? '')) {
+      await marcar({ status: 'erro', erro: 'alvo inválido (não se anonimiza a própria conta)' });
+      return;
+    }
+    const alvoRef = db().doc('users/' + alvoId);
+    const alvo = await alvoRef.get();
+    if (!alvo.exists) { await marcar({ status: 'erro', erro: 'usuário não encontrado' }); return; }
+    const anon = 'Usuário removido';
+    const oldNome = String(alvo.data()!.nome ?? '');
+    // 1) logs de falha de inscrição do usuário (nome, conteúdo do pitch, userAgent)
+    const falhas = await db().collection('logsFalhas').where('uid', '==', alvoId).get();
+    await Promise.all(falhas.docs.map((d) => d.ref.delete()));
+    // 2) nome congelado nos rankings — casa por UID (preciso, sem atingir homônimo);
+    //    frozen legado sem uid cai no nome anterior (melhor esforço). Idempotente:
+    //    só reescreve entradas que ainda não estão anonimizadas.
+    let rankingsAjustados = 0;
+    const ciclos = await db().collection('cycles').get();
+    for (const c of ciclos.docs) {
+      const frozen = c.data().frozen as Array<Record<string, unknown>> | undefined;
+      if (!Array.isArray(frozen) || !frozen.length) continue;
+      let mudou = false;
+      const novo = frozen.map((f) => {
+        const casa = f.uid ? f.uid === alvoId : (!!oldNome && f.nome === oldNome);
+        return casa && f.nome !== anon ? (mudou = true, { ...f, nome: anon }) : f;
+      });
+      if (mudou) { await c.ref.update({ frozen: novo }); rankingsAjustados++; }
+    }
+    // 3) POR ÚLTIMO: cadastro (zera PII, revoga acesso). Deixar por último mantém
+    //    oldNome legível se a entrega at-least-once reprocessar o laço acima.
+    await alvoRef.set({
+      nome: anon, email: 'removido+' + alvoId + '@tecnofink.invalid', foto: '',
+      apres: '', niver: '', cargo: '', depto: '', empresa: '',
+      roles: ['user'], ativo: false, perfilPendente: false,
+      anonimizadoEm: FieldValue.serverTimestamp(),
+    }, { merge: true });
+    await logSistema('Usuário anonimizado (LGPD)', 'cadastro, ' + falhas.size + ' log(s) de falha e ' + rankingsAjustados + ' ranking(s) tratados', 'admin');
+    await marcar({ status: 'ok', falhasRemovidas: falhas.size, rankingsAjustados });
+    return;
+  }
+
   if (cmd.tipo !== 'encerrarCiclo') return;
   if (!autorAtivo || !(papeis.includes('fluxAdmin') || papeis.includes('admin'))) {
     logger.warn('comando encerrarCiclo recusado — autor não é admin do Flux', { por: cmd.por });
@@ -367,6 +419,7 @@ export const aoReceberComando = onDocumentCreated('comandos/{comandoId}', async 
     const u = users.get(l.uid);
     return {
       pos: l.pos,
+      uid: l.uid, // chave estável p/ anonimização precisa (LGPD #30) — sem casar por nome
       nome: u?.nome ?? l.uid,
       setor: u?.depto ?? '',
       projeto: l.projeto,
@@ -395,3 +448,42 @@ export const aoReceberComando = onDocumentCreated('comandos/{comandoId}', async 
 
   await marcar({ status: 'ok', projetosCongelados: frozen.length });
 });
+
+/* ── #21 · guarda de "1 ciclo ativo por vez" (server-side).
+   As regras não fazem consulta entre documentos e a UI é a única barreira hoje.
+   Este gatilho não é destrutivo: se detectar mais de um ciclo ativo, registra
+   alerta no log do sistema e avisa os admins do Flux para encerrarem o excedente
+   (não escolhe automaticamente qual encerrar — isso mexeria em ranking). ── */
+export const aoAtivarCiclo = onDocumentWritten('cycles/{id}', async (event) => {
+  const depois = event.data?.after?.data();
+  if (!depois || depois.status !== 'ativo') return; // só interessa virar/continuar ativo
+  const ativos = await db().collection('cycles').where('status', '==', 'ativo').get();
+  if (ativos.size <= 1) return;
+  const nomes = ativos.docs.map((d) => d.data().nome ?? d.id).join(', ');
+  await logSistema('Conflito de ciclos ativos', `${ativos.size} ciclos ativos ao mesmo tempo (${nomes}) — o esperado é 1. Encerre os excedentes.`, 'admin');
+  const admins = await emailsPorPapeis(['fluxAdmin', 'admin']);
+  if (admins.length) {
+    await enviar({
+      para: admins,
+      assunto: 'Portal Flux — mais de um ciclo ativo',
+      corpo: `Foram detectados ${ativos.size} ciclos com status "ativo" ao mesmo tempo:\n\n${nomes}\n\nO ranking e o kanban assumem um único ciclo ativo. Encerre os ciclos excedentes no Admin do Flux.`,
+    });
+  }
+});
+
+/* ── #30 · retenção de dados (LGPD). Apaga diariamente registros que guardam
+   dados pessoais além do prazo: logsFalhas (nome, conteúdo do pitch, userAgent)
+   com 180 dias; logs de auditoria com 365 dias. Limite por execução para não
+   estourar em picos — como roda todo dia, converge. ── */
+export const limparRetencao = onSchedule(
+  { schedule: '30 3 * * *', timeZone: 'America/Sao_Paulo' },
+  async () => {
+    const agora = Date.now();
+    const corte = (dias: number) => new Date(agora - dias * 864e5);
+    const falhas = await db().collection('logsFalhas').where('em', '<', corte(180)).limit(400).get();
+    await Promise.all(falhas.docs.map((d) => d.ref.delete()));
+    const logs = await db().collection('logs').where('at', '<', corte(365)).limit(400).get();
+    await Promise.all(logs.docs.map((d) => d.ref.delete()));
+    logger.info('retenção aplicada', { logsFalhasRemovidos: falhas.size, logsRemovidos: logs.size });
+  },
+);

@@ -7,7 +7,7 @@
  */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Navigate, useNavigate, useParams } from 'react-router-dom';
-import { useStore } from '../../store/AppStore';
+import { useStore, useUI } from '../../store/AppStore';
 import { dbr, dbrCurto, diffDias, mesesNoIntervalo, mesAbrevAno, todayISO } from '../../lib/dates';
 import { Badge, L, Modal, Pill } from '../../components/ui';
 import type { Tarefa, TaskStatusDerivado } from '../../lib/types';
@@ -29,6 +29,7 @@ function setaStyle(side: 'left' | 'right'): React.CSSProperties {
 
 export default function Tarefas() {
   const store = useStore();
+  const ui = useUI();
   const { me, state, cicloAtivo: c } = store;
   const { id } = useParams();
   const nav = useNavigate();
@@ -110,7 +111,7 @@ export default function Tarefas() {
     if (!tid) return;
     const destino = view === 'etapa' ? { et: colKey } : { st: colKey as 'nao' | 'and' | 'rev' | 'conc' };
     const desfazer = store.moverTarefa(id, tid, destino);
-    if (desfazer) store.showToast('Tarefa movida.', { label: 'Desfazer', fn: desfazer });
+    if (desfazer) ui.showToast('Tarefa movida.', { label: 'Desfazer', fn: desfazer });
   };
 
   const segs = (['conc', 'and', 'rev', 'atras', 'nao'] as TaskStatusDerivado[]).filter((k) => counts[k] > 0);
@@ -426,17 +427,18 @@ export default function Tarefas() {
 /* ── Nova tarefa (NewTaskModal do CRM: descrição, início, responsável, nova etapa) ── */
 function NovaTarefa({ pid, membros, onFechar }: { pid: string; membros: { id: string; nome: string }[]; onFechar: () => void }) {
   const store = useStore();
+  const ui = useUI();
   const q = store.quadroDe(pid);
   const [f, setF] = useState({ ti: '', desc: '', et: q.etapas[0]?.id ?? 'F0', prazo: '', inicio: '', prio: 'Média' as 'Alta' | 'Média' | 'Baixa', respId: store.me?.id ?? '' });
   const [novaEtapaOn, setNovaEtapaOn] = useState(false);
   const [novaEtapa, setNovaEtapa] = useState('');
 
   const salvar = () => {
-    if (!f.ti.trim() || !f.prazo) return store.showToast('Dê um título e um prazo para a tarefa.');
+    if (!f.ti.trim() || !f.prazo) return ui.showToast('Dê um título e um prazo para a tarefa.');
     let et = f.et;
     let etapaNova: { id: string; nome: string; inicio: string; fim: string } | undefined;
     if (novaEtapaOn) {
-      if (!novaEtapa.trim()) return store.showToast('Dê um nome à nova etapa.');
+      if (!novaEtapa.trim()) return ui.showToast('Dê um nome à nova etapa.');
       et = 'F' + q.etapas.length;
       const inicio = todayISO();
       const fim = q.etapas.reduce((a, e) => (e.fim > a ? e.fim : a), f.prazo || todayISO());

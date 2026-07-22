@@ -1,7 +1,7 @@
 /** C3 · Confirmação de envio (RF-20/21): resumo + aviso de não-edição. */
 import React from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
-import { PITCH_DRAFT_VAZIO, useStore } from '../../store/AppStore';
+import { PITCH_DRAFT_VAZIO, useStore, useUI } from '../../store/AppStore';
 import { dbr, mesesDoCiclo } from '../../lib/dates';
 import { brl, num } from '../../lib/format';
 import { catNome } from '../../lib/scoring';
@@ -9,7 +9,8 @@ import { Badge } from '../../components/ui';
 
 export default function Confirmar() {
   const store = useStore();
-  const { me, cicloAtivo: c, pitchDraft: d, setPitchDraft } = store;
+  const { me, cicloAtivo: c } = store;
+  const { pitchDraft: d, setPitchDraft } = useUI();
   const nav = useNavigate();
   const [enviando, setEnviando] = React.useState(false);
 

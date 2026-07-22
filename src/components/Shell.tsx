@@ -1,7 +1,7 @@
 /** Shell autenticado: cabeçalho com navegação contextual, rodapé, toast e modal. */
 import React, { Suspense, useEffect } from 'react';
 import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { useStore } from '../store/AppStore';
+import { useStore, useUI } from '../store/AppStore';
 import { dbr, todayISO } from '../lib/dates';
 import { ehFluxAdmin, ehHubAdmin, faviconDe, rotaNormalizada } from '../lib/roles';
 import { Avatar, Modal } from './ui';
@@ -47,7 +47,7 @@ export function ThemeToggleBtn({ fixed }: { fixed?: boolean }) {
 }
 
 export function ToastModal() {
-  const { toast, fecharToast, modal, fecharModal } = useStore();
+  const { toast, fecharToast, modal, fecharModal } = useUI();
   return (
     <>
       {toast && (
@@ -119,7 +119,8 @@ function tituloDe(path: string): string {
 
 /** Popup do Axel: notícia de mudança de etapa ou de acesso ao Claude (fila do store). */
 export function AxelModal() {
-  const { axelNoticia, axelProximo, me } = useStore();
+  const { me } = useStore();
+  const { axelNoticia, axelProximo } = useUI();
   // não empilha com o modal de conclusão de perfil: enquanto o perfil está
   // pendente, ele tem prioridade; as notícias do Axel esperam a próxima carga
   if (!axelNoticia || me?.perfilPendente) return null;
