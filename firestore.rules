@@ -55,8 +55,11 @@ service cloud.firestore {
     // ── Comandos administrativos processados por Function (encerrar ciclo:
     //    admin do Flux; restaurar ferramentas: admin do hub) — em nome próprio. ──
     match /comandos/{comandoId} {
-      allow create: if (ehFluxAdmin() || ehHubAdmin())
-        && request.resource.data.por == request.auth.uid;
+      // tipo amarrado ao papel já na regra (a Function é a 2ª barreira)
+      allow create: if request.resource.data.por == request.auth.uid
+        && request.resource.data.tipo in ['encerrarCiclo', 'restaurarFerramentas']
+        && ((request.resource.data.tipo == 'restaurarFerramentas' && ehHubAdmin())
+            || (request.resource.data.tipo == 'encerrarCiclo' && ehFluxAdmin()));
       allow read: if ehFluxAdmin() || ehHubAdmin();
     }
 
@@ -155,6 +158,8 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/cycles/$(request.resource.data.ciclo)).data.status == 'ativo'
         && request.resource.data.deadline >= get(/databases/$(database)/documents/cycles/$(request.resource.data.ciclo)).data.inicio
         && request.resource.data.deadline <= get(/databases/$(database)/documents/cycles/$(request.resource.data.ciclo)).data.fim
+        // reativar só ZERA notas — nunca semeia notas do comitê
+        && (!('notas' in request.resource.data) || request.resource.data.notas.size() == 0)
         && request.resource.data.diff(resource.data).affectedKeys()
              .hasOnly(['ciclo', 'backlogDe', 'deadline', 'criadoEm', 'tier', 'resultado', 'reprovado', 'notas']);
 
@@ -170,13 +175,25 @@ service cloud.firestore {
         && request.resource.data.resultado.diff(resource.data.resultado).affectedKeys().hasOnly(['validacoes'])
         && request.resource.data.resultado.validacoes
              .diff(resource.data.resultado.validacoes).affectedKeys()
-             .hasOnly([request.auth.uid]);
+             .hasOnly([request.auth.uid])
+        // validação entre 0 e o tangível declarado (evita corromper o ranking ao vivo)
+        && request.resource.data.resultado.validacoes[request.auth.uid] is number
+        && request.resource.data.resultado.validacoes[request.auth.uid] >= 0
+        && request.resource.data.resultado.validacoes[request.auth.uid] <= resource.data.resultado.tang;
 
       // RF-39: cada membro do comitê grava apenas as próprias notas
       allow update: if hasRole('avaliador')
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['notas'])
         && request.resource.data.notas.diff(resource.data.notas).affectedKeys()
-             .hasOnly([request.auth.uid]);
+             .hasOnly([request.auth.uid])
+        // as três notas (i/imp/alc) são números de 0 a 5
+        && request.resource.data.notas[request.auth.uid].keys().hasOnly(['i', 'imp', 'alc'])
+        && request.resource.data.notas[request.auth.uid].i is number
+        && request.resource.data.notas[request.auth.uid].i >= 0 && request.resource.data.notas[request.auth.uid].i <= 5
+        && request.resource.data.notas[request.auth.uid].imp is number
+        && request.resource.data.notas[request.auth.uid].imp >= 0 && request.resource.data.notas[request.auth.uid].imp <= 5
+        && request.resource.data.notas[request.auth.uid].alc is number
+        && request.resource.data.notas[request.auth.uid].alc >= 0 && request.resource.data.notas[request.auth.uid].alc <= 5;
     }
 
     // ── Ferramentas do hub (RF-57): administração do portal.
@@ -188,8 +205,12 @@ service cloud.firestore {
 
     // ── Acessos ao Claude (RF-54): status da aplicação manual ──
     match /access/{userId} {
-      allow read: if ehFluxAdmin();
-      allow write: if ehFluxAdmin() || hasRole('avaliador');
+      // leitura e escrita pelos mesmos papéis (comitê/admin do Flux); a escrita
+      // só pode conter o campo booleano 'apl' (nada de conteúdo arbitrário)
+      allow read: if ehFluxAdmin() || hasRole('avaliador');
+      allow write: if (ehFluxAdmin() || hasRole('avaliador'))
+        && request.resource.data.keys().hasOnly(['apl'])
+        && request.resource.data.apl is bool;
     }
 
     // ── Projetos livres do Gestor de Tarefas (RF-44, reconciliado com o CRM/P15):
@@ -208,7 +229,10 @@ service cloud.firestore {
       // criador entra como admin do projeto (trigger equivalente do CRM)
       allow create: if isActive()
         && request.resource.data.uid == request.auth.uid
-        && request.auth.uid in request.resource.data.membrosIds
+        // criação SEMPRE solo (membros entram depois via update de admin): não
+        // dá para adicionar terceiros sem consentimento nem semear papéis
+        && request.resource.data.membrosIds == [request.auth.uid]
+        && request.resource.data.papeis.keys() == [request.auth.uid]
         && request.resource.data.papeis[request.auth.uid] == 'admin'
         // impede colisão de ID com um pitch do Flux: o namespace tarefas/{id} é
         // compartilhado, então criar extraProjs/{idDePitch} sequestraria/destruiria
