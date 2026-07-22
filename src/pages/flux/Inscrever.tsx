@@ -74,6 +74,7 @@ export default function Inscrever() {
             {CATS.map((ct) => (
               <button
                 key={ct.id}
+                aria-pressed={d.cat === ct.id}
                 onClick={() => up({ cat: ct.id })}
                 style={{ textAlign: 'left', padding: '14px 16px', borderRadius: 10, border: '1px solid ' + (d.cat === ct.id ? 'var(--tf-accent)' : 'var(--tf-line)'), background: d.cat === ct.id ? 'var(--tf-accent-soft)' : 'var(--tf-bg-pure)', cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: 4 }}
               >

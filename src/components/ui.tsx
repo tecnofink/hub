@@ -38,6 +38,7 @@ export function Pill({ on, onClick, children, style }: { on: boolean; onClick: (
   return (
     <button
       onClick={onClick}
+      aria-pressed={on}
       style={{
         padding: '7px 13px', borderRadius: 999,
         border: '1px solid ' + (on ? 'var(--tf-accent)' : 'var(--tf-line-2)'),

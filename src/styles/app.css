@@ -6,7 +6,8 @@
 @keyframes tfPop { from { opacity: 0; transform: translateY(14px) scale(0.985); } to { opacity: 1; transform: none; } }
 
 ::selection { background: #0C0059; color: #fff; }
-input::placeholder, textarea::placeholder { color: var(--tf-ink-3); opacity: 0.65; }
+/* placeholder: opacidade alta o bastante para passar no contraste AA */
+input::placeholder, textarea::placeholder { color: var(--tf-ink-3); opacity: 0.85; }
 input[type="date"] { color-scheme: light; }
 [data-theme="dark"] input[type="date"] { color-scheme: dark; }
 .kb-scroll::-webkit-scrollbar { display: none; }

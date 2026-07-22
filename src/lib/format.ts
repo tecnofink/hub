@@ -36,8 +36,12 @@ export function iniciais(nome: string): string {
  */
 export function fotoNaMedida(url: string | undefined, size: number): string | undefined {
   if (!url) return url;
-  const alvo = Math.max(128, Math.round(size * 2));
-  return url.replace(/=s\d+(-c)?$/, '=s' + alvo + '-c');
+  const alvo = Math.max(96, Math.round(size * 2)); // 2x p/ retina; piso 96 evita o =s96 quebrado
+  // troca o sufixo de tamanho onde quer que apareça (fim da URL ou antes de ?/&),
+  // cobrindo tanto =sNN[-c] quanto =wNN-hNN; URLs sem esse token ficam intactas
+  return url
+    .replace(/=s\d+(-c)?(?=$|[?&])/, '=s' + alvo + '-c')
+    .replace(/=w\d+-h\d+(-c)?(?=$|[?&])/, '=s' + alvo + '-c');
 }
 
 export function primeiroNome(nome: string): string {

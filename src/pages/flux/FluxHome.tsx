@@ -134,8 +134,8 @@ export default function FluxHome() {
       </div>
 
       <div style={{ position: 'relative' }}>
-        <button className="kb-seta" onMouseEnter={() => scrollStart(-9)} onMouseLeave={scrollStop} title="Rolar para a esquerda" style={setaStyle('left')}>‹</button>
-        <button className="kb-seta" onMouseEnter={() => scrollStart(9)} onMouseLeave={scrollStop} title="Rolar para a direita" style={setaStyle('right')}>›</button>
+        <button className="kb-seta" aria-label="Rolar colunas para a esquerda" onClick={() => kbRef.current?.scrollBy({ left: -272, behavior: 'smooth' })} onMouseEnter={() => scrollStart(-9)} onMouseLeave={scrollStop} title="Rolar para a esquerda" style={setaStyle('left')}>‹</button>
+        <button className="kb-seta" aria-label="Rolar colunas para a direita" onClick={() => kbRef.current?.scrollBy({ left: 272, behavior: 'smooth' })} onMouseEnter={() => scrollStart(9)} onMouseLeave={scrollStop} title="Rolar para a direita" style={setaStyle('right')}>›</button>
         <div className="kb-scroll" ref={kbRef} style={{ display: 'flex', gap: 12, overflowX: 'auto', scrollbarWidth: 'none', paddingBottom: 10, alignItems: 'flex-start' }}>
           {KB_COLS.map((col) => {
             const cards = all

@@ -17,6 +17,7 @@ import { brl, GCOLORS, num, primeiroNome } from '../lib/format';
 import { isAvaliado, rankingDoCiclo, setComiteMembros, tangValidado } from '../lib/scoring';
 import { ehFluxAdmin, ehHubAdmin } from '../lib/roles';
 import { noticiaAcesso, noticiaEtapa, type NoticiaAxel } from '../lib/axel';
+import { perfilCompleto } from '../lib/opcoesPerfil';
 import { colunaDe } from '../pages/flux/statusProjeto';
 import type {
   Anexo, AnexoTarefa, AppState, Ciclo, Comentario, Etapa, Ferramenta, LogEntry, LogTipo,
@@ -539,8 +540,10 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
 
       salvarPerfil: (dados) => {
         if (!me) return;
-        // salvar o perfil sempre encerra a pendência de conclusão
-        updateDoc(doc(db, 'users', me.id), { ...dados, perfilPendente: false } as Record<string, unknown>)
+        // a pendência só é encerrada quando o perfil fica REALMENTE completo
+        // (mesma régua do modal) — salvar incompleto no /perfil não contorna
+        const pendente = !perfilCompleto({ ...me, ...dados });
+        updateDoc(doc(db, 'users', me.id), { ...dados, perfilPendente: pendente } as Record<string, unknown>)
           .then(() => showToast('Perfil atualizado.'))
           .catch(falha);
       },

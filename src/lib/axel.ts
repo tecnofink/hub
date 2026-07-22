@@ -11,48 +11,48 @@ const BASE = '/brand/axel/';
 
 export const AXEL = {
   /** 1 · sentado com o laptop — tela de inscrição de pitch */
-  inscrever: BASE + 'axel-inscrever.png',
+  inscrever: BASE + 'axel-inscrever.webp',
   /** 7 · em pé, pronto — coluna Inscrito */
-  inscrito: BASE + 'axel-inscrito.png',
+  inscrito: BASE + 'axel-inscrito.webp',
   /** 2 · surfando no foguete — coluna Em desenvolvimento */
-  dev: BASE + 'axel-dev.png',
+  dev: BASE + 'axel-dev.webp',
   /** 8 · sentado na nuvem, aguardando — coluna Aguardando Avaliação */
-  aval: BASE + 'axel-avaliacao.png',
+  aval: BASE + 'axel-avaliacao.webp',
   /** 4 · segurando a estrela — coluna Concluído */
-  conc: BASE + 'axel-concluido.png',
+  conc: BASE + 'axel-concluido.webp',
   /** 10 · deitado na nuvem — coluna Reprovado */
-  rep: BASE + 'axel-reprovado.png',
+  rep: BASE + 'axel-reprovado.webp',
   /** 3 · abraçado ao foguetinho — coluna Backlog */
-  back: BASE + 'axel-backlog.png',
+  back: BASE + 'axel-backlog.webp',
   /** 5 · erguendo a bandeira do Flux — acesso Claude Enterprise */
-  enterprise: BASE + 'axel-enterprise.png',
+  enterprise: BASE + 'axel-enterprise.webp',
   /** 6 · carregando a bandeira — acesso Claude Basic */
-  basic: BASE + 'axel-basic.png',
+  basic: BASE + 'axel-basic.webp',
   /** 9 · voando — ciclo ativo (home) e hero do Como funciona */
-  ciclo: BASE + 'axel-ciclo.png',
+  ciclo: BASE + 'axel-ciclo.webp',
   /** 11 · pódio com três Axels — ranking vazio */
-  ranking: BASE + 'axel-ranking.png',
+  ranking: BASE + 'axel-ranking.webp',
 
   /* ── 2ª leva (21/07) — extras com telas definidas por nós ── */
   /** lua + violão — histórico de ciclos vazio */
-  historico: BASE + 'axel-historico.png',
+  historico: BASE + 'axel-historico.webp',
   /** segurando o globo — tela de login */
-  login: BASE + 'axel-login.png',
+  login: BASE + 'axel-login.webp',
   /** sentado no foguetinho — Flux sem ciclo ativo */
-  semCiclo: BASE + 'axel-semciclo.png',
+  semCiclo: BASE + 'axel-semciclo.webp',
   /** no skate — Produtividade sem projetos */
-  gestor: BASE + 'axel-gestor.png',
+  gestor: BASE + 'axel-gestor.webp',
 } as const;
 
 /** Mascote de cada categoria de pitch (Destaques por categoria) — mapeamento
     confirmado pelo Daniel em 21/07: produtividade=yoga · qualidade=café ·
     experiência=dedão #1 · inovação=disco voador · redução=livro sobre moedas. */
 export const AXEL_CATEGORIA: Record<string, string> = {
-  produtividade: BASE + 'axel-cat-produtividade.png',
-  qualidade: BASE + 'axel-cat-qualidade.png',
-  experiencia: BASE + 'axel-cat-experiencia.png',
-  inovacao: BASE + 'axel-cat-inovacao.png',
-  reducao: BASE + 'axel-cat-reducao.png',
+  produtividade: BASE + 'axel-cat-produtividade.webp',
+  qualidade: BASE + 'axel-cat-qualidade.webp',
+  experiencia: BASE + 'axel-cat-experiencia.webp',
+  inovacao: BASE + 'axel-cat-inovacao.webp',
+  reducao: BASE + 'axel-cat-reducao.webp',
 };
 
 /** Mascote de cada coluna do kanban — substitui o antigo [ VAZIO ]. */

@@ -119,8 +119,10 @@ function tituloDe(path: string): string {
 
 /** Popup do Axel: notícia de mudança de etapa ou de acesso ao Claude (fila do store). */
 export function AxelModal() {
-  const { axelNoticia, axelProximo } = useStore();
-  if (!axelNoticia) return null;
+  const { axelNoticia, axelProximo, me } = useStore();
+  // não empilha com o modal de conclusão de perfil: enquanto o perfil está
+  // pendente, ele tem prioridade; as notícias do Axel esperam a próxima carga
+  if (!axelNoticia || me?.perfilPendente) return null;
   return (
     <Modal onClose={axelProximo} maxWidth={520} labelId="axel-titulo">
       <div style={{ textAlign: 'center', padding: '10px 6px 4px' }}>

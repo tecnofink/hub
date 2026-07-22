@@ -12,3 +12,13 @@ ui-debug.log
 # arquivos de lock do Office
 ~$*
 scratchpad/
+
+# segredos — NUNCA versionar (repo público). Os functions/.env.* de parâmetros
+# (sem senha; a senha vive no Secret Manager) são commitados de propósito.
+Dados Supabase*.txt
+*serviceaccount*.json
+*service-account*.json
+*-key.json
+credentials.json
+.env
+.env.production.local

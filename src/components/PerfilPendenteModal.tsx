@@ -27,6 +27,11 @@ export default function PerfilPendenteModal() {
   const on = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setF((s) => ({ ...s, [k]: e.target.value }));
   const valido = f.nome.trim() !== '' && perfilCompleto(f);
+  const faltam: string[] = [];
+  if (!f.nome.trim()) faltam.push('nome');
+  if (!f.cargo.trim()) faltam.push('cargo');
+  if (!EMPRESAS.includes(f.empresa)) faltam.push('empresa/unidade');
+  if (!DEPTOS.includes(f.depto)) faltam.push('departamento');
 
   const adiar = () => {
     try { sessionStorage.setItem(CHAVE_ADIAR, me.id); } catch { /* sem storage */ }
@@ -36,7 +41,7 @@ export default function PerfilPendenteModal() {
   return (
     <Modal onClose={adiar} maxWidth={540} labelId="perfil-pend-titulo">
       <div style={{ textAlign: 'center', marginBottom: 4 }}>
-        <img src="/brand/axel/axel-gestor.png" alt="" aria-hidden="true" style={{ height: 92, width: 'auto' }} />
+        <img src="/brand/axel/axel-gestor.webp" alt="" aria-hidden="true" style={{ height: 92, width: 'auto' }} />
       </div>
       <h3 id="perfil-pend-titulo" className="tf-h3" style={{ margin: '0 0 6px', textAlign: 'center' }}>Complete seu perfil</h3>
       <p className="tf-body" style={{ margin: '0 auto 18px', textAlign: 'center', fontSize: '0.92rem', maxWidth: 400 }}>
@@ -62,7 +67,12 @@ export default function PerfilPendenteModal() {
           </div>
         </div>
       </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginTop: 22, flexWrap: 'wrap' }}>
+      {!valido && (
+        <p className="tf-small" style={{ margin: '14px 0 0', fontSize: '0.78rem', color: 'var(--tf-warn)' }}>
+          Falta preencher: {faltam.join(', ')}.
+        </p>
+      )}
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginTop: 14, flexWrap: 'wrap' }}>
         <button onClick={() => { adiar(); nav('/perfil'); }} className="tf-btn tf-btn-ghost">Abrir perfil completo →</button>
         <button
           onClick={() => { if (valido) salvarPerfil({ nome: f.nome.trim(), cargo: f.cargo.trim(), empresa: f.empresa, depto: f.depto }); }}

@@ -226,8 +226,10 @@ export default function ComoFunciona() {
           </div>
         ) : (
           <div>
-            <button onClick={() => nav('/flux/inscrever')} className="tf-btn tf-btn-accent" style={{ padding: '13px 26px' }}>Inscrever pitch →</button>
-            {!c && <div className="tf-small" style={{ marginTop: 10, fontSize: '0.78rem' }}>A abertura do próximo ciclo será anunciada no portal.</div>}
+            <button onClick={() => nav(c ? '/flux' : '/flux/historico')} className="tf-btn tf-btn-ghost" style={{ padding: '13px 26px' }}>{c ? 'Ver o Flux →' : 'Ver histórico de ciclos →'}</button>
+            <div className="tf-small" style={{ marginTop: 10, fontSize: '0.78rem' }}>
+              {c ? 'As inscrições do ' + c.nome + ' não estão abertas no momento.' : 'A abertura do próximo ciclo será anunciada no portal.'}
+            </div>
           </div>
         )}
       </div>
