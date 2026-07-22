@@ -155,7 +155,26 @@ export const aoAtualizarProjeto = onDocumentUpdated('projects/{pid}', async (eve
 
 /* ── RF-51 · alerta aos admins quando pitch com tier definido é excluído ── */
 export const aoExcluirProjeto = onDocumentDeleted('projects/{pid}', async (event) => {
+  const pid = event.params.pid;
   const p = event.data?.data();
+  // cascade: ao excluir o pitch, remove o quadro de tarefas, os comentários e os
+  // anexos órfãos (Storage). Guarda defensiva: só se não for um projeto livre
+  // (namespaces distintos, mas evita apagar quadro alheio numa colisão).
+  if (!(await db().doc('extraProjs/' + pid).get()).exists) {
+    const quadroRef = db().doc('tarefas/' + pid);
+    const comentarios = await quadroRef.collection('comentarios').get();
+    await Promise.all(comentarios.docs.map((d) => d.ref.delete()));
+    await quadroRef.delete().catch(() => undefined);
+    try {
+      const { getStorage } = await import('firebase-admin/storage');
+      const bucket = getStorage().bucket();
+      await bucket.deleteFiles({ prefix: `anexos-tarefas/${pid}/` });
+      await bucket.deleteFiles({ prefix: `anexos/${pid}/` });
+    } catch (e) {
+      logger.warn('falha ao limpar anexos do pitch excluído', { pid, erro: String(e) });
+    }
+  }
+  // alerta aos admins só quando o pitch excluído tinha acesso ao Claude liberado
   if (!p || !p.tier) return;
   const admins = await emailsPorPapel('admin');
   if (!admins.length) return;
@@ -269,8 +288,8 @@ export const aoSolicitarBootstrap = onDocumentCreated('bootstrap/{uid}', async (
     await db().doc('users/' + uid).set({
       nome: String(dados?.nome ?? email.split('@')[0]),
       email, foto: String(dados?.foto ?? ''),
-      cargo: '', depto: '', empresa: 'Tecnofink LTDA',
-      roles: ['user', 'hubAdmin', 'fluxAdmin'], ativo: true, apres: '', niver: '',
+      cargo: '', depto: '', empresa: 'Tecnofink Matriz',
+      roles: ['user', 'hubAdmin', 'fluxAdmin'], ativo: true, apres: '', niver: '', perfilPendente: true,
     }, { merge: true });
     await logSistema('Bootstrap do portal', email + ' promovido a administrador do hub e do Flux (primeiro acesso)', 'admin');
   }
@@ -297,6 +316,9 @@ export const aoSolicitarBootstrap = onDocumentCreated('bootstrap/{uid}', async (
 export const aoReceberComando = onDocumentCreated('comandos/{comandoId}', async (event) => {
   const cmd = event.data?.data();
   if (!cmd) return;
+  // idempotência: entrega é at-least-once — não reprocessa um comando já tratado
+  // (evita re-restaurar ferramentas e reenviar o broadcast do ranking)
+  if (cmd.status || cmd.processadoEm) return;
   const marcar = (resultado: Record<string, unknown>) =>
     event.data?.ref.set({ ...cmd, ...resultado, processadoEm: FieldValue.serverTimestamp() }, { merge: true });
 

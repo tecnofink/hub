@@ -1,11 +1,12 @@
 /**
  * E-mail transacional via Google Workspace (RF-51 / seção 8).
  *
- * Usa o SMTP relay do Workspace (smtp-relay.gmail.com) ou uma conta com senha
- * de app. Configuração por parâmetros do Functions:
- *   firebase functions:secrets:set SMTP_PASS
- *   e defina SMTP_HOST / SMTP_USER / EMAIL_FROM no deploy (ou .env do codebase).
- * Sem configuração, os e-mails são apenas registrados no log (modo emulador).
+ * Autentica via smtp.gmail.com (conta Workspace + senha de app). Configuração:
+ *   - SMTP_HOST / SMTP_USER / EMAIL_FROM: parâmetros (functions/.env.* — SEM segredo).
+ *   - SMTP_PASS: SEMPRE segredo do Secret Manager (firebase functions:secrets:set
+ *     SMTP_PASS) e ligado via setGlobalOptions({ secrets: ['SMTP_PASS'] }).
+ *     NUNCA colocar a senha em .env versionado (o repositório é público).
+ * Sem SMTP_HOST, o envio é apenas registrado no log (modo emulador/dev).
  */
 import * as logger from 'firebase-functions/logger';
 import { defineString } from 'firebase-functions/params';
@@ -14,9 +15,8 @@ import * as nodemailer from 'nodemailer';
 export const SMTP_HOST = defineString('SMTP_HOST', { default: '' });
 export const SMTP_USER = defineString('SMTP_USER', { default: '' });
 export const EMAIL_FROM = defineString('EMAIL_FROM', { default: 'Portal Flux <portal-flux@tecnofink.com>' });
-// Senha SMTP: lida do ambiente. Fica vazia até o e-mail ser configurado
-// (quando ativarem, gravar como segredo do Functions e reativar a ligação
-// em setGlobalOptions). Sem SMTP_HOST, o envio é apenas registrado no log.
+// Senha SMTP: injetada como segredo do Secret Manager (setGlobalOptions.secrets),
+// disponível em process.env. NUNCA vem de .env versionado.
 const SMTP_PASS = () => process.env.SMTP_PASS ?? '';
 
 export interface Mensagem {
@@ -39,9 +39,14 @@ export async function enviar(m: Mensagem): Promise<void> {
       secure: false,
       auth: SMTP_USER.value() ? { user: SMTP_USER.value(), pass: SMTP_PASS() } : undefined,
     });
+    // multidestinatário vai por BCC (não expõe a lista de e-mails a todos);
+    // destinatário único fica no To normalmente
+    const lista = Array.isArray(m.para) ? m.para : [m.para];
+    const multi = lista.length > 1;
     await transporter.sendMail({
       from: EMAIL_FROM.value(),
-      to: Array.isArray(m.para) ? m.para.join(', ') : m.para,
+      to: multi ? EMAIL_FROM.value() : lista[0],
+      bcc: multi ? lista : undefined,
       subject: m.assunto,
       text: texto,
     });
