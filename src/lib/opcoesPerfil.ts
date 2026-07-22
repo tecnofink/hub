@@ -9,8 +9,9 @@ export const EMPRESAS = ['Tecnofink Matriz', 'Tecnofink Itaboraí', 'Powerpoxi']
 // ordenados alfabeticamente (pt-BR) — o .sort mantém a ordem mesmo se alguém
 // acrescentar um departamento novo à lista no futuro
 export const DEPTOS = [
-  'Presidência e Conselho', 'Engenharia', 'Comercial', 'Financeiro', 'Controladoria',
-  'RH e DP', 'Compras', 'Inovação, Marketing e Estratégia', 'Operações', 'Qualidade e Segurança',
+  'Administrativo', 'Conselho Administrativo', 'Comercial', 'Diretoria Executiva',
+  'Diretoria Estratégica de Mercado e Inovação', 'Monitoramento', 'Presidência',
+  'Qualidade', 'Técnico',
 ].sort((a, b) => a.localeCompare(b, 'pt-BR'));
 
 /** Perfil completo: cargo preenchido + empresa e departamento dentro das listas. */
