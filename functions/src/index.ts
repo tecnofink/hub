@@ -14,7 +14,9 @@ import { enviar } from './email';
 import { ProjetoDoc, rankingDoCiclo } from './scoring';
 
 initializeApp();
-setGlobalOptions({ region: 'southamerica-east1', maxInstances: 10 });
+// SMTP_PASS (segredo do Secret Manager) fica disponível em process.env para o
+// envio de e-mail (email.ts). Ligado aqui a todas as Functions do codebase.
+setGlobalOptions({ region: 'southamerica-east1', maxInstances: 10, secrets: ['SMTP_PASS'] });
 
 const db = () => getFirestore();
 
