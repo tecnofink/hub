@@ -164,7 +164,7 @@ export default function FluxHome() {
         </div>
       </div>
       <p className="tf-small" style={{ fontSize: '0.76rem', margin: '12px 0 0', maxWidth: 880 }}>
-        Os cards avançam sozinhos conforme o pitch evolui — ninguém arrasta: inscrição, liberação do acesso ao Claude, registro de resultado e avaliação do comitê movem o projeto de etapa. Clique no seu projeto (destacado em azul) para abrir o gestor de tarefas.
+        Os cards avançam sozinhos conforme o pitch evolui — ninguém arrasta: inscrição, liberação do acesso ao Claude, registro de resultado e avaliação do comitê movem o projeto de etapa. Clique em um projeto para abrir a ficha — no seu (destacado em azul), a ficha também leva ao gestor de tarefas.
       </p>
 
       {reativar && (
@@ -277,7 +277,9 @@ function KanbanCard({ p, col, onReativar }: { p: Projeto; col: ColunaId; onReati
   // RF-27: reativação disponível ao titular quando um novo ciclo abre inscrições
   const reativavel = col === 'back' && mine && !!cicloAtivo && cicloAtivo.id !== p.backlogDe && todayISO() <= cicloAtivo.limite;
   const clickOn = col !== 'back';
-  const destino = mine ? '/tarefas/' + p.id : '/flux/projeto/' + p.id;
+  // todo card abre a FICHA (comentários da triagem, resultado, ações); de lá o
+  // titular alcança o quadro por "Abrir em Produtividade →"
+  const destino = '/flux/projeto/' + p.id;
 
   const atrasado = statusDe(p).k === 'atrasado';
   const fg = mine ? '#fff' : 'var(--tf-ink)';
@@ -318,7 +320,7 @@ function KanbanCard({ p, col, onReativar }: { p: Projeto; col: ColunaId; onReati
         <span style={{ fontSize: '0.74rem', color: sub }}>{meta2}</span>
       </div>
       {clickOn && (
-        <span style={{ fontSize: '0.76rem', fontWeight: 700, color: mine ? '#fff' : atrasado ? 'var(--tf-crit)' : 'var(--tf-accent)' }}>{mine ? 'Abrir em Produtividade →' : 'Ver ficha →'}</span>
+        <span style={{ fontSize: '0.76rem', fontWeight: 700, color: mine ? '#fff' : atrasado ? 'var(--tf-crit)' : 'var(--tf-accent)' }}>Ver ficha →</span>
       )}
       {reativavel && (
         <button onClick={(e) => { e.stopPropagation(); onReativar(); }} className="tf-btn tf-btn-accent" style={{ padding: '8px 14px', fontSize: '0.78rem', justifyContent: 'center' }}>

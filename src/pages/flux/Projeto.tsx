@@ -304,6 +304,44 @@ export default function Projeto() {
               </p>
             </div>
           )}
+
+          {/* Triagem de acesso na própria ficha (RF-24, P12): admin/comitê decidem
+              sem sair daqui — mesmas ações e confirmações de /admin/flux/pitches.
+              Só enquanto pende: sem tier, não reprovado, ciclo ativo. */}
+          {(ehFluxAdmin(me) || me.roles.includes('avaliador')) && !emBacklog && cc?.status === 'ativo' && !p.tier && !p.reprovado && (
+            <div style={{ border: '1px solid var(--tf-line)', borderRadius: 12, padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <span className="tf-mono" style={{ fontSize: '0.56rem' }}>[ TRIAGEM DE ACESSO · COMITÊ E ADMINS ]</span>
+              <button onClick={() => store.definirTier(p.id, 'Enterprise')} className="tf-btn tf-btn-accent" style={{ justifyContent: 'center' }}>Definir Enterprise</button>
+              <button onClick={() => store.definirTier(p.id, 'Basic')} className="tf-btn tf-btn-primary" style={{ justifyContent: 'center' }}>Definir Basic</button>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  onClick={() => ui.confirmar({
+                    titulo: 'Enviar pitch para o backlog?',
+                    texto: '"' + p.nome + '" sai deste ciclo e fica guardado no Backlog de Projetos. O titular pode reativá-lo quando um novo ciclo abrir as inscrições.',
+                    cta: 'Enviar para o backlog',
+                    onConfirm: () => store.enviarBacklog(p.id),
+                  })}
+                  className="tf-btn tf-btn-ghost" style={{ flex: 1, justifyContent: 'center', fontSize: '0.8rem' }}
+                >
+                  Backlog
+                </button>
+                <button
+                  onClick={() => ui.confirmar({
+                    titulo: 'Reprovar este pitch?',
+                    texto: '"' + p.nome + '" será marcado como Reprovado e não participa do ranking deste ciclo. A decisão fica registrada nos logs de auditoria.',
+                    cta: 'Reprovar pitch', danger: true,
+                    onConfirm: () => store.reprovarPitch(p.id, 'triagem'),
+                  })}
+                  className="tf-btn tf-btn-ghost tf-btn-danger" style={{ flex: 1, justifyContent: 'center', fontSize: '0.8rem' }}
+                >
+                  Reprovar
+                </button>
+              </div>
+              <p className="tf-small" style={{ fontSize: '0.7rem', margin: 0 }}>
+                O tier libera o Claude do titular para este ciclo. Vale a primeira decisão registrada.
+              </p>
+            </div>
+          )}
         </div>
       </div>
       {comentariosAbertos && <PitchComentarios pitch={p} onClose={() => setComentariosAbertos(false)} />}
