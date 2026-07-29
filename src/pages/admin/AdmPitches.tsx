@@ -5,6 +5,30 @@ import { dbr, mesesDoCiclo } from '../../lib/dates';
 import { brl } from '../../lib/format';
 import { catNome } from '../../lib/scoring';
 import { Avatar, Vazio } from '../../components/ui';
+import PitchComentarios from '../../components/PitchComentarios';
+
+const DESC_MAX = 400; // descrição do pitch clampada; excedente atrás de "mostrar mais"
+
+function Descricao({ texto }: { texto: string }) {
+  const [aberta, setAberta] = React.useState(false);
+  const longa = texto.length > DESC_MAX;
+  // corta em limite de palavra para não partir termo no meio
+  const curta = longa ? texto.slice(0, DESC_MAX).replace(/\s+\S*$/, '') + '…' : texto;
+  return (
+    <p style={{ fontSize: '0.86rem', color: 'var(--tf-ink-2)', lineHeight: 1.5, margin: '10px 0 0', maxWidth: 640 }}>
+      {aberta ? texto : curta}
+      {longa && (
+        <>
+          {' '}
+          <button type="button" className="acao foco-tf" style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--tf-accent)' }}
+            onClick={() => setAberta((v) => !v)}>
+            {aberta ? 'mostrar menos' : 'mostrar mais'}
+          </button>
+        </>
+      )}
+    </p>
+  );
+}
 
 export default function AdmPitches() {
   const store = useStore();
@@ -12,6 +36,8 @@ export default function AdmPitches() {
   const { state, cicloAtivo: c } = store;
   const fila = state.projects.filter((p) => c && p.ciclo === c.id && !p.tier && !p.reprovado);
   const meses = c ? mesesDoCiclo(c.inicio, c.fim) : 3.5;
+  const [comentandoId, setComentandoId] = React.useState<string | null>(null);
+  const comentando = comentandoId ? fila.find((p) => p.id === comentandoId) ?? null : null;
 
   return (
     <div>
@@ -35,7 +61,7 @@ export default function AdmPitches() {
                   <div className="tf-mono" style={{ fontSize: '0.6rem', marginTop: 6 }}>
                     {brl(p.estimPer === 'mes' ? p.estimValor * meses : p.estimValor)} POR CICLO · DEADLINE {dbr(p.deadline)}
                   </div>
-                  <p style={{ fontSize: '0.86rem', color: 'var(--tf-ink-2)', lineHeight: 1.5, margin: '10px 0 0', maxWidth: 640 }}>{p.just}</p>
+                  <Descricao texto={p.just} />
                 </div>
                 <div style={{ display: 'flex', gap: 8, flex: 'none', alignItems: 'center', flexWrap: 'wrap' }}>
                   <button
@@ -64,6 +90,11 @@ export default function AdmPitches() {
                   <button onClick={() => store.definirTier(p.id, 'Enterprise')} className="tf-btn tf-btn-accent" style={{ padding: '10px 16px', fontSize: '0.82rem' }}>Definir Enterprise</button>
                 </div>
               </div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 14 }}>
+                <button onClick={() => setComentandoId(p.id)} className="tf-btn tf-btn-ghost" style={{ padding: '12px 22px', fontSize: '0.9rem' }}>
+                  💬 Comentários
+                </button>
+              </div>
             </div>
           );
         })}
@@ -71,6 +102,7 @@ export default function AdmPitches() {
       <p className="tf-small" style={{ fontSize: '0.74rem', margin: '14px 0 0' }}>
         A concessão em si é manual, no console do Claude — acompanhe em Acessos ao Claude.
       </p>
+      {comentando && <PitchComentarios pitch={comentando} onClose={() => setComentandoId(null)} />}
     </div>
   );
 }

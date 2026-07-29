@@ -20,9 +20,9 @@ import { noticiaAcesso, noticiaEtapa, type NoticiaAxel } from '../lib/axel';
 import { perfilCompleto } from '../lib/opcoesPerfil';
 import { colunaDe } from '../pages/flux/statusProjeto';
 import type {
-  Anexo, AnexoTarefa, AppState, Ciclo, Comentario, Etapa, Ferramenta, LogEntry, LogTipo,
-  NotaTrio, PapelProjeto, Periodicidade, Projeto, ProjetoLivre, QuadroProjeto,
-  Role, Tarefa, Tier, Usuario,
+  Anexo, AnexoTarefa, AppState, Ciclo, Comentario, ComentarioPitch, Etapa, Ferramenta,
+  LogEntry, LogTipo, NotaTrio, PapelProjeto, Periodicidade, Projeto, ProjetoLivre,
+  QuadroProjeto, Role, Tarefa, Tier, Usuario,
 } from '../lib/types';
 
 export interface ModalDef {
@@ -134,6 +134,13 @@ interface StoreApi {
   addComentario(pid: string, tarefaId: string, texto: string): void;
   editarComentario(pid: string, comentarioId: string, texto: string): void;
   excluirComentario(pid: string, comentarioId: string): void;
+
+  /* ── Comentários de triagem do pitch (thread titular ↔ admins do Flux) ──
+     Sem exclusão: é um bate-papo — o histórico da triagem fica íntegro. */
+  observarComentariosPitch(pid: string, cb: (cs: ComentarioPitch[]) => void): () => void;
+  /** Cria a mensagem; arquivos sobem antes para anexos-pitches/{pid}/ (20 MB cada). */
+  addComentarioPitch(pid: string, texto: string, arquivos: File[]): Promise<void>;
+  editarComentarioPitch(pid: string, comentarioId: string, texto: string): void;
 
   addAnexosTarefa(pid: string, tid: string, arquivos: File[]): Promise<void>;
   removerAnexoTarefa(pid: string, tid: string, anexo: AnexoTarefa): void;
@@ -1072,6 +1079,42 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
 
       excluirComentario: (pid, comentarioId) => {
         deleteDoc(doc(db, 'tarefas', pid, 'comentarios', comentarioId)).catch(falha);
+      },
+
+      /* ── Comentários de triagem do pitch (titular ↔ admins do Flux) ──
+         Mesmo desenho da thread de tarefa, mas em projects/{pid}/comentarios e
+         com anexos inline na mensagem (arquivos em anexos-pitches/{pid}/). */
+      observarComentariosPitch: (pid, cb) =>
+        onSnapshot(
+          collection(db, 'projects', pid, 'comentarios'),
+          (s) => {
+            const cs = s.docs.map((d) => ({ id: d.id, ...d.data() }) as ComentarioPitch);
+            cs.sort((a, b) => a.criadoEm.localeCompare(b.criadoEm));
+            cb(cs);
+          },
+          () => cb([]), // sem permissão (não é titular nem admin): thread vazia
+        ),
+
+      addComentarioPitch: async (pid, texto, arquivos) => {
+        try {
+          const anexos: AnexoTarefa[] = [];
+          for (const f of arquivos) {
+            const r = sRef(storage, `anexos-pitches/${pid}/${Date.now()}_${f.name}`);
+            await uploadBytes(r, f);
+            anexos.push({ n: f.name, url: await getDownloadURL(r), tamanho: f.size, por: me!.id, em: todayISO() });
+          }
+          await setDoc(doc(collection(db, 'projects', pid, 'comentarios')), {
+            autorId: me!.id, autorNome: me!.nome, texto: texto.trim(),
+            criadoEm: new Date().toISOString(),
+            ...(anexos.length ? { anexos } : {}),
+          });
+        } catch (e) { falha(e); throw e; }
+      },
+
+      editarComentarioPitch: (pid, comentarioId, texto) => {
+        updateDoc(doc(db, 'projects', pid, 'comentarios', comentarioId), {
+          texto: texto.trim(), editadoEm: new Date().toISOString(),
+        }).catch(falha);
       },
 
       /* ── Anexos por tarefa (CRM: Storage + metadados na tarefa) ── */

@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "emuladores": "powershell -ExecutionPolicy Bypass -File scripts/emuladores.ps1",
     "seed": "tsx scripts/seed-emulador.ts",
-    "deploy": "npm run build && firebase deploy"
+    "deploy": "npm run build && firebase deploy",
+    "dev:workspace": "vite --mode workspace"
   },
   "dependencies": {
     "firebase": "^12.15.0",

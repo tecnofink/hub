@@ -3,6 +3,8 @@ rules_version = '2';
 // Portal interno: o Storage cruza a autorização com o Firestore (a barreira de
 // domínio/conta ativa não pode viver só nas regras do Firestore). Qualquer conta
 // Google obtém token, então "request.auth != null" NÃO basta.
+// Cross-service (firestore.get daqui) exige o papel firebaserules.firestoreServiceAgent
+// no agente service-*@gcp-sa-firebasestorage — o deploy interativo concede na 1ª vez.
 service firebase.storage {
   match /b/{bucket}/o {
     // conta existente e ativa no portal
@@ -23,6 +25,20 @@ service firebase.storage {
       allow read: if ativo();
       allow write: if donoDoProjeto() && tamanhoOk();
       allow delete: if donoDoProjeto();
+    }
+
+    // anexos dos comentários de triagem do pitch — thread restrita: só o
+    // titular do pitch e os admins do Flux (espelha projects/{pid}/comentarios)
+    match /anexos-pitches/{projectId}/{fileName} {
+      function participanteDaTriagem() {
+        return ativo() && (
+          firestore.get(/databases/(default)/documents/projects/$(projectId)).data.uid == request.auth.uid
+          || firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.roles.hasAny(['fluxAdmin', 'admin'])
+        );
+      }
+      allow read: if participanteDaTriagem();
+      allow write: if participanteDaTriagem() && tamanhoOk();
+      allow delete: if participanteDaTriagem();
     }
 
     // anexos de tarefas — só dono/membro do quadro (denormalizado em tarefas/{pid}.membrosIds).

@@ -187,6 +187,21 @@ export interface Comentario {
 }
 
 /**
+ * Comentário de triagem do PITCH — subcoleção projects/{pid}/comentarios.
+ * Thread restrita: só admins do Flux e o titular do pitch leem/escrevem
+ * (regras). Anexos vão inline na mensagem (Storage: anexos-pitches/{pid}/).
+ */
+export interface ComentarioPitch {
+  id: string;
+  autorId: string;
+  autorNome: string;
+  texto: string;
+  criadoEm: string;   // ISO com hora
+  editadoEm?: string;
+  anexos?: AnexoTarefa[];
+}
+
+/**
  * Projeto livre do Gestor de Tarefas (RF-44), reconciliado com o CRM (P15):
  * multi-membro com papéis por projeto, descrição e arquivamento.
  */

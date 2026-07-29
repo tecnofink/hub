@@ -165,11 +165,15 @@ export const aoExcluirProjeto = onDocumentDeleted('projects/{pid}', async (event
     const comentarios = await quadroRef.collection('comentarios').get();
     await Promise.all(comentarios.docs.map((d) => d.ref.delete()));
     await quadroRef.delete().catch(() => undefined);
+    // thread de triagem do próprio pitch (subcoleção órfã após o delete do pai)
+    const triagem = await db().collection('projects/' + pid + '/comentarios').get();
+    await Promise.all(triagem.docs.map((d) => d.ref.delete()));
     try {
       const { getStorage } = await import('firebase-admin/storage');
       const bucket = getStorage().bucket();
       await bucket.deleteFiles({ prefix: `anexos-tarefas/${pid}/` });
       await bucket.deleteFiles({ prefix: `anexos/${pid}/` });
+      await bucket.deleteFiles({ prefix: `anexos-pitches/${pid}/` });
     } catch (e) {
       logger.warn('falha ao limpar anexos do pitch excluído', { pid, erro: String(e) });
     }
@@ -182,6 +186,46 @@ export const aoExcluirProjeto = onDocumentDeleted('projects/{pid}', async (event
     para: admins,
     assunto: 'Pitch com tier definido foi excluído — rever acessos ao Claude',
     corpo: `O pitch "${p.nome}" tinha acesso ${p.tier} liberado e foi excluído pelo titular.\n\nRevise os acessos em Admin do Flux → Acessos ao Claude e ajuste o console do Claude se necessário.`,
+  });
+});
+
+/* ── Comentários de triagem do pitch (pedido do VP): thread restrita entre o
+   titular e os admins do Flux. Admin comenta → avisa o titular (link para a
+   ficha, onde ele responde); titular responde → avisa os admins (link para a
+   triagem). Autor nunca é notificado da própria mensagem. ── */
+export const aoComentarPitch = onDocumentCreated('projects/{pid}/comentarios/{cid}', async (event) => {
+  const c = event.data?.data();
+  if (!c) return;
+  const pid = event.params.pid;
+  const pitch = (await db().doc('projects/' + pid).get()).data();
+  if (!pitch) return;
+
+  const trecho = String(c.texto ?? '').slice(0, 400) + (String(c.texto ?? '').length > 400 ? '…' : '');
+  const nAnexos = Array.isArray(c.anexos) ? c.anexos.length : 0;
+  const rodapeAnexos = nAnexos ? `\n(${nAnexos} anexo${nAnexos > 1 ? 's' : ''} na mensagem)` : '';
+
+  const autor = await usuario(String(c.autorId));
+
+  if (c.autorId === pitch.uid) {
+    // titular respondeu → avisa os admins do Flux (sem ecoar para o próprio
+    // autor, caso o titular também seja admin)
+    const admins = (await emailsPorPapeis(['fluxAdmin', 'admin'])).filter((e) => e !== autor?.email);
+    if (!admins.length) return;
+    await enviar({
+      para: admins,
+      assunto: `${c.autorNome} respondeu na triagem — ${pitch.nome}`,
+      corpo: `O titular respondeu na thread de triagem do pitch "${pitch.nome}":\n\n"${trecho}"${rodapeAnexos}\n\nResponda em https://tecnofink-hub.web.app/admin/flux/pitches (botão Comentários) ou pela ficha do projeto.`,
+    });
+    return;
+  }
+
+  // admin comentou → avisa o titular
+  const dono = await usuario(String(pitch.uid));
+  if (!dono) return;
+  await enviar({
+    para: dono.email,
+    assunto: `Comentário da triagem no seu pitch — ${pitch.nome}`,
+    corpo: `Olá, ${dono.nome}!\n\n${c.autorNome} (admin do Flux) comentou na triagem do seu pitch "${pitch.nome}":\n\n"${trecho}"${rodapeAnexos}\n\nVeja e responda na ficha do projeto: https://tecnofink-hub.web.app/flux/projeto/${pid} (botão "Comentários da triagem").`,
   });
 });
 

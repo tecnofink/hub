@@ -195,6 +195,28 @@ service cloud.firestore {
         && request.resource.data.notas[request.auth.uid].imp >= 0 && request.resource.data.notas[request.auth.uid].imp <= 5
         && request.resource.data.notas[request.auth.uid].alc is number
         && request.resource.data.notas[request.auth.uid].alc >= 0 && request.resource.data.notas[request.auth.uid].alc <= 5;
+
+      // ── Comentários de triagem do pitch: thread RESTRITA ao titular e aos
+      //    admins do Flux (diferente da ficha, que é pública). Anexos vão
+      //    inline no doc; os arquivos ficam em anexos-pitches/ (storage.rules).
+      match /comentarios/{comentarioId} {
+        function pitch() {
+          return get(/databases/$(database)/documents/projects/$(projectId)).data;
+        }
+        function participante() {
+          return isActive() && (pitch().uid == request.auth.uid || ehFluxAdmin());
+        }
+        allow read: if participante();
+        allow create: if participante()
+          && request.resource.data.autorId == request.auth.uid
+          && request.resource.data.texto is string;
+        // editar: só o autor, e apenas o texto. SEM exclusão (bate-papo: o
+        // histórico da triagem fica íntegro; a limpeza ao excluir o pitch é
+        // feita pela Function, que não passa pelas regras).
+        allow update: if isActive()
+          && resource.data.autorId == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['texto', 'editadoEm']);
+      }
     }
 
     // ── Ferramentas do hub (RF-57): administração do portal.

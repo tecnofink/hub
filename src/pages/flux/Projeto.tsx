@@ -13,6 +13,8 @@ import { dbr, mesesDoCiclo, todayISO } from '../../lib/dates';
 import { brl } from '../../lib/format';
 import { catNome, nValidacoes, score, tangValidado } from '../../lib/scoring';
 import { Avatar, Badge, Mono } from '../../components/ui';
+import PitchComentarios from '../../components/PitchComentarios';
+import { ehFluxAdmin } from '../../lib/roles';
 import { statusDe } from './statusProjeto';
 
 const PASSOS = ['Inscrito', 'Acesso definido', 'Em execução', 'Resultado registrado', 'Avaliado'];
@@ -35,6 +37,7 @@ export default function Projeto() {
   // ciclo (para o score daquele ciclo) sob demanda. `busca` é indexada pelo id
   // para não redirecionar nem mostrar dado velho ao trocar de projeto.
   const [busca, setBusca] = React.useState<{ id: string; p?: ProjetoT; set?: ProjetoT[]; ausente?: boolean } | null>(null);
+  const [comentariosAbertos, setComentariosAbertos] = React.useState(false);
   React.useEffect(() => {
     if (!id || emEscopo) return; // em escopo: o store já tem tudo
     let vivo = true;
@@ -291,8 +294,19 @@ export default function Projeto() {
               Abrir em Produtividade →
             </button>
           )}
+          {(p.uid === me.id || ehFluxAdmin(me)) && (
+            <div>
+              <button onClick={() => setComentariosAbertos(true)} className="tf-btn tf-btn-ghost" style={{ width: '100%', justifyContent: 'center' }}>
+                💬 Comentários da triagem
+              </button>
+              <p className="tf-small" style={{ fontSize: '0.72rem', margin: '8px 0 0', textAlign: 'center' }}>
+                Conversa privada entre você e os admins do Flux — não aparece na ficha pública.
+              </p>
+            </div>
+          )}
         </div>
       </div>
+      {comentariosAbertos && <PitchComentarios pitch={p} onClose={() => setComentariosAbertos(false)} />}
     </div>
   );
 }

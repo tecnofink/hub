@@ -22,3 +22,5 @@ Dados Supabase*.txt
 credentials.json
 .env
 .env.production.local
+.env.workspace.local
+*.tsbuildinfo
