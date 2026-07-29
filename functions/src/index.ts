@@ -195,22 +195,29 @@ export const aoExcluirProjeto = onDocumentDeleted('projects/{pid}', async (event
    triagem). Autor nunca é notificado da própria mensagem. ── */
 export const aoComentarPitch = onDocumentCreated('projects/{pid}/comentarios/{cid}', async (event) => {
   const c = event.data?.data();
-  if (!c) return;
   const pid = event.params.pid;
+  if (!c) { logger.warn('comentário sem dados no evento', { pid }); return; }
   const pitch = (await db().doc('projects/' + pid).get()).data();
-  if (!pitch) return;
+  if (!pitch) { logger.warn('pitch do comentário não encontrado', { pid }); return; }
 
   const trecho = String(c.texto ?? '').slice(0, 400) + (String(c.texto ?? '').length > 400 ? '…' : '');
   const nAnexos = Array.isArray(c.anexos) ? c.anexos.length : 0;
   const rodapeAnexos = nAnexos ? `\n(${nAnexos} anexo${nAnexos > 1 ? 's' : ''} na mensagem)` : '';
 
   const autor = await usuario(String(c.autorId));
+  const doTitular = c.autorId === pitch.uid;
+  logger.info('comentário de triagem recebido', { pid, autor: c.autorNome, doTitular, anexos: nAnexos });
 
-  if (c.autorId === pitch.uid) {
+  if (doTitular) {
     // titular respondeu → avisa os admins do Flux (sem ecoar para o próprio
     // autor, caso o titular também seja admin)
-    const admins = (await emailsPorPapeis(['fluxAdmin', 'admin'])).filter((e) => e !== autor?.email);
-    if (!admins.length) return;
+    const todos = await emailsPorPapeis(['fluxAdmin', 'admin']);
+    const admins = todos.filter((e) => e !== autor?.email);
+    if (!admins.length) {
+      // nunca sai calado: sem destinatário é anomalia digna de log
+      logger.warn('nenhum admin para notificar (fora o autor)', { pid, todos });
+      return;
+    }
     await enviar({
       para: admins,
       assunto: `${c.autorNome} respondeu na triagem — ${pitch.nome}`,
@@ -221,7 +228,7 @@ export const aoComentarPitch = onDocumentCreated('projects/{pid}/comentarios/{ci
 
   // admin comentou → avisa o titular
   const dono = await usuario(String(pitch.uid));
-  if (!dono) return;
+  if (!dono) { logger.warn('titular do pitch não encontrado para notificar', { pid, uid: pitch.uid }); return; }
   await enviar({
     para: dono.email,
     assunto: `Comentário da triagem no seu pitch — ${pitch.nome}`,
