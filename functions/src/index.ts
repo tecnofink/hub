@@ -69,6 +69,7 @@ function logSistema(acao: string, det: string, tipo: 'admin' | 'avaliacao' | 'fl
 export const aoInscreverPitch = onDocumentCreated('projects/{pid}', async (event) => {
   const p = event.data?.data();
   if (!p || p.ciclo === 'backlog') return;
+  if (p.teste === true) return; // pitch semeado para teste — não notifica ninguém
   const u = await usuario(p.uid);
   if (!u) return;
   await enviar({
@@ -199,6 +200,7 @@ export const aoComentarPitch = onDocumentCreated('projects/{pid}/comentarios/{ci
   if (!c) { logger.warn('comentário sem dados no evento', { pid }); return; }
   const pitch = (await db().doc('projects/' + pid).get()).data();
   if (!pitch) { logger.warn('pitch do comentário não encontrado', { pid }); return; }
+  if (pitch.teste === true) return; // pitch semeado para teste — não notifica ninguém
 
   const trecho = String(c.texto ?? '').slice(0, 400) + (String(c.texto ?? '').length > 400 ? '…' : '');
   const nAnexos = Array.isArray(c.anexos) ? c.anexos.length : 0;
