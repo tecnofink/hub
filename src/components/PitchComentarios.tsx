@@ -141,7 +141,11 @@ export function ChatTriagem({ pitch, onClose, compacto, onMaximizar }: {
       {onClose && <p className="tf-small" style={{ margin: '4px 0 12px', fontSize: '0.78rem' }}>{pitch.nome}</p>}
       {!onClose && <div style={{ height: 12 }} />}
 
-      <div style={{ minHeight: compacto ? 0 : 160, maxHeight: compacto ? 300 : (onClose ? '46vh' : 380), overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8, padding: '4px 4px 4px 0', background: 'var(--tf-bg-2)', borderRadius: 12, border: '1px solid var(--tf-line)' }}>
+      <div style={{
+        // no modal a thread ESTICA para preencher os 80vh; inline usa altura fixa
+        ...(onClose ? { flex: 1, minHeight: 0 } : { minHeight: compacto ? 0 : 160, maxHeight: compacto ? 300 : 380 }),
+        overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8, padding: '4px 4px 4px 0', background: 'var(--tf-bg-2)', borderRadius: 12, border: '1px solid var(--tf-line)',
+      }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: 12 }}>
           {mensagens.length === 0 && (
             <p className="tf-small" style={{ fontSize: '0.8rem', color: 'var(--tf-ink-3)', textAlign: 'center', padding: compacto ? '14px 8px' : '28px 12px' }}>
@@ -249,10 +253,12 @@ export function ChatTriagem({ pitch, onClose, compacto, onMaximizar }: {
   );
 }
 
-/** Chat da triagem em modal (usado na fila de /admin/flux/pitches). */
+/** Chat da triagem em modal (fila de /admin/flux/pitches e "Maximizar" da ficha):
+    largura da tela do pitch (até 1100) e 80% da altura, com a thread esticando. */
 export default function PitchComentarios({ pitch, onClose }: { pitch: Projeto; onClose: () => void }) {
   return (
-    <Modal onClose={onClose} maxWidth={640} labelId="pc-titulo">
+    <Modal onClose={onClose} maxWidth={1100} labelId="pc-titulo"
+      cardStyle={{ height: '80vh', display: 'flex', flexDirection: 'column' }}>
       <ChatTriagem pitch={pitch} onClose={onClose} />
     </Modal>
   );

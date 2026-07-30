@@ -59,7 +59,7 @@ export function Pill({ on, onClick, children, style }: { on: boolean; onClick: (
  * semântica de diálogo (role=dialog + aria-modal). Substitui o boilerplate de
  * overlay repetido pelas telas. `top` ancora no topo (avisos); senão centraliza.
  */
-export function Modal({ onClose, children, maxWidth = 480, top, labelId }: { onClose: () => void; children: React.ReactNode; maxWidth?: number; top?: boolean; labelId?: string }) {
+export function Modal({ onClose, children, maxWidth = 480, top, labelId, cardStyle }: { onClose: () => void; children: React.ReactNode; maxWidth?: number; top?: boolean; labelId?: string; cardStyle?: React.CSSProperties }) {
   const cardRef = useRef<HTMLDivElement>(null);
   // guarda o onClose mais recente sem re-assinar o efeito: se dependêssemos de
   // [onClose], um pai que recria a função a cada render devolveria o foco ao 1º
@@ -96,7 +96,7 @@ export function Modal({ onClose, children, maxWidth = 480, top, labelId }: { onC
       <div
         ref={cardRef} onClick={(e) => e.stopPropagation()}
         role="dialog" aria-modal="true" aria-labelledby={labelId}
-        className="tf-card" style={{ maxWidth, width: '100%', padding: 28, boxShadow: 'var(--tf-shadow-lg)' }}
+        className="tf-card" style={{ maxWidth, width: '100%', padding: 28, boxShadow: 'var(--tf-shadow-lg)', ...cardStyle }}
       >
         {children}
       </div>
