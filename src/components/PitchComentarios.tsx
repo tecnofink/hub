@@ -70,7 +70,12 @@ function AnexosDaMensagem({ anexos }: { anexos: AnexoTarefa[] }) {
   );
 }
 
-export default function PitchComentarios({ pitch, onClose }: { pitch: Projeto; onClose: () => void }) {
+/**
+ * Corpo do chat (sem moldura): usado inline na ficha do projeto e dentro do
+ * modal em /admin/flux/pitches. `onClose` só é passado no modal — nesse caso
+ * o cabeçalho ganha o X de fechar e o nome do pitch (redundante inline).
+ */
+export function ChatTriagem({ pitch, onClose }: { pitch: Projeto; onClose?: () => void }) {
   const store = useStore();
   const ui = useUI();
   const { me } = store;
@@ -108,12 +113,21 @@ export default function PitchComentarios({ pitch, onClose }: { pitch: Projeto; o
   };
 
   return (
-    <Modal onClose={onClose} maxWidth={640} labelId="pc-titulo">
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-        <h2 id="pc-titulo" className="tf-h3" style={{ margin: 0, fontSize: '1.15rem' }}>Chat da triagem</h2>
-        <span className="tf-mono" style={{ fontSize: '0.58rem' }}>VISÍVEL SÓ AO TITULAR E AOS ADMINS DO FLUX</span>
+    <>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
+          <h2 id="pc-titulo" className="tf-h3" style={{ margin: 0, fontSize: '1.15rem' }}>Chat da triagem</h2>
+          <span className="tf-mono" style={{ fontSize: '0.58rem' }}>VISÍVEL SÓ AO TITULAR E AOS ADMINS DO FLUX</span>
+        </div>
+        {onClose && (
+          <button type="button" aria-label="Fechar chat" onClick={onClose} className="foco-tf"
+            style={{ flex: 'none', width: 32, height: 32, borderRadius: 8, border: '1px solid var(--tf-line)', background: 'var(--tf-bg-2)', color: 'var(--tf-ink-2)', fontSize: '1.3rem', lineHeight: 1, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            ×
+          </button>
+        )}
       </div>
-      <p className="tf-small" style={{ margin: '4px 0 12px', fontSize: '0.78rem' }}>{pitch.nome}</p>
+      {onClose && <p className="tf-small" style={{ margin: '4px 0 12px', fontSize: '0.78rem' }}>{pitch.nome}</p>}
+      {!onClose && <div style={{ height: 12 }} />}
 
       <div style={{ minHeight: 200, maxHeight: '46vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8, padding: '4px 4px 4px 0', background: 'var(--tf-bg-2)', borderRadius: 12, border: '1px solid var(--tf-line)' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: 12 }}>
@@ -212,6 +226,15 @@ export default function PitchComentarios({ pitch, onClose }: { pitch: Projeto; o
           </button>
         </div>
       </div>
+    </>
+  );
+}
+
+/** Chat da triagem em modal (usado na fila de /admin/flux/pitches). */
+export default function PitchComentarios({ pitch, onClose }: { pitch: Projeto; onClose: () => void }) {
+  return (
+    <Modal onClose={onClose} maxWidth={640} labelId="pc-titulo">
+      <ChatTriagem pitch={pitch} onClose={onClose} />
     </Modal>
   );
 }
