@@ -86,18 +86,31 @@ service cloud.firestore {
         && request.resource.data.roles == ['user']
         && request.resource.data.ativo == true;
 
-      // RF-07: o usuário edita o próprio perfil (nunca e-mail, papéis ou status)
+      // RF-07: o usuário edita o próprio perfil (nunca e-mail, papéis ou status).
+      // #4: limites de tamanho — impede impersonação por nome gigante e, sobretudo,
+      // um `apres` de centenas de KB baixado por TODA sessão (o cliente assina a
+      // coleção users inteira). Guardas `in` evitam erro em doc legado sem o campo.
       allow update: if isActive() && request.auth.uid == userId
         && request.resource.data.diff(resource.data).affectedKeys()
-             .hasOnly(['nome', 'cargo', 'empresa', 'depto', 'niver', 'apres', 'foto', 'perfilPendente']);
+             .hasOnly(['nome', 'cargo', 'empresa', 'depto', 'niver', 'apres', 'foto', 'perfilPendente'])
+        && (!('nome' in request.resource.data) || (request.resource.data.nome is string && request.resource.data.nome.size() <= 80))
+        && (!('apres' in request.resource.data) || (request.resource.data.apres is string && request.resource.data.apres.size() <= 2000))
+        && (!('cargo' in request.resource.data) || (request.resource.data.cargo is string && request.resource.data.cargo.size() <= 80))
+        && (!('depto' in request.resource.data) || (request.resource.data.depto is string && request.resource.data.depto.size() <= 80))
+        && (!('empresa' in request.resource.data) || (request.resource.data.empresa is string && request.resource.data.empresa.size() <= 80))
+        && (!('niver' in request.resource.data) || (request.resource.data.niver is string && request.resource.data.niver.size() <= 10))
+        && (!('foto' in request.resource.data) || (request.resource.data.foto is string && request.resource.data.foto.size() <= 1000));
 
       // RF-55 (revisto): admin do HUB gere contas (ativo) e papéis do portal;
       // admin do FLUX gere apenas papéis (comitê/fluxAdmin, via UI do Flux).
       // Ninguém desativa a própria conta.
+      // #5: no próprio doc, o hubAdmin não pode mexer no 'ativo' NEM remover o
+      // próprio papel de admin — evita auto-lockout que só o console recupera.
       allow update: if ehHubAdmin()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['roles', 'ativo'])
         && (request.auth.uid != userId
-            || !('ativo' in request.resource.data.diff(resource.data).affectedKeys()));
+            || (!('ativo' in request.resource.data.diff(resource.data).affectedKeys())
+                && ('hubAdmin' in request.resource.data.roles || 'admin' in request.resource.data.roles)));
       // fluxAdmin gere só papéis do Flux (avaliador/fluxAdmin) — nunca concede
       // nem remove hubAdmin/admin (exclusivo do hubAdmin): impede auto-promoção
       // e lockout do único admin do hub.
@@ -207,9 +220,16 @@ service cloud.firestore {
           return isActive() && (pitch().uid == request.auth.uid || ehFluxAdmin());
         }
         allow read: if participante();
+        // #7/#21: identidade e forma validadas — autorNome tem de bater com o
+        // cadastro (sem nome forjado no e-mail/UI), texto limitado, sem campos
+        // extras, anexos só como lista.
         allow create: if participante()
           && request.resource.data.autorId == request.auth.uid
-          && request.resource.data.texto is string;
+          && request.resource.data.autorNome == meDoc().nome
+          && request.resource.data.texto is string
+          && request.resource.data.texto.size() <= 5000
+          && request.resource.data.keys().hasOnly(['autorId', 'autorNome', 'texto', 'criadoEm', 'anexos'])
+          && (!('anexos' in request.resource.data) || request.resource.data.anexos is list);
         // editar: só o autor, e apenas o texto. SEM exclusão (bate-papo: o
         // histórico da triagem fica íntegro; a limpeza ao excluir o pitch é
         // feita pela Function, que não passa pelas regras).

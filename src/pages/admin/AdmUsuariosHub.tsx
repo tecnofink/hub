@@ -41,7 +41,9 @@ export default function AdmUsuariosHub() {
               <span className="tf-small" style={{ display: 'block', fontSize: '0.72rem' }}>{u.cargo || '—'}</span>
             </span>
             <span>
-              <Pill on={ehHubAdmin(u)} onClick={() => store.toggleRole(u.id, 'hubAdmin')} style={{ padding: '6px 11px', fontSize: '0.72rem' }}>Admin do Hub</Pill>
+              {u.id === me.id
+                ? <span className="tf-mono" style={{ fontSize: '0.62rem', color: 'var(--tf-ink-3)' }}>Admin do Hub · você</span>
+                : <Pill on={ehHubAdmin(u)} onClick={() => store.toggleRole(u.id, 'hubAdmin')} style={{ padding: '6px 11px', fontSize: '0.72rem' }}>Admin do Hub</Pill>}
             </span>
             <span style={{ textAlign: 'center' }}>
               <Badge kind={u.ativo ? 'live' : 'crit'}>{u.ativo ? '● ATIVA' : 'DESATIVADA'}</Badge>
