@@ -7,9 +7,11 @@ Portal Flux · projeto `portal-flux-tecnofink`. Cobre os dados pessoais tratados
 |---|---|---|
 | `users/{uid}` | nome, e-mail, foto, aniversário (`niver`), apresentação (`apres`), cargo, departamento, empresa | Execução do vínculo de trabalho / uso do hub |
 | `projects/{id}` | `uid` (autor), nome e conteúdo do pitch | Legítimo interesse (gestão do programa Flux) |
+| `projects/{id}/comentarios` e `tarefas/{id}/comentarios` | `autorId`, `autorNome`, texto e anexos das mensagens | Triagem do pitch / colaboração nas tarefas |
 | `cycles/{id}.frozen` | nome e setor congelados no ranking | Histórico dos ciclos |
 | `logs` | `quem` (nome), ação | Auditoria / segurança |
 | `logsFalhas` | nome, `uid`, conteúdo do pitch, `userAgent` | Diagnóstico de falha de inscrição |
+| Storage `anexos-pitches/`, `anexos-tarefas/`, `anexos/` | arquivos anexados às mensagens/tarefas | Comprovações e evidências |
 | Firebase Auth | e-mail, foto (do Google Workspace) | Autenticação |
 
 ## Retenção (automática — Function `limparRetencao`, diária às 03:30 BRT)
@@ -22,9 +24,12 @@ Portal Flux · projeto `portal-flux-tecnofink`. Cobre os dados pessoais tratados
 Ação de **Admin do Hub** em **Admin do Hub → Usuários do portal → Anonimizar** (só aparece em contas já **desativadas**; irreversível, com confirmação). Dispara o comando `anonimizarUsuario` (coleção `comandos`), processado pela Function `aoReceberComando`, que:
 1. **Cadastro (`users/{uid}`)**: zera nome, e-mail, foto, aniversário, apresentação, cargo, departamento e empresa (nome → "Usuário removido", e-mail → `removido+<uid>@tecnofink.invalid`); revoga papéis (`['user']`), marca `ativo:false` e grava `anonimizadoEm`.
 2. **`logsFalhas`** do usuário: **apagados**.
-3. **Rankings congelados (`cycles.frozen`)**: nome do usuário → "Usuário removido" (casado pelo nome anterior).
+3. **Rankings congelados (`cycles.frozen`)**: nome do usuário → "Usuário removido" (casado por `uid`; frozen legado sem uid, pelo nome anterior).
+4. **Comentários** (chat de triagem do pitch **e** comentários de tarefa): as mensagens escritas pelo usuário têm `autorNome` → "Usuário removido", `texto` → "[removido]" e os **anexos apagados** do Storage.
 
-O que **permanece** (pseudonimizado): os documentos de `projects` do usuário continuam ligados ao `uid` (chave pseudônima), para não quebrar a integridade dos rankings — mas sem qualquer identificador pessoal, já que o nome exibido passa a resolver como "Usuário removido".
+O que **permanece** (pseudonimizado): os documentos de `projects` do usuário e as evidências de resultado continuam ligados ao `uid` (chave pseudônima), para não quebrar a integridade dos rankings — mas sem identificador pessoal, já que o nome exibido resolve como "Usuário removido".
+
+**Resíduo conhecido**: a coleção `logs` (auditoria) guarda `quem` (nome) sem `uid`, então não é anonimizada por chave — some pela retenção de 365 dias. Corrigir depende de gravar `quemUid` (item #2 da auditoria, previsto).
 
 ### Passos manuais complementares (fora do app)
 - **Firebase Auth**: excluir a conta do usuário no console (Authentication) para encerrar o login — o app não remove contas de Auth (ação prohibida por política; feita por pessoa autorizada).

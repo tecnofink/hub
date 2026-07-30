@@ -71,6 +71,14 @@ function limpaEmail(v: unknown, n: number): string {
   return String(v ?? '').replace(/[\r\n\t]+/g, ' ').replace(/https?:\/\/\S+/gi, '[link]').slice(0, n);
 }
 
+/** Extrai o caminho no bucket a partir de uma download URL do Storage. */
+function caminhoDoDownloadUrl(url: unknown): string | null {
+  try {
+    const m = String(url ?? '').split('/o/')[1];
+    return m ? decodeURIComponent(m.split('?')[0]) : null;
+  } catch { return null; }
+}
+
 /* ── RF-51 · confirmação de inscrição do pitch ─────────────────────────── */
 export const aoInscreverPitch = onDocumentCreated('projects/{pid}', async (event) => {
   const p = event.data?.data();
@@ -456,16 +464,37 @@ export const aoReceberComando = onDocumentCreated('comandos/{comandoId}', async 
       });
       if (mudou) { await c.ref.update({ frozen: novo }); rankingsAjustados++; }
     }
-    // 3) POR ÚLTIMO: cadastro (zera PII, revoga acesso). Deixar por último mantém
-    //    oldNome legível se a entrega at-least-once reprocessar o laço acima.
+    // 3) comentários escritos pelo usuário — chat de triagem do pitch E
+    //    comentários de tarefa (mesma subcoleção "comentarios"): anonimiza autor
+    //    e conteúdo e apaga os anexos dele do Storage. collectionGroup exige o
+    //    índice de escopo COLLECTION_GROUP em comentarios.autorId (firestore.indexes).
+    let comentsTratados = 0;
+    try {
+      const { getStorage } = await import('firebase-admin/storage');
+      const bucket = getStorage().bucket();
+      const coments = await db().collectionGroup('comentarios').where('autorId', '==', alvoId).get();
+      for (const d of coments.docs) {
+        const anexos = (d.data().anexos as Array<{ url?: string }> | undefined) ?? [];
+        for (const a of anexos) {
+          const caminho = caminhoDoDownloadUrl(a.url);
+          if (caminho) await bucket.file(caminho).delete().catch(() => undefined);
+        }
+        await d.ref.update({ autorNome: anon, texto: '[removido]', anexos: [] });
+        comentsTratados++;
+      }
+    } catch (e) {
+      logger.warn('anonimização: falha ao tratar comentários (índice collectionGroup ausente?)', { erro: String(e) });
+    }
+    // 4) POR ÚLTIMO: cadastro (zera PII, revoga acesso). Deixar por último mantém
+    //    oldNome legível se a entrega at-least-once reprocessar os laços acima.
     await alvoRef.set({
       nome: anon, email: 'removido+' + alvoId + '@tecnofink.invalid', foto: '',
       apres: '', niver: '', cargo: '', depto: '', empresa: '',
       roles: ['user'], ativo: false, perfilPendente: false,
       anonimizadoEm: FieldValue.serverTimestamp(),
     }, { merge: true });
-    await logSistema('Usuário anonimizado (LGPD)', 'cadastro, ' + falhas.size + ' log(s) de falha e ' + rankingsAjustados + ' ranking(s) tratados', 'admin');
-    await marcar({ status: 'ok', falhasRemovidas: falhas.size, rankingsAjustados });
+    await logSistema('Usuário anonimizado (LGPD)', 'cadastro, ' + falhas.size + ' falha(s), ' + rankingsAjustados + ' ranking(s) e ' + comentsTratados + ' comentário(s) tratados', 'admin');
+    await marcar({ status: 'ok', falhasRemovidas: falhas.size, rankingsAjustados, comentsTratados });
     return;
   }
 
