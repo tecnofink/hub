@@ -605,6 +605,9 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
       },
       logout: async () => {
         try { sessionStorage.removeItem('pf-saudou'); } catch { /* ok */ }
+        // #14: o Provider não desmonta no logout — zera o rascunho do pitch para
+        // não vazar para o próximo usuário na mesma aba
+        setPitchDraft(PITCH_DRAFT_VAZIO);
         await signOut(auth);
       },
 
@@ -800,6 +803,9 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
       },
 
       removeDominio: (d) => {
+        // #15: sem o último domínio, nenhum e-mail novo entra (bootstrap/domínio
+        // recusam) — trava o lockout total do portal
+        if (domains.length <= 1) { showErro('Não dá para remover o último domínio — o portal ficaria sem nenhum domínio autorizado para novos acessos.'); return; }
         updateDoc(doc(db, 'config', 'portal'), { domains: arrayRemove(d) })
           .then(() => addLog('Domínio removido', d, 'admin'))
           .catch(falha);

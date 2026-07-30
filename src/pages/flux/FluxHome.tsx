@@ -33,16 +33,19 @@ export default function FluxHome() {
   const timer = useRef<number | null>(null);
   const [reativar, setReativar] = useState<{ pid: string; deadline: string } | null>(null);
   const [avisoAtraso, setAvisoAtraso] = useState(false);
+  // #19: uma vez exibido nesta sessão, não reabre a cada atualização de pitch
+  const avisoMostradoRef = useRef<string | null>(null);
 
   // aviso (1×/dia) quando o próprio usuário tem projeto atrasado no ciclo
   useEffect(() => {
     if (!me || !c) return;
+    if (avisoMostradoRef.current === c.id) return; // já apareceu nesta sessão
     const meus = state.projects.filter((p) => p.uid === me.id && p.ciclo === c.id && statusDe(p).k === 'atrasado');
     if (!meus.length) return;
     const chave = `pf-flux-atraso-${c.id}-${todayISO()}`;
     try {
       if (!localStorage.getItem(chave)) {
-        const t = window.setTimeout(() => setAvisoAtraso(true), 600);
+        const t = window.setTimeout(() => { avisoMostradoRef.current = c.id; setAvisoAtraso(true); }, 600);
         return () => window.clearTimeout(t);
       }
     } catch { /* sem storage */ }

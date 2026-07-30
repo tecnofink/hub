@@ -53,6 +53,11 @@ export function Pill({ on, onClick, children, style }: { on: boolean; onClick: (
   );
 }
 
+// Pilha de modais abertos: com dois empilhados (ex.: chat maximizado + um
+// confirmar), o Escape deve fechar só o de cima — stopPropagation não impede os
+// outros listeners no mesmo document, então quem está no topo é quem responde.
+const modalStack: symbol[] = [];
+
 /**
  * Modal acessível compartilhado: overlay + card, fecha com Escape ou clique no
  * fundo, foco inicial no primeiro controle, focus trap (Tab cicla dentro) e
@@ -66,15 +71,19 @@ export function Modal({ onClose, children, maxWidth = 480, top, labelId, cardSty
   // campo a cada tecla digitada (o efeito rodava de novo e chamava foco).
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
+  const idRef = useRef<symbol>(Symbol('modal'));
 
   useEffect(() => {
+    const id = idRef.current;
+    modalStack.push(id);
     const anterior = document.activeElement as HTMLElement | null;
     const foco = () => cardRef.current?.querySelectorAll<HTMLElement>(
       'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
     );
     foco()?.[0]?.focus();
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') { e.stopPropagation(); onCloseRef.current(); return; }
+      // só o modal do topo da pilha responde ao Escape
+      if (e.key === 'Escape' && modalStack[modalStack.length - 1] === id) { e.stopPropagation(); onCloseRef.current(); return; }
       if (e.key === 'Tab') {
         const els = foco(); if (!els || els.length === 0) return;
         const primeiro = els[0]; const ultimo = els[els.length - 1];
@@ -83,7 +92,11 @@ export function Modal({ onClose, children, maxWidth = 480, top, labelId, cardSty
       }
     };
     document.addEventListener('keydown', onKey, true);
-    return () => { document.removeEventListener('keydown', onKey, true); anterior?.focus?.(); };
+    return () => {
+      document.removeEventListener('keydown', onKey, true);
+      const i = modalStack.lastIndexOf(id); if (i >= 0) modalStack.splice(i, 1);
+      anterior?.focus?.();
+    };
     // montagem-única: foco inicial + trap; onClose acessado via ref (acima)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
