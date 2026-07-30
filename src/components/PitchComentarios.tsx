@@ -74,8 +74,13 @@ function AnexosDaMensagem({ anexos }: { anexos: AnexoTarefa[] }) {
  * Corpo do chat (sem moldura): usado inline na ficha do projeto e dentro do
  * modal em /admin/flux/pitches. `onClose` só é passado no modal — nesse caso
  * o cabeçalho ganha o X de fechar e o nome do pitch (redundante inline).
+ * `compacto` (ficha): mostra só as 2 últimas mensagens + botão Maximizar
+ * (onMaximizar) para abrir a conversa inteira no modal — evita que uma thread
+ * longa deixe a ficha desproporcional.
  */
-export function ChatTriagem({ pitch, onClose }: { pitch: Projeto; onClose?: () => void }) {
+export function ChatTriagem({ pitch, onClose, compacto, onMaximizar }: {
+  pitch: Projeto; onClose?: () => void; compacto?: boolean; onMaximizar?: () => void;
+}) {
   const store = useStore();
   const ui = useUI();
   const { me } = store;
@@ -93,6 +98,7 @@ export function ChatTriagem({ pitch, onClose }: { pitch: Projeto; onClose?: () =
 
   if (!me) return null;
   const souAdmin = ehFluxAdmin(me);
+  const visiveis = compacto ? mensagens.slice(-2) : mensagens;
 
   const escolher = (files: FileList | null) => {
     if (!files) return;
@@ -125,23 +131,36 @@ export function ChatTriagem({ pitch, onClose }: { pitch: Projeto; onClose?: () =
             ×
           </button>
         )}
+        {!onClose && compacto && onMaximizar && (
+          <button type="button" onClick={onMaximizar} className="tf-btn tf-btn-ghost foco-tf"
+            style={{ flex: 'none', padding: '6px 12px', fontSize: '0.74rem' }} aria-label="Maximizar chat">
+            ⤢ Maximizar
+          </button>
+        )}
       </div>
       {onClose && <p className="tf-small" style={{ margin: '4px 0 12px', fontSize: '0.78rem' }}>{pitch.nome}</p>}
       {!onClose && <div style={{ height: 12 }} />}
 
-      <div style={{ minHeight: 200, maxHeight: '46vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8, padding: '4px 4px 4px 0', background: 'var(--tf-bg-2)', borderRadius: 12, border: '1px solid var(--tf-line)' }}>
+      <div style={{ minHeight: compacto ? 0 : 200, maxHeight: compacto ? 300 : '46vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8, padding: '4px 4px 4px 0', background: 'var(--tf-bg-2)', borderRadius: 12, border: '1px solid var(--tf-line)' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: 12 }}>
           {mensagens.length === 0 && (
-            <p className="tf-small" style={{ fontSize: '0.8rem', color: 'var(--tf-ink-3)', textAlign: 'center', padding: '28px 12px' }}>
+            <p className="tf-small" style={{ fontSize: '0.8rem', color: 'var(--tf-ink-3)', textAlign: 'center', padding: compacto ? '14px 8px' : '28px 12px' }}>
               Nenhuma mensagem ainda. {souAdmin
                 ? 'Use este chat para tirar dúvidas e pedir comprovações ao titular antes de definir o acesso — ele será avisado por e-mail.'
                 : 'Use este chat para conversar com os admins do Flux sobre a triagem do seu pitch — eles serão avisados por e-mail.'}
             </p>
           )}
-          {mensagens.map((c, i) => {
+          {/* na ficha (compacto) mostra só as 2 últimas — o resto fica no modal */}
+          {compacto && mensagens.length > 2 && (
+            <button type="button" onClick={onMaximizar} className="acao foco-tf"
+              style={{ alignSelf: 'center', fontSize: '0.72rem', color: 'var(--tf-accent)' }}>
+              ↑ ver conversa completa ({mensagens.length} mensagens)
+            </button>
+          )}
+          {visiveis.map((c, i) => {
             const minha = c.autorId === me.id;
             const doTitular = c.autorId === pitch.uid;
-            const diaAnterior = i > 0 ? diaDe(mensagens[i - 1].criadoEm) : null;
+            const diaAnterior = i > 0 ? diaDe(visiveis[i - 1].criadoEm) : null;
             const dia = diaDe(c.criadoEm);
             return (
               <React.Fragment key={c.id}>

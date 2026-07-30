@@ -13,7 +13,7 @@ import { dbr, mesesDoCiclo, todayISO } from '../../lib/dates';
 import { brl } from '../../lib/format';
 import { catNome, nValidacoes, score, tangValidado } from '../../lib/scoring';
 import { Avatar, Badge, Mono } from '../../components/ui';
-import { ChatTriagem } from '../../components/PitchComentarios';
+import PitchComentarios, { ChatTriagem } from '../../components/PitchComentarios';
 import { ehFluxAdmin } from '../../lib/roles';
 import { statusDe } from './statusProjeto';
 
@@ -37,6 +37,7 @@ export default function Projeto() {
   // ciclo (para o score daquele ciclo) sob demanda. `busca` é indexada pelo id
   // para não redirecionar nem mostrar dado velho ao trocar de projeto.
   const [busca, setBusca] = React.useState<{ id: string; p?: ProjetoT; set?: ProjetoT[]; ausente?: boolean } | null>(null);
+  const [chatMax, setChatMax] = React.useState(false);
   React.useEffect(() => {
     if (!id || emEscopo) return; // em escopo: o store já tem tudo
     let vivo = true;
@@ -295,7 +296,7 @@ export default function Projeto() {
           )}
           {(p.uid === me.id || ehFluxAdmin(me)) && (
             <div className="tf-card" style={{ padding: '18px 20px' }}>
-              <ChatTriagem pitch={p} />
+              <ChatTriagem pitch={p} compacto onMaximizar={() => setChatMax(true)} />
               <p className="tf-small" style={{ fontSize: '0.72rem', margin: '10px 0 0' }}>
                 Conversa privada entre você e os admins do Flux — não aparece na ficha pública.
               </p>
@@ -341,6 +342,7 @@ export default function Projeto() {
           )}
         </div>
       </div>
+      {chatMax && <PitchComentarios pitch={p} onClose={() => setChatMax(false)} />}
     </div>
   );
 }
