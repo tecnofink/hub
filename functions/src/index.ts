@@ -65,6 +65,12 @@ function logSistema(acao: string, det: string, tipo: 'admin' | 'avaliacao' | 'fl
   return db().collection('logs').add({ ts, quem: 'Sistema', acao, det, tipo, at: FieldValue.serverTimestamp() });
 }
 
+/** Neutraliza texto do usuário antes de entrar num e-mail: remove quebras de
+ *  linha e troca URLs por [link] (evita phishing auto-clicável) e trunca. */
+function limpaEmail(v: unknown, n: number): string {
+  return String(v ?? '').replace(/[\r\n\t]+/g, ' ').replace(/https?:\/\/\S+/gi, '[link]').slice(0, n);
+}
+
 /* ── RF-51 · confirmação de inscrição do pitch ─────────────────────────── */
 export const aoInscreverPitch = onDocumentCreated('projects/{pid}', async (event) => {
   const p = event.data?.data();
@@ -181,8 +187,10 @@ export const aoExcluirProjeto = onDocumentDeleted('projects/{pid}', async (event
   }
   // alerta aos admins só quando o pitch excluído tinha acesso ao Claude liberado
   if (!p || !p.tier) return;
-  const admins = await emailsPorPapel('admin');
-  if (!admins.length) return;
+  // #10: precisa alcançar fluxAdmin/hubAdmin (o papel 'admin' é só legado) —
+  // são eles que gerem os Acessos ao Claude citados no e-mail
+  const admins = await emailsPorPapeis(['fluxAdmin', 'hubAdmin', 'admin']);
+  if (!admins.length) { logger.warn('pitch com tier excluído, mas nenhum admin p/ avisar', { pid }); return; }
   await enviar({
     para: admins,
     assunto: 'Pitch com tier definido foi excluído — rever acessos ao Claude',
@@ -202,13 +210,18 @@ export const aoComentarPitch = onDocumentCreated('projects/{pid}/comentarios/{ci
   if (!pitch) { logger.warn('pitch do comentário não encontrado', { pid }); return; }
   if (pitch.teste === true) return; // pitch semeado para teste — não notifica ninguém
 
-  const trecho = String(c.texto ?? '').slice(0, 400) + (String(c.texto ?? '').length > 400 ? '…' : '');
+  // #11: texto, nome do autor e nome do pitch vêm do cliente — neutraliza URLs
+  // e quebras antes de entrar no e-mail (evita phishing com nome/ link forjado)
+  const textoBruto = String(c.texto ?? '');
+  const trecho = limpaEmail(textoBruto, 400) + (textoBruto.length > 400 ? '…' : '');
+  const autorNome = limpaEmail(c.autorNome, 80);
+  const nomePitch = limpaEmail(pitch.nome, 120);
   const nAnexos = Array.isArray(c.anexos) ? c.anexos.length : 0;
   const rodapeAnexos = nAnexos ? `\n(${nAnexos} anexo${nAnexos > 1 ? 's' : ''} na mensagem)` : '';
 
   const autor = await usuario(String(c.autorId));
   const doTitular = c.autorId === pitch.uid;
-  logger.info('comentário de triagem recebido', { pid, autor: c.autorNome, doTitular, anexos: nAnexos });
+  logger.info('comentário de triagem recebido', { pid, autor: autorNome, doTitular, anexos: nAnexos });
 
   if (doTitular) {
     // titular respondeu → avisa os admins do Flux (sem ecoar para o próprio
@@ -222,8 +235,8 @@ export const aoComentarPitch = onDocumentCreated('projects/{pid}/comentarios/{ci
     }
     await enviar({
       para: admins,
-      assunto: `${c.autorNome} respondeu na triagem — ${pitch.nome}`,
-      corpo: `O titular respondeu na thread de triagem do pitch "${pitch.nome}":\n\n"${trecho}"${rodapeAnexos}\n\nResponda em https://tecnofink-hub.web.app/admin/flux/pitches (botão Comentários) ou pela ficha do projeto.`,
+      assunto: `${autorNome} respondeu na triagem — ${nomePitch}`,
+      corpo: `O titular respondeu na thread de triagem do pitch "${nomePitch}":\n\n"${trecho}"${rodapeAnexos}\n\nResponda em https://tecnofink-hub.web.app/admin/flux/pitches (botão Comentários) ou pela ficha do projeto.`,
     });
     return;
   }
@@ -233,8 +246,8 @@ export const aoComentarPitch = onDocumentCreated('projects/{pid}/comentarios/{ci
   if (!dono) { logger.warn('titular do pitch não encontrado para notificar', { pid, uid: pitch.uid }); return; }
   await enviar({
     para: dono.email,
-    assunto: `Comentário da triagem no seu pitch — ${pitch.nome}`,
-    corpo: `Olá, ${dono.nome}!\n\n${c.autorNome} (admin do Flux) comentou na triagem do seu pitch "${pitch.nome}":\n\n"${trecho}"${rodapeAnexos}\n\nVeja e responda na ficha do projeto: https://tecnofink-hub.web.app/flux/projeto/${pid} (botão "Comentários da triagem").`,
+    assunto: `Comentário da triagem no seu pitch — ${nomePitch}`,
+    corpo: `Olá, ${dono.nome}!\n\n${autorNome} (admin do Flux) comentou na triagem do seu pitch "${nomePitch}":\n\n"${trecho}"${rodapeAnexos}\n\nVeja e responda na ficha do projeto: https://tecnofink-hub.web.app/flux/projeto/${pid} (botão "Comentários da triagem").`,
   });
 });
 
@@ -368,12 +381,22 @@ export const aoSolicitarBootstrap = onDocumentCreated('bootstrap/{uid}', async (
    gatilho executa — mesmo motivo do bootstrap: sem invocação pública. ── */
 export const aoReceberComando = onDocumentCreated('comandos/{comandoId}', async (event) => {
   const cmd = event.data?.data();
-  if (!cmd) return;
-  // idempotência: entrega é at-least-once — não reprocessa um comando já tratado
-  // (evita re-restaurar ferramentas e reenviar o broadcast do ranking)
-  if (cmd.status || cmd.processadoEm) return;
+  const ref = event.data?.ref;
+  if (!cmd || !ref) return;
+  // #8: idempotência sob entrega at-least-once. O snapshot do evento é imutável
+  // (nunca traz status/processadoEm gravados depois), então checar cmd.* não
+  // protegia nada. Aqui REIVINDICAMOS o comando numa transação: lê o doc ATUAL
+  // do servidor e só segue se ninguém o pegou/tratou — evita reprocessar
+  // (re-apagar tools, re-encerrar ciclo, reenviar broadcast).
+  const reivindicado = await db().runTransaction(async (tx) => {
+    const atual = (await tx.get(ref)).data() ?? {};
+    if (atual.status || atual.processadoEm || atual.processandoEm) return false;
+    tx.update(ref, { processandoEm: FieldValue.serverTimestamp() });
+    return true;
+  });
+  if (!reivindicado) return;
   const marcar = (resultado: Record<string, unknown>) =>
-    event.data?.ref.set({ ...cmd, ...resultado, processadoEm: FieldValue.serverTimestamp() }, { merge: true });
+    ref.set({ ...cmd, ...resultado, processadoEm: FieldValue.serverTimestamp() }, { merge: true });
 
   // defesa em profundidade: as regras já exigem admin na criação
   const autor = await db().doc('users/' + String(cmd.por ?? '')).get();
@@ -455,15 +478,29 @@ export const aoReceberComando = onDocumentCreated('comandos/{comandoId}', async 
 
   const cicloId = String(cmd.cicloId ?? '');
   const cicloRef = db().doc('cycles/' + cicloId);
+  // #9: transição de estado atômica. Dois comandos concorrentes (duplo clique
+  // ou dois admins) liam o ciclo 'ativo' e ambos congelavam + disparavam o
+  // broadcast do ranking p/ a empresa toda. Aqui só UM vence a transição
+  // ativo→encerrando; o outro cai no erro sem reenviar e-mail.
   const ciclo = await cicloRef.get();
-  if (!ciclo.exists || ciclo.data()!.status !== 'ativo') {
+  const podeEncerrar = await db().runTransaction(async (tx) => {
+    const cs = await tx.get(cicloRef);
+    if (!cs.exists || cs.data()!.status !== 'ativo') return false;
+    tx.update(cicloRef, { status: 'encerrando' });
+    return true;
+  });
+  if (!podeEncerrar) {
     await marcar({ status: 'erro', erro: 'ciclo não encontrado ou já encerrado' });
     return;
   }
 
   const usersSnap = await db().collection('users').get();
   const users = new Map(usersSnap.docs.map((d) => [d.id, d.data()]));
-  const avaliadores = usersSnap.docs.filter((d) => (d.data().roles as string[]).includes('avaliador')).map((d) => d.id);
+  // #13: só avaliadores ATIVOS contam na normalização — desativar um membro do
+  // comitê sem tirar o papel não pode "faltar validação" e zerar o ranking
+  const avaliadores = usersSnap.docs
+    .filter((d) => (d.data().roles as string[]).includes('avaliador') && d.data().ativo === true)
+    .map((d) => d.id);
 
   const projsSnap = await db().collection('projects').where('ciclo', '==', cicloId).get();
   const projs: ProjetoDoc[] = projsSnap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<ProjetoDoc, 'id'>) }));
