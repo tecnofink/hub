@@ -131,7 +131,7 @@ export function ChatTriagem({ pitch, onClose, compacto, onMaximizar }: {
             ×
           </button>
         )}
-        {!onClose && compacto && onMaximizar && (
+        {!onClose && onMaximizar && (
           <button type="button" onClick={onMaximizar} className="tf-btn tf-btn-ghost foco-tf"
             style={{ flex: 'none', padding: '6px 12px', fontSize: '0.74rem' }} aria-label="Maximizar chat">
             ⤢ Maximizar
@@ -141,7 +141,7 @@ export function ChatTriagem({ pitch, onClose, compacto, onMaximizar }: {
       {onClose && <p className="tf-small" style={{ margin: '4px 0 12px', fontSize: '0.78rem' }}>{pitch.nome}</p>}
       {!onClose && <div style={{ height: 12 }} />}
 
-      <div style={{ minHeight: compacto ? 0 : 200, maxHeight: compacto ? 300 : '46vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8, padding: '4px 4px 4px 0', background: 'var(--tf-bg-2)', borderRadius: 12, border: '1px solid var(--tf-line)' }}>
+      <div style={{ minHeight: compacto ? 0 : 160, maxHeight: compacto ? 300 : (onClose ? '46vh' : 380), overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8, padding: '4px 4px 4px 0', background: 'var(--tf-bg-2)', borderRadius: 12, border: '1px solid var(--tf-line)' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: 12 }}>
           {mensagens.length === 0 && (
             <p className="tf-small" style={{ fontSize: '0.8rem', color: 'var(--tf-ink-3)', textAlign: 'center', padding: compacto ? '14px 8px' : '28px 12px' }}>

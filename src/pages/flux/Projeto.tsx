@@ -294,15 +294,6 @@ export default function Projeto() {
               Abrir em Produtividade →
             </button>
           )}
-          {(p.uid === me.id || ehFluxAdmin(me)) && (
-            <div className="tf-card" style={{ padding: '18px 20px' }}>
-              <ChatTriagem pitch={p} compacto onMaximizar={() => setChatMax(true)} />
-              <p className="tf-small" style={{ fontSize: '0.72rem', margin: '10px 0 0' }}>
-                Conversa privada entre você e os admins do Flux — não aparece na ficha pública.
-              </p>
-            </div>
-          )}
-
           {/* Triagem de acesso na própria ficha (RF-24, P12): admin/comitê decidem
               sem sair daqui — mesmas ações e confirmações de /admin/flux/pitches.
               Só enquanto pende: sem tier, não reprovado, ciclo ativo. */}
@@ -342,6 +333,17 @@ export default function Projeto() {
           )}
         </div>
       </div>
+
+      {/* Chat da triagem em faixa full-width no rodapé — conversa é conteúdo
+          próprio; fora da coluna estreita, a ficha fica equilibrada. */}
+      {(p.uid === me.id || ehFluxAdmin(me)) && (
+        <div className="tf-card" style={{ marginTop: 16, padding: '20px 24px' }}>
+          <ChatTriagem pitch={p} onMaximizar={() => setChatMax(true)} />
+          <p className="tf-small" style={{ fontSize: '0.72rem', margin: '10px 0 0' }}>
+            Conversa privada entre você e os admins do Flux — não aparece na ficha pública.
+          </p>
+        </div>
+      )}
       {chatMax && <PitchComentarios pitch={p} onClose={() => setChatMax(false)} />}
     </div>
   );
