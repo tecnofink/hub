@@ -394,9 +394,16 @@ service cloud.firestore {
     // ── Logs de auditoria (RF-59): escrita por usuários ativos, leitura por admins ──
     match /logs/{logId} {
       allow read: if ehFluxAdmin() || ehHubAdmin();
+      // #2: quemUid == auth.uid torna a AUTORIA não-forjável (antes só validava
+      // `quem`, que é o nome editável); tamanhos limitados e tipo restrito
+      // evitam payload arbitrário. `quem` fica como rótulo de exibição.
       allow create: if isActive()
+        && request.resource.data.quemUid == request.auth.uid
         && request.resource.data.quem == meDoc().nome
-        && request.resource.data.keys().hasOnly(['ts', 'quem', 'acao', 'det', 'tipo', 'at'])
+        && request.resource.data.keys().hasOnly(['ts', 'quem', 'quemUid', 'acao', 'det', 'tipo', 'at'])
+        && request.resource.data.acao is string && request.resource.data.acao.size() <= 120
+        && request.resource.data.det is string && request.resource.data.det.size() <= 500
+        && request.resource.data.tipo in ['admin', 'avaliacao', 'flux']
         && request.resource.data.at == request.time;
     }
 

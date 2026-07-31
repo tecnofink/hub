@@ -505,7 +505,9 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
     const addLog = (acao: string, det: string, tipo: LogTipo) => {
       if (!me) return;
       setDoc(doc(collection(db, 'logs')), {
-        ts: logTimestamp(), quem: me.nome, acao, det, tipo, at: serverTimestamp(),
+        // #2: quemUid é a identidade REAL (regra exige == auth.uid) — a trilha
+        // deixa de depender de `quem` (nome, editável e forjável). `det` truncado.
+        ts: logTimestamp(), quem: me.nome, quemUid: me.id, acao: acao.slice(0, 120), det: det.slice(0, 500), tipo, at: serverTimestamp(),
       }).catch(() => { /* log nunca bloqueia o fluxo */ });
     };
 
