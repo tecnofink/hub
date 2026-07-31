@@ -48,9 +48,19 @@ service firebase.storage {
         return ativo()
           && request.auth.uid in firestore.get(/databases/(default)/documents/tarefas/$(projectId)).data.membrosIds;
       }
+      // #1/#25: ler é de qualquer membro; ESCREVER/APAGAR exige papel admin/editor
+      // do projeto livre (um 'leitor' está em membrosIds mas é read-only) ou ser o
+      // titular do pitch do Flux (quadro sem extraProjs).
+      function podeEscreverAnexo() {
+        return ativo() && (
+          (firestore.exists(/databases/(default)/documents/extraProjs/$(projectId))
+            && firestore.get(/databases/(default)/documents/extraProjs/$(projectId)).data.papeis[request.auth.uid] in ['admin', 'editor'])
+          || firestore.get(/databases/(default)/documents/tarefas/$(projectId)).data.uid == request.auth.uid
+        );
+      }
       allow read: if membroDoQuadro();
-      allow write: if membroDoQuadro() && tamanhoOk();
-      allow delete: if membroDoQuadro();
+      allow write: if podeEscreverAnexo() && tamanhoOk();
+      allow delete: if podeEscreverAnexo();
     }
 
     // documentos do Playbook/Marketing (logística, stands, planilhas de leads) —

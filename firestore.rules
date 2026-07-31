@@ -301,14 +301,19 @@ service cloud.firestore {
         && (resource.data.uid == request.auth.uid
             || request.auth.uid in resource.data.membrosIds);
       // criar o quadro: admin/editor do projeto livre (uid = dono do projeto),
-      // OU o TITULAR do pitch do Flux — impede sequestrar tarefas/{pid} alheio
+      // OU o TITULAR do pitch do Flux — impede sequestrar tarefas/{pid} alheio.
+      // #3: membrosIds tem de ESPELHAR o projeto (projeto livre) ou ser só o
+      // titular (Flux) — senão um editor apagava e recriava o quadro com
+      // membrosIds arbitrário, liberando os anexos a estranhos.
       allow create: if isActive()
         && (
           (ehProjetoLivre(projectId) && papelNoProjeto(projectId) in ['admin', 'editor']
-            && request.resource.data.uid == get(/databases/$(database)/documents/extraProjs/$(projectId)).data.uid)
+            && request.resource.data.uid == get(/databases/$(database)/documents/extraProjs/$(projectId)).data.uid
+            && request.resource.data.membrosIds == get(/databases/$(database)/documents/extraProjs/$(projectId)).data.membrosIds)
           || (exists(/databases/$(database)/documents/projects/$(projectId))
               && get(/databases/$(database)/documents/projects/$(projectId)).data.uid == request.auth.uid
-              && request.resource.data.uid == request.auth.uid)
+              && request.resource.data.uid == request.auth.uid
+              && request.resource.data.membrosIds == [request.auth.uid])
         );
       // editar: admin do projeto pode tudo (inclusive membros); titular do Flux e
       // editor mexem no conteúdo, mas NÃO em uid/membrosIds (evita escalar acesso)
@@ -320,10 +325,11 @@ service cloud.firestore {
               && !('uid' in request.resource.data.diff(resource.data).affectedKeys())
               && !('membrosIds' in request.resource.data.diff(resource.data).affectedKeys()))
         );
-      // excluir o quadro: dono (Flux/criador) ou admin/editor do projeto livre
+      // excluir o quadro: dono (Flux/criador) ou ADMIN do projeto livre. #3: sem
+      // 'editor' aqui — apagar+recriar era o vetor de escalonar acesso.
       allow delete: if isActive()
         && (resource.data.uid == request.auth.uid
-            || (ehProjetoLivre(projectId) && papelNoProjeto(projectId) in ['admin', 'editor']));
+            || (ehProjetoLivre(projectId) && papelNoProjeto(projectId) == 'admin'));
 
       // ── Comentários por tarefa (CRM): thread na subcoleção ──
       match /comentarios/{comentarioId} {
@@ -369,9 +375,12 @@ service cloud.firestore {
       // seções restritas (checklist/stands2027) só para quem vê tudo; demais, todo ativo
       allow read: if isActive()
         && (!(secao in ['checklist', 'stands2027']) || podeVerTudoPlaybook());
-      // conteúdo só por editores — exceto Prospecção, colaborativa (qualquer ativo)
-      allow write: if secao != 'config'
+      // #6: conteúdo só por editores. Prospecção é colaborativa (qualquer ativo),
+      // mas só via UPDATE — criar/APAGAR o documento continua exclusivo de editor
+      // (antes, qualquer ativo apagava a Prospecção inteira).
+      allow update: if secao != 'config'
         && (ehEditorPlaybook() || (secao == 'prospeccao' && isActive()));
+      allow create, delete: if secao != 'config' && ehEditorPlaybook();
     }
     match /playbook/config {
       allow write: if ehEditorPlaybook() || ehHubAdmin();
