@@ -1,5 +1,5 @@
 /** E4 · Ciclos (RF-58): editar datas, encerrar (congela ranking) e criar novo ciclo. */
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useStore, useUI } from '../../store/AppStore';
 import { addDias, dbr, todayISO } from '../../lib/dates';
 import { Badge, L, Mono } from '../../components/ui';
@@ -9,6 +9,13 @@ export default function AdmCiclos() {
   const ui = useUI();
   const { state, cicloAtivo: c } = store;
   const [ce, setCe] = useState(() => (c ? { nome: c.nome, inicio: c.inicio, limite: c.limite, fim: c.fim } : { nome: '', inicio: '', limite: '', fim: '' }));
+  // #28: re-sincroniza o formulário quando o CICLO ATIVO troca (encerrar + novo)
+  // — sem isto, dados do ciclo antigo eram gravados no novo. Chaveado por id,
+  // então edições no mesmo ciclo não são perdidas por updates do listener.
+  useEffect(() => {
+    setCe(c ? { nome: c.nome, inicio: c.inicio, limite: c.limite, fim: c.fim } : { nome: '', inicio: '', limite: '', fim: '' });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [c?.id]);
   const [nc, setNc] = useState(() => ({
     nome: 'Ciclo ' + (state.cycles.length + 1),
     inicio: todayISO(),

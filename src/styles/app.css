@@ -42,7 +42,7 @@ input[type="date"] { color-scheme: light; }
 }
 .f-select { padding: 11px 12px; font-size: 0.9rem; }
 .f-textarea { resize: vertical; line-height: 1.55; }
-.f-input:focus, .f-textarea:focus { border-color: var(--tf-accent); box-shadow: 0 0 0 3px var(--tf-accent-soft); }
+.f-input:focus, .f-select:focus, .f-textarea:focus { border-color: var(--tf-accent); box-shadow: 0 0 0 3px var(--tf-accent-soft); }
 .f-input:disabled { border-color: var(--tf-line); background: var(--tf-bg-2); color: var(--tf-ink-3); }
 .f-input[type="date"] { padding: 10px 12px; font-size: 0.92rem; }
 

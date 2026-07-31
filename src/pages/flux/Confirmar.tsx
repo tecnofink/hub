@@ -2,7 +2,7 @@
 import React from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { PITCH_DRAFT_VAZIO, useStore, useUI } from '../../store/AppStore';
-import { dbr, mesesDoCiclo } from '../../lib/dates';
+import { dbr, mesesDoCiclo, todayISO } from '../../lib/dates';
 import { brl, num } from '../../lib/format';
 import { catNome } from '../../lib/scoring';
 import { Badge } from '../../components/ui';
@@ -10,7 +10,7 @@ import { Badge } from '../../components/ui';
 export default function Confirmar() {
   const store = useStore();
   const { me, cicloAtivo: c } = store;
-  const { pitchDraft: d, setPitchDraft } = useUI();
+  const { pitchDraft: d, setPitchDraft, showToast } = useUI();
   const nav = useNavigate();
   const [enviando, setEnviando] = React.useState(false);
 
@@ -31,6 +31,16 @@ export default function Confirmar() {
 
   const confirmar = async () => {
     if (enviando) return;
+    // #17/#20: revalida a janela ANTES de enviar — inscrições podem ter fechado
+    // enquanto a tela ficou aberta, e o deadline tem de caber no ciclo (respeita
+    // início futuro). Sem isto a gravação era rejeitada com mensagem genérica.
+    const hoje = todayISO();
+    if (hoje > c.limite) { showToast('As inscrições deste ciclo já encerraram (' + dbr(c.limite) + ').'); return; }
+    const minDeadline = c.inicio > hoje ? c.inicio : hoje;
+    if (!d.deadline || d.deadline < minDeadline || d.deadline > c.fim) {
+      showToast('O deadline precisa ficar entre ' + dbr(minDeadline) + ' e ' + dbr(c.fim) + '. Volte e ajuste.');
+      return;
+    }
     setEnviando(true);
     try {
       // só limpa o rascunho e navega DEPOIS que a gravação confirma
