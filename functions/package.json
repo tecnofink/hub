@@ -3,7 +3,7 @@
   "private": true,
   "description": "Cloud Functions do Portal Flux — cálculo, notificações e rotinas (seção 8 da especificação)",
   "engines": {
-    "node": "20"
+    "node": "22"
   },
   "main": "lib/index.js",
   "scripts": {
