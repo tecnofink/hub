@@ -687,35 +687,48 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
       },
 
       /* ── Triagem de acesso (RF-24..28) ── */
+      // #16/#26: triagem em 3 telas (AdmPitches, ficha, Acesso do comitê) sem
+      // trava — a 2ª decisão sobrescrevia a 1ª. Agora em transação: lê o estado
+      // atual e só decide se ainda estiver PENDENTE ("vale a 1ª decisão").
       definirTier: (pid, tier) => {
-        const p = proj(pid)!;
-        const u = byId(p.uid)!;
-        updateDoc(doc(db, 'projects', pid), { tier })
-          .then(() => {
-            setDoc(doc(db, 'access', u.id), { apl: false }).catch(() => { /* admins ajustam depois */ });
-            addLog('Tier definido', p.nome + ' — ' + tier, 'admin');
-            showToast('Acesso ' + tier + ' liberado para ' + u.nome + ' executar o pitch — vale até o fim do ciclo. Aplique no console do Claude.');
-          })
+        const nome = proj(pid)?.nome ?? pid;
+        runTransaction(db, async (tx) => {
+          const ref = doc(db, 'projects', pid);
+          const d = (await tx.get(ref)).data();
+          if (!d) throw new Error('Pitch não encontrado.');
+          if (d.tier || d.reprovado || d.ciclo === 'backlog') throw new Error('Este pitch já foi decidido na triagem — recarregue a página para ver a decisão registrada.');
+          tx.update(ref, { tier });
+          tx.set(doc(db, 'access', d.uid as string), { apl: false });
+          return byId(d.uid as string)?.nome ?? nome;
+        })
+          .then((quem) => { addLog('Tier definido', nome + ' — ' + tier, 'admin'); showToast('Acesso ' + tier + ' liberado para ' + quem + ' executar o pitch — vale até o fim do ciclo. Aplique no console do Claude.'); })
           .catch(falha);
       },
 
       enviarBacklog: (pid) => {
-        const p = proj(pid)!;
-        updateDoc(doc(db, 'projects', pid), { ciclo: 'backlog', backlogDe: p.ciclo, tier: null })
-          .then(() => {
-            addLog('Pitch enviado ao backlog', p.nome, 'avaliacao');
-            showToast('"' + p.nome + '" foi para o Backlog de Projetos — o titular pode reativá-lo quando um novo ciclo abrir.');
-          })
+        const nome = proj(pid)?.nome ?? pid;
+        runTransaction(db, async (tx) => {
+          const ref = doc(db, 'projects', pid);
+          const d = (await tx.get(ref)).data();
+          if (!d) throw new Error('Pitch não encontrado.');
+          if (d.tier || d.reprovado || d.ciclo === 'backlog') throw new Error('Este pitch já foi decidido na triagem — recarregue a página para ver a decisão registrada.');
+          tx.update(ref, { ciclo: 'backlog', backlogDe: d.ciclo, tier: null });
+        })
+          .then(() => { addLog('Pitch enviado ao backlog', nome, 'avaliacao'); showToast('"' + nome + '" foi para o Backlog de Projetos — o titular pode reativá-lo quando um novo ciclo abrir.'); })
           .catch(falha);
       },
 
       reprovarPitch: (pid, contexto) => {
-        const p = proj(pid)!;
-        updateDoc(doc(db, 'projects', pid), { reprovado: true })
-          .then(() => {
-            addLog(contexto === 'triagem' ? 'Pitch reprovado na triagem' : 'Projeto desclassificado pelo comitê', p.nome, 'avaliacao');
-            showToast('"' + p.nome + '" foi reprovado e está fora do ranking do ciclo.');
-          })
+        const nome = proj(pid)?.nome ?? pid;
+        runTransaction(db, async (tx) => {
+          const ref = doc(db, 'projects', pid);
+          const d = (await tx.get(ref)).data();
+          if (!d) throw new Error('Pitch não encontrado.');
+          if (d.reprovado) throw new Error('Este pitch já foi reprovado.');
+          if (contexto === 'triagem' && (d.tier || d.ciclo === 'backlog')) throw new Error('Este pitch já foi decidido na triagem — recarregue a página.');
+          tx.update(ref, { reprovado: true });
+        })
+          .then(() => { addLog(contexto === 'triagem' ? 'Pitch reprovado na triagem' : 'Projeto desclassificado pelo comitê', nome, 'avaliacao'); showToast('"' + nome + '" foi reprovado e está fora do ranking do ciclo.'); })
           .catch(falha);
       },
 
@@ -933,14 +946,10 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
         const u = users.find((x) => x.email.toLowerCase() === email.trim().toLowerCase());
         if (!u) return 'Nenhuma conta com este e-mail — a pessoa precisa fazer o primeiro login no portal antes.';
         if (p.membrosIds.includes(u.id)) return 'Esta pessoa já é membro do projeto.';
-        const membrosIds = [...p.membrosIds, u.id];
-        updateDoc(doc(db, 'extraProjs', pid), { membrosIds, ['papeis.' + u.id]: papel })
-          .then(() => {
-            // denormalização: o quadro reflete os membros (regras/consultas), sem
-            // sobrescrever tarefas/etapas — a transação relê o quadro do servidor
-            void mutarQuadro(pid, (cur) => cur, { membrosIds }).catch(falha);
-            showToast(u.nome + ' agora é ' + (papel === 'admin' ? 'administrador' : papel) + ' do projeto.');
-          })
+        // #23: arrayUnion (merge no servidor) — duas inclusões concorrentes não se
+        // perdem. A denormalização no quadro é feita pela Function aoMudarMembros.
+        updateDoc(doc(db, 'extraProjs', pid), { membrosIds: arrayUnion(u.id), ['papeis.' + u.id]: papel })
+          .then(() => showToast(u.nome + ' agora é ' + (papel === 'admin' ? 'administrador' : papel) + ' do projeto.'))
           .catch(falha);
         return null;
       },
@@ -963,13 +972,11 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
         if (p.papeis[membroId] === 'admin' && admins.length === 1) {
           return 'O projeto precisa de ao menos um administrador.';
         }
-        const membrosIds = p.membrosIds.filter((m) => m !== membroId);
-        updateDoc(doc(db, 'extraProjs', pid), { membrosIds, ['papeis.' + membroId]: deleteField() })
-          .then(() => {
-            // ao sair de si próprio a escrita do quadro é negada (papel já removido) — silencioso
-            void mutarQuadro(pid, (cur) => cur, { membrosIds }).catch(() => { /* sem acesso após sair */ });
-            showToast(membroId === me!.id ? 'Você saiu do projeto.' : 'Membro removido do projeto.');
-          })
+        // #23: arrayRemove (merge no servidor); a Function aoMudarMembros tira o
+        // membro do quadro de forma confiável — antes a denormalização era
+        // best-effort e falhava justamente quando a pessoa saía de si mesma (#22).
+        updateDoc(doc(db, 'extraProjs', pid), { membrosIds: arrayRemove(membroId), ['papeis.' + membroId]: deleteField() })
+          .then(() => showToast(membroId === me!.id ? 'Você saiu do projeto.' : 'Membro removido do projeto.'))
           .catch(falha);
         return null;
       },

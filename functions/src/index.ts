@@ -259,6 +259,23 @@ export const aoComentarPitch = onDocumentCreated('projects/{pid}/comentarios/{ci
   });
 });
 
+/* ── #22/#23 · membresia do quadro sincronizada pelo servidor. A denormalização
+   de extraProjs.membrosIds em tarefas/{pid} era feita no cliente (best-effort) e
+   falhava justamente quando alguém saía de si mesmo, deixando acesso residual ao
+   quadro e aos anexos. Aqui a Function reescreve tarefas/{pid}.membrosIds sempre
+   que os membros do projeto mudam — fonte única de verdade. ── */
+export const aoMudarMembrosProjeto = onDocumentUpdated('extraProjs/{pid}', async (event) => {
+  const antes = event.data?.before.data();
+  const depois = event.data?.after.data();
+  if (!depois) return;
+  const a = JSON.stringify((antes?.membrosIds ?? []).slice().sort());
+  const b = JSON.stringify((depois.membrosIds ?? []).slice().sort());
+  if (a === b) return; // só quando a membresia muda
+  const quadroRef = db().doc('tarefas/' + event.params.pid);
+  if (!(await quadroRef.get()).exists) return; // quadro só existe após a 1ª tarefa
+  await quadroRef.update({ membrosIds: depois.membrosIds ?? [] });
+});
+
 /* ── RF-51 · lembretes de deadline (7 dias e 1 dia) + alerta de atraso ──── */
 export const lembretesDeadline = onSchedule(
   { schedule: '0 8 * * *', timeZone: 'America/Sao_Paulo' },
