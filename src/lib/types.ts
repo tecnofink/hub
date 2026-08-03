@@ -72,9 +72,21 @@ export interface Projeto {
   just: string;
   criadoEm: string;         // ISO
   tier: Tier | null;
+  /** Valor Ponderado pela Administração: estimativa do admin do Flux na triagem
+   *  (referência para comparar com o realizado; NÃO entra no cálculo do ranking). */
+  valorPonderado?: number;
   reprovado?: boolean;
   resultado: Resultado | null;
   notas: Record<MembroId, NotaTrio | null>;
+}
+
+/** Entrada do histórico de edições do pitch feitas pelo admin do Flux. */
+export interface EdicaoPitch {
+  id: string;
+  por: string;              // uid do admin
+  porNome: string;
+  em: string;               // ISO
+  mudancas: { campo: string; de: string; para: string }[];
 }
 
 export interface RankingFrozenRow {

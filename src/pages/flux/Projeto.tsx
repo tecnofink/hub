@@ -14,6 +14,7 @@ import { brl } from '../../lib/format';
 import { catNome, nValidacoes, score, tangValidado } from '../../lib/scoring';
 import { Avatar, Badge, Mono } from '../../components/ui';
 import PitchComentarios, { ChatTriagem } from '../../components/PitchComentarios';
+import PitchEdicao from '../../components/PitchEdicao';
 import { ehFluxAdmin } from '../../lib/roles';
 import { statusDe } from './statusProjeto';
 
@@ -38,6 +39,8 @@ export default function Projeto() {
   // para não redirecionar nem mostrar dado velho ao trocar de projeto.
   const [busca, setBusca] = React.useState<{ id: string; p?: ProjetoT; set?: ProjetoT[]; ausente?: boolean } | null>(null);
   const [chatMax, setChatMax] = React.useState(false);
+  const [vp, setVp] = React.useState('');
+  const [edicao, setEdicao] = React.useState<null | 'editar' | 'historico'>(null);
   React.useEffect(() => {
     if (!id || emEscopo) return; // em escopo: o store já tem tudo
     let vivo = true;
@@ -239,6 +242,18 @@ export default function Projeto() {
                   </p>
                 </>
               )}
+              {typeof p.valorPonderado === 'number' && (
+                <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid var(--tf-line)' }}>
+                  <div className="tf-mono" style={{ fontSize: '0.58rem' }}>VALOR PONDERADO PELA ADMINISTRAÇÃO</div>
+                  <div style={{ fontSize: '0.95rem', fontWeight: 600, marginTop: 3 }}>{brl(p.valorPonderado)}</div>
+                  <div className="tf-small" style={{ fontSize: '0.68rem' }}>Estimativa da administração na análise — referência.</div>
+                </div>
+              )}
+              {(p.uid === me.id || ehFluxAdmin(me)) && (
+                <button onClick={() => setEdicao('historico')} className="acao foco-tf" style={{ fontSize: '0.74rem', color: 'var(--tf-accent)', marginTop: 12 }}>
+                  Histórico de edições
+                </button>
+              )}
             </div>
           </div>
 
@@ -301,10 +316,21 @@ export default function Projeto() {
           lado — admin/comitê decidem sem sair da ficha. Só enquanto pende. */}
       {(ehFluxAdmin(me) || me.roles.includes('avaliador')) && !emBacklog && cc?.status === 'ativo' && !p.tier && !p.reprovado && (
         <div className="tf-card" style={{ marginTop: 16, padding: '18px 24px' }}>
-          <span className="tf-mono" style={{ fontSize: '0.56rem' }}>[ TRIAGEM DE ACESSO · COMITÊ E ADMINS ]</span>
-          <div style={{ display: 'flex', gap: 10, marginTop: 12, flexWrap: 'wrap' }}>
-            <button onClick={() => store.definirTier(p.id, 'Enterprise')} className="tf-btn tf-btn-accent" style={{ flex: 1, minWidth: 180, justifyContent: 'center' }}>Definir Enterprise</button>
-            <button onClick={() => store.definirTier(p.id, 'Basic')} className="tf-btn tf-btn-primary" style={{ flex: 1, minWidth: 180, justifyContent: 'center' }}>Definir Basic</button>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
+            <span className="tf-mono" style={{ fontSize: '0.56rem' }}>[ TRIAGEM DE ACESSO · COMITÊ E ADMINS ]</span>
+            {ehFluxAdmin(me) && (
+              <button onClick={() => setEdicao('editar')} className="acao foco-tf" style={{ fontSize: '0.76rem', color: 'var(--tf-accent)' }}>✏️ Editar pitch</button>
+            )}
+          </div>
+          <div style={{ marginTop: 12 }}>
+            <label className="tf-mono" style={{ fontSize: '0.56rem' }}>VALOR PONDERADO PELA ADMINISTRAÇÃO · R$ (opcional)</label>
+            <input className="f-input" inputMode="numeric" placeholder={p.valorPonderado ? String(p.valorPonderado) : 'sua estimativa do retorno tangível na análise'}
+              value={vp} onChange={(e) => setVp(e.target.value.replace(/[^\d]/g, ''))} style={{ maxWidth: 360 }} />
+            <p className="tf-small" style={{ fontSize: '0.68rem', margin: '4px 0 0' }}>Referência da administração — não entra no ranking (o ranking usa o Valor Realizado após a avaliação). Salvo ao definir o acesso.</p>
+          </div>
+          <div style={{ display: 'flex', gap: 10, marginTop: 14, flexWrap: 'wrap' }}>
+            <button onClick={() => store.definirTier(p.id, 'Enterprise', Number(vp) || undefined)} className="tf-btn tf-btn-accent" style={{ flex: 1, minWidth: 180, justifyContent: 'center' }}>Definir Enterprise</button>
+            <button onClick={() => store.definirTier(p.id, 'Basic', Number(vp) || undefined)} className="tf-btn tf-btn-primary" style={{ flex: 1, minWidth: 180, justifyContent: 'center' }}>Definir Basic</button>
             <button
               onClick={() => ui.confirmar({
                 titulo: 'Enviar pitch para o backlog?',
@@ -345,6 +371,13 @@ export default function Projeto() {
         </div>
       )}
       {chatMax && <PitchComentarios pitch={p} onClose={() => setChatMax(false)} />}
+      {edicao && (
+        <PitchEdicao
+          pitch={p}
+          editavel={edicao === 'editar' && ehFluxAdmin(me) && !emBacklog && cc?.status === 'ativo' && !p.tier && !p.reprovado}
+          onClose={() => setEdicao(null)}
+        />
+      )}
     </div>
   );
 }

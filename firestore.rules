@@ -177,10 +177,24 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys()
              .hasOnly(['ciclo', 'backlogDe', 'deadline', 'criadoEm', 'tier', 'resultado', 'reprovado', 'notas']);
 
-      // RF-24..28 (P12): triagem — comitê e admins do Flux com os mesmos poderes
+      // RF-24..28 (P12): triagem — comitê e admins do Flux com os mesmos poderes.
+      // valorPonderado (pedido do VP): estimativa da administração na análise,
+      // gravada junto com o tier (referência; não entra no ranking).
       allow update: if (hasRole('avaliador') || ehFluxAdmin())
         && request.resource.data.diff(resource.data).affectedKeys()
-             .hasOnly(['tier', 'ciclo', 'backlogDe', 'reprovado']);
+             .hasOnly(['tier', 'ciclo', 'backlogDe', 'reprovado', 'valorPonderado'])
+        && (!('valorPonderado' in request.resource.data) || request.resource.data.valorPonderado is number);
+
+      // Edição do pitch pelo admin do Flux ANTES de liberar o Claude (pedido do
+      // VP): só enquanto pendente (sem tier, não reprovado, no ciclo ativo) e só
+      // campos de conteúdo — nunca tier/resultado/notas/uid. O histórico de
+      // edições vai para a subcoleção edicoes/.
+      allow update: if ehFluxAdmin()
+        && resource.data.tier == null
+        && resource.data.ciclo != 'backlog'
+        && !(('reprovado' in resource.data) && resource.data.reprovado == true)
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['nome', 'cat', 'estimValor', 'estimPer', 'deadline', 'intang', 'just', 'valorPonderado']);
 
       // RF-38 (P13): cada membro do comitê grava apenas a própria validação
       allow update: if hasRole('avaliador')
@@ -190,10 +204,10 @@ service cloud.firestore {
         && request.resource.data.resultado.validacoes
              .diff(resource.data.resultado.validacoes).affectedKeys()
              .hasOnly([request.auth.uid])
-        // validação entre 0 e o tangível declarado (evita corromper o ranking ao vivo)
+        // "Valor Realizado" (pedido do VP): o comitê confirma/ajusta e pode ser
+        // MAIOR ou menor que o declarado — sem teto ≤ declarado. Só >= 0.
         && request.resource.data.resultado.validacoes[request.auth.uid] is number
-        && request.resource.data.resultado.validacoes[request.auth.uid] >= 0
-        && request.resource.data.resultado.validacoes[request.auth.uid] <= resource.data.resultado.tang;
+        && request.resource.data.resultado.validacoes[request.auth.uid] >= 0;
 
       // RF-39: cada membro do comitê grava apenas as próprias notas
       allow update: if hasRole('avaliador')
@@ -236,6 +250,17 @@ service cloud.firestore {
         allow update: if isActive()
           && resource.data.autorId == request.auth.uid
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['texto', 'editadoEm']);
+      }
+
+      // ── Histórico de edições do pitch pelo admin (pedido do VP): visível ao
+      //    titular e aos admins do Flux; criado só por admin do Flux. Somente
+      //    append (sem update/delete) — trilha íntegra. ──
+      match /edicoes/{edicaoId} {
+        function pitchDono() {
+          return get(/databases/$(database)/documents/projects/$(projectId)).data.uid;
+        }
+        allow read: if isActive() && (pitchDono() == request.auth.uid || ehFluxAdmin());
+        allow create: if ehFluxAdmin() && request.resource.data.por == request.auth.uid;
       }
     }
 

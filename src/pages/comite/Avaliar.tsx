@@ -102,9 +102,9 @@ export default function Avaliar() {
         <div style={{ border: '1px solid var(--tf-line)', borderRadius: 10, padding: '14px 16px', marginTop: 12 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
             <div style={{ flex: 1, minWidth: 260 }}>
-              <Mono accent>[ 1 · VALIDAÇÃO DO TANGÍVEL ]</Mono>
+              <Mono accent>[ 1 · VALOR REALIZADO ]</Mono>
               <p className="tf-small" style={{ fontSize: '0.76rem', margin: '4px 0 0' }}>
-                Cada um dos três membros valida o valor realizado — integral ou ajustado. A <strong>média dos três valores</strong> entra no cálculo e na normalização do ciclo.
+                Cada um dos três membros confirma o <strong>Valor Realizado</strong> — pode ser igual, <strong>maior ou menor</strong> que o declarado. A média dos três entra no cálculo e na normalização do ciclo.
               </p>
             </div>
             {minhaVal !== undefined ? (
@@ -113,7 +113,7 @@ export default function Avaliar() {
               </Badge>
             ) : ajusteOn ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', flex: 'none' }}>
-                <label className="tf-mono" style={{ fontSize: '0.56rem' }}>VALOR AJUSTADO · R$/CICLO</label>
+                <label className="tf-mono" style={{ fontSize: '0.56rem' }}>VALOR REALIZADO · R$/CICLO</label>
                 <input
                   className="f-input" style={{ width: 130, padding: '9px 12px', fontSize: '0.88rem' }}
                   value={ajuste} onChange={(e) => setAjuste(e.target.value)} placeholder="Ex.: 12000"
