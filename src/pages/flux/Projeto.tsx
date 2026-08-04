@@ -174,7 +174,7 @@ export default function Projeto() {
                         value={dp || (p.deadlinePonderado ?? '')} onChange={(e) => setDp(e.target.value)} />
                       <button type="button" aria-label="Salvar ponderados" title="Salvar ponderados"
                         onClick={() => store.salvarPonderados(p.id, Number(vp) || undefined, dp || undefined)}
-                        className="foco-tf" style={{ flex: 'none', border: 'none', borderRadius: 8, background: 'var(--tf-live, #1f9d6b)', color: '#fff', cursor: 'pointer', padding: '0 11px', fontSize: '1rem' }}>💾</button>
+                        className="foco-tf" style={{ flex: 'none', border: 'none', background: 'transparent', cursor: 'pointer', padding: '0 6px', fontSize: '1.2rem', lineHeight: 1 }}>💾</button>
                     </div>
                   </div>
                 ) : p.deadlinePonderado && (
@@ -195,7 +195,7 @@ export default function Projeto() {
                         value={vp} onChange={(e) => setVp(e.target.value.replace(/[^\d]/g, ''))} />
                       <button type="button" aria-label="Salvar ponderados" title="Salvar ponderados"
                         onClick={() => store.salvarPonderados(p.id, Number(vp) || undefined, dp || undefined)}
-                        className="foco-tf" style={{ flex: 'none', border: 'none', borderRadius: 8, background: 'var(--tf-live, #1f9d6b)', color: '#fff', cursor: 'pointer', padding: '0 11px', fontSize: '1rem' }}>💾</button>
+                        className="foco-tf" style={{ flex: 'none', border: 'none', background: 'transparent', cursor: 'pointer', padding: '0 6px', fontSize: '1.2rem', lineHeight: 1 }}>💾</button>
                     </div>
                   </div>
                 ) : typeof p.valorPonderado === 'number' && (
