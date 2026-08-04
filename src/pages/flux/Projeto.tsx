@@ -169,8 +169,13 @@ export default function Projeto() {
                 {podePonderar ? (
                   <div style={{ marginTop: 8 }}>
                     <label className="tf-mono" style={{ fontSize: '0.54rem' }}>DEADLINE PONDERADO (ADM)</label>
-                    <input type="date" className="f-input" style={{ padding: '8px 10px', fontSize: '0.85rem' }}
-                      value={dp || (p.deadlinePonderado ?? '')} onChange={(e) => setDp(e.target.value)} />
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <input type="date" className="f-input" style={{ flex: 1, padding: '8px 10px', fontSize: '0.85rem' }}
+                        value={dp || (p.deadlinePonderado ?? '')} onChange={(e) => setDp(e.target.value)} />
+                      <button type="button" aria-label="Salvar ponderados" title="Salvar ponderados"
+                        onClick={() => store.salvarPonderados(p.id, Number(vp) || undefined, dp || undefined)}
+                        className="foco-tf" style={{ flex: 'none', border: 'none', borderRadius: 8, background: 'var(--tf-live, #1f9d6b)', color: '#fff', cursor: 'pointer', padding: '0 11px', fontSize: '1rem' }}>💾</button>
+                    </div>
                   </div>
                 ) : p.deadlinePonderado && (
                   <div className="tf-small" style={{ fontSize: '0.74rem', marginTop: 6 }}>
@@ -184,9 +189,14 @@ export default function Projeto() {
                 {podePonderar ? (
                   <div style={{ marginTop: 8 }}>
                     <label className="tf-mono" style={{ fontSize: '0.54rem' }}>RETORNO TANGÍVEL PONDERADO (ADM) · R$</label>
-                    <input className="f-input" inputMode="numeric" style={{ padding: '8px 10px', fontSize: '0.85rem' }}
-                      placeholder={p.valorPonderado ? String(p.valorPonderado) : 'estimativa da administração'}
-                      value={vp} onChange={(e) => setVp(e.target.value.replace(/[^\d]/g, ''))} />
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <input className="f-input" inputMode="numeric" style={{ flex: 1, padding: '8px 10px', fontSize: '0.85rem' }}
+                        placeholder={p.valorPonderado ? String(p.valorPonderado) : 'estimativa da administração'}
+                        value={vp} onChange={(e) => setVp(e.target.value.replace(/[^\d]/g, ''))} />
+                      <button type="button" aria-label="Salvar ponderados" title="Salvar ponderados"
+                        onClick={() => store.salvarPonderados(p.id, Number(vp) || undefined, dp || undefined)}
+                        className="foco-tf" style={{ flex: 'none', border: 'none', borderRadius: 8, background: 'var(--tf-live, #1f9d6b)', color: '#fff', cursor: 'pointer', padding: '0 11px', fontSize: '1rem' }}>💾</button>
+                    </div>
                   </div>
                 ) : typeof p.valorPonderado === 'number' && (
                   <div className="tf-small" style={{ fontSize: '0.74rem', marginTop: 6 }}>
@@ -204,10 +214,9 @@ export default function Projeto() {
               </div>
             </div>
             {podePonderar && (
-              <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid var(--tf-line)', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                <button onClick={() => store.salvarPonderados(p.id, Number(vp) || undefined, dp || undefined)} className="tf-btn tf-btn-ghost" style={{ flex: 'none' }}>Salvar ponderados</button>
-                <span className="tf-small" style={{ fontSize: '0.7rem', flex: 1, minWidth: 200 }}>Referência da administração — não entram no ranking (o ranking usa o Valor Realizado após a avaliação). Também são salvos ao definir o acesso.</span>
-              </div>
+              <p className="tf-small" style={{ fontSize: '0.7rem', margin: '12px 0 0', paddingTop: 12, borderTop: '1px solid var(--tf-line)' }}>
+                💾 salva o valor ponderado (referência — não entra no ranking; o ranking usa o Valor Realizado após a avaliação). Também são salvos ao definir o acesso.
+              </p>
             )}
           </div>
 
