@@ -89,12 +89,14 @@ interface StoreApi {
   reativarBacklog(pid: string, deadline: string): void;
   registrarResultado(pid: string, dados: ResultadoInput, arquivos: File[]): Promise<void>;
 
-  definirTier(pid: string, tier: Tier, valorPonderado?: number): void;
+  definirTier(pid: string, tier: Tier, valorPonderado?: number, deadlinePonderado?: string): void;
+  /** ADM/comitê definem os ponderados (retorno tangível e deadline) na triagem. */
+  salvarPonderados(pid: string, valorPonderado?: number, deadlinePonderado?: string): void;
   enviarBacklog(pid: string): void;
   reprovarPitch(pid: string, contexto: 'triagem' | 'avaliacao'): void;
   validarTangivel(pid: string, valor: number): void;
-  /** Admin do Flux edita o conteúdo do pitch antes de liberar o Claude (VP). */
-  editarPitchAdmin(pid: string, dados: Partial<Pick<Projeto, 'nome' | 'cat' | 'estimValor' | 'estimPer' | 'deadline' | 'intang' | 'just' | 'valorPonderado'>>): void;
+  /** Titular edita o pitch (todos os campos menos o título) nas 2 primeiras etapas. */
+  editarPitch(pid: string, dados: Partial<Pick<Projeto, 'cat' | 'estimValor' | 'estimPer' | 'deadline' | 'intang' | 'just'>>): void;
   /** Histórico de edições do pitch (titular + admins). */
   observarEdicoesPitch(pid: string, cb: (es: EdicaoPitch[]) => void): () => void;
   salvarNotas(pid: string, notas: NotaTrio): void;
@@ -696,16 +698,17 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
       // #16/#26: triagem em 3 telas (AdmPitches, ficha, Acesso do comitê) sem
       // trava — a 2ª decisão sobrescrevia a 1ª. Agora em transação: lê o estado
       // atual e só decide se ainda estiver PENDENTE ("vale a 1ª decisão").
-      definirTier: (pid, tier, valorPonderado) => {
+      definirTier: (pid, tier, valorPonderado, deadlinePonderado) => {
         const nome = proj(pid)?.nome ?? pid;
         runTransaction(db, async (tx) => {
           const ref = doc(db, 'projects', pid);
           const d = (await tx.get(ref)).data();
           if (!d) throw new Error('Pitch não encontrado.');
           if (d.tier || d.reprovado || d.ciclo === 'backlog') throw new Error('Este pitch já foi decidido na triagem — recarregue a página para ver a decisão registrada.');
-          // Valor Ponderado pela Administração (VP): gravado junto com o tier
+          // ponderados da administração/comitê gravados junto com o tier (referência)
           const patch: Record<string, unknown> = { tier };
           if (typeof valorPonderado === 'number' && !Number.isNaN(valorPonderado)) patch.valorPonderado = valorPonderado;
+          if (deadlinePonderado) patch.deadlinePonderado = deadlinePonderado;
           tx.update(ref, patch);
           tx.set(doc(db, 'access', d.uid as string), { apl: false });
           return byId(d.uid as string)?.nome ?? nome;
@@ -714,13 +717,25 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
           .catch(falha);
       },
 
-      // Edição do pitch pelo admin do Flux ANTES de liberar o Claude (pedido do
-      // VP): grava os campos e registra a diferença em edicoes/ (histórico
-      // visível ao titular e aos admins). As regras restringem a admin/pendente.
-      editarPitchAdmin: (pid, dados) => {
+      // ADM/comitê definem os ponderados (retorno tangível e deadline) na triagem
+      // — referência, não entram no ranking. Pode ser antes de decidir o tier.
+      salvarPonderados: (pid, valorPonderado, deadlinePonderado) => {
+        const patch: Record<string, unknown> = {};
+        if (typeof valorPonderado === 'number' && !Number.isNaN(valorPonderado)) patch.valorPonderado = valorPonderado;
+        if (deadlinePonderado !== undefined) patch.deadlinePonderado = deadlinePonderado || null;
+        if (!Object.keys(patch).length) return;
+        updateDoc(doc(db, 'projects', pid), patch)
+          .then(() => { addLog('Ponderados definidos', (proj(pid)?.nome ?? pid), 'avaliacao'); showToast('Valores ponderados salvos.'); })
+          .catch(falha);
+      },
+
+      // Edição do pitch pelo TITULAR (pedido do VP): todos os campos MENOS o
+      // título, nas duas primeiras etapas. Registra a diferença em edicoes/
+      // (histórico visível ao titular e aos admins). As regras impõem a janela.
+      editarPitch: (pid, dados) => {
         const p = proj(pid);
         if (!p || !me) return;
-        const rotulos: Record<string, string> = { nome: 'Nome', cat: 'Categoria', estimValor: 'Valor estimado', estimPer: 'Periodicidade', deadline: 'Deadline', intang: 'Intangíveis', just: 'Justificativa', valorPonderado: 'Valor ponderado' };
+        const rotulos: Record<string, string> = { cat: 'Categoria', estimValor: 'Valor estimado', estimPer: 'Periodicidade', deadline: 'Deadline', intang: 'Intangíveis', just: 'Justificativa' };
         const fmt = (v: unknown) => (Array.isArray(v) ? v.join(' · ') : v === undefined || v === null ? '—' : String(v));
         const antes = p as unknown as Record<string, unknown>;
         const mudancas = (Object.keys(dados) as (keyof typeof dados)[])
@@ -731,7 +746,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
           .then(() => {
             setDoc(doc(collection(db, 'projects', pid, 'edicoes')), { por: me.id, porNome: me.nome, em: new Date().toISOString(), mudancas })
               .catch(() => { /* histórico é best-effort — não bloqueia a edição */ });
-            addLog('Pitch editado pelo admin', p.nome + ' — ' + mudancas.map((m) => m.campo).join(', '), 'admin');
+            addLog('Pitch editado', p.nome + ' — ' + mudancas.map((m) => m.campo).join(', '), 'flux');
             showToast('Pitch atualizado. As mudanças ficam no histórico de edições.');
           })
           .catch(falha);

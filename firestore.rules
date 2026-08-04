@@ -182,19 +182,22 @@ service cloud.firestore {
       // gravada junto com o tier (referência; não entra no ranking).
       allow update: if (hasRole('avaliador') || ehFluxAdmin())
         && request.resource.data.diff(resource.data).affectedKeys()
-             .hasOnly(['tier', 'ciclo', 'backlogDe', 'reprovado', 'valorPonderado'])
+             .hasOnly(['tier', 'ciclo', 'backlogDe', 'reprovado', 'valorPonderado', 'deadlinePonderado'])
         && (!('valorPonderado' in request.resource.data) || request.resource.data.valorPonderado is number);
 
-      // Edição do pitch pelo admin do Flux ANTES de liberar o Claude (pedido do
-      // VP): só enquanto pendente (sem tier, não reprovado, no ciclo ativo) e só
-      // campos de conteúdo — nunca tier/resultado/notas/uid. O histórico de
-      // edições vai para a subcoleção edicoes/.
-      allow update: if ehFluxAdmin()
-        && resource.data.tier == null
+      // Edição do pitch pelo TITULAR (pedido do VP): todos os campos MENOS o
+      // título, só nas DUAS PRIMEIRAS etapas — Inscrito e Em desenvolvimento, ou
+      // seja, antes de registrar o resultado. Depois, ninguém edita o conteúdo.
+      // O deadline continua preso ao ciclo. Cada mudança vai para edicoes/.
+      allow update: if isActive()
+        && resource.data.uid == request.auth.uid
+        && resource.data.resultado == null
         && resource.data.ciclo != 'backlog'
         && !(('reprovado' in resource.data) && resource.data.reprovado == true)
         && request.resource.data.diff(resource.data).affectedKeys()
-             .hasOnly(['nome', 'cat', 'estimValor', 'estimPer', 'deadline', 'intang', 'just', 'valorPonderado']);
+             .hasOnly(['cat', 'estimValor', 'estimPer', 'deadline', 'intang', 'just'])
+        && request.resource.data.deadline >= get(/databases/$(database)/documents/cycles/$(resource.data.ciclo)).data.inicio
+        && request.resource.data.deadline <= get(/databases/$(database)/documents/cycles/$(resource.data.ciclo)).data.fim;
 
       // RF-38 (P13): cada membro do comitê grava apenas a própria validação
       allow update: if hasRole('avaliador')
@@ -260,7 +263,10 @@ service cloud.firestore {
           return get(/databases/$(database)/documents/projects/$(projectId)).data.uid;
         }
         allow read: if isActive() && (pitchDono() == request.auth.uid || ehFluxAdmin());
-        allow create: if ehFluxAdmin() && request.resource.data.por == request.auth.uid;
+        // o titular (que agora edita o próprio pitch) e os admins registram
+        allow create: if isActive()
+          && request.resource.data.por == request.auth.uid
+          && (pitchDono() == request.auth.uid || ehFluxAdmin());
       }
     }
 

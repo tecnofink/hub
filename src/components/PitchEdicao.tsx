@@ -14,7 +14,6 @@ export default function PitchEdicao({ pitch, editavel, onClose }: { pitch: Proje
   const store = useStore();
   const [edicoes, setEdicoes] = useState<EdicaoPitch[]>([]);
   const [form, setForm] = useState({
-    nome: pitch.nome,
     cat: pitch.cat as string,
     estimValor: String(pitch.estimValor ?? ''),
     estimPer: pitch.estimPer,
@@ -25,8 +24,7 @@ export default function PitchEdicao({ pitch, editavel, onClose }: { pitch: Proje
   useEffect(() => store.observarEdicoesPitch(pitch.id, setEdicoes), [pitch.id]);
 
   const salvar = () => {
-    store.editarPitchAdmin(pitch.id, {
-      nome: form.nome.trim(),
+    store.editarPitch(pitch.id, {
       cat: form.cat as Projeto['cat'],
       estimValor: Number(form.estimValor) || 0,
       estimPer: form.estimPer as Projeto['estimPer'],
@@ -49,10 +47,9 @@ export default function PitchEdicao({ pitch, editavel, onClose }: { pitch: Proje
 
       {editavel && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 22, paddingBottom: 20, borderBottom: '1px solid var(--tf-line)' }}>
-          <div>
-            <label className="tf-mono" style={{ fontSize: '0.56rem' }}>NOME DO PROJETO</label>
-            <input className="f-input" value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} />
-          </div>
+          <p className="tf-small" style={{ fontSize: '0.72rem', margin: 0, color: 'var(--tf-ink-3)' }}>
+            O título do pitch não pode ser alterado. Edição liberada só nas etapas Inscrito e Em desenvolvimento.
+          </p>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
             <div style={{ flex: 1, minWidth: 200 }}>
               <label className="tf-mono" style={{ fontSize: '0.56rem' }}>CATEGORIA</label>
@@ -84,10 +81,10 @@ export default function PitchEdicao({ pitch, editavel, onClose }: { pitch: Proje
           </div>
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
             <button onClick={onClose} className="tf-btn tf-btn-ghost">Cancelar</button>
-            <button onClick={salvar} className="tf-btn tf-btn-accent" disabled={!form.nome.trim()}>Salvar edição</button>
+            <button onClick={salvar} className="tf-btn tf-btn-accent" disabled={!form.deadline}>Salvar edição</button>
           </div>
           <p className="tf-small" style={{ fontSize: '0.72rem', margin: 0 }}>
-            A edição pelo admin só é possível antes de liberar o acesso ao Claude. Cada mudança fica registrada abaixo, visível ao titular.
+            Edição liberada só nas etapas Inscrito e Em desenvolvimento (antes de registrar o resultado). Cada mudança fica registrada abaixo, visível a você e aos admins.
           </p>
         </div>
       )}

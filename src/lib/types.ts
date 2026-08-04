@@ -72,9 +72,10 @@ export interface Projeto {
   just: string;
   criadoEm: string;         // ISO
   tier: Tier | null;
-  /** Valor Ponderado pela Administração: estimativa do admin do Flux na triagem
-   *  (referência para comparar com o realizado; NÃO entra no cálculo do ranking). */
-  valorPonderado?: number;
+  /** Ponderados da administração/comitê na triagem (referência; NÃO entram no
+   *  cálculo do ranking) — exibidos abaixo dos valores do titular. */
+  valorPonderado?: number;        // retorno tangível ponderado
+  deadlinePonderado?: string | null; // deadline ponderado (ISO)
   reprovado?: boolean;
   resultado: Resultado | null;
   notas: Record<MembroId, NotaTrio | null>;
