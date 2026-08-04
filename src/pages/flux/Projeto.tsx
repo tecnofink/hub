@@ -91,6 +91,8 @@ export default function Projeto() {
 
   const passo = st.k === 'inscrito' ? 0 : st.k === 'execucao' || st.k === 'atrasado' ? 2 : st.k === 'registrado' ? 3 : 4;
   const estimCiclo = p.estimPer === 'mes' ? p.estimValor * meses : p.estimValor;
+  // admin do Flux define os ponderados na triagem (pitch pendente do ciclo ativo)
+  const podePonderar = ehFluxAdmin(me) && !emBacklog && cc?.status === 'ativo' && !p.tier && !p.reprovado;
 
   return (
     <div className="anim-in" style={{ maxWidth: 1100, margin: '0 auto', padding: '48px 32px 80px' }}>
@@ -164,8 +166,14 @@ export default function Projeto() {
               <div>
                 <div className="tf-mono" style={{ fontSize: '0.6rem', marginBottom: 4 }}>DEADLINE DEFINIDO</div>
                 <div style={{ fontSize: '0.92rem' }}>{dbr(p.deadline)}</div>
-                {p.deadlinePonderado && (
-                  <div className="tf-small" style={{ fontSize: '0.74rem', marginTop: 4 }}>
+                {podePonderar ? (
+                  <div style={{ marginTop: 8 }}>
+                    <label className="tf-mono" style={{ fontSize: '0.54rem' }}>DEADLINE PONDERADO (ADM)</label>
+                    <input type="date" className="f-input" style={{ padding: '8px 10px', fontSize: '0.85rem' }}
+                      value={dp || (p.deadlinePonderado ?? '')} onChange={(e) => setDp(e.target.value)} />
+                  </div>
+                ) : p.deadlinePonderado && (
+                  <div className="tf-small" style={{ fontSize: '0.74rem', marginTop: 6 }}>
                     <span className="tf-mono" style={{ fontSize: '0.54rem' }}>DEADLINE PONDERADO (ADM)</span><br />{dbr(p.deadlinePonderado)}
                   </div>
                 )}
@@ -173,8 +181,15 @@ export default function Projeto() {
               <div>
                 <div className="tf-mono" style={{ fontSize: '0.6rem', marginBottom: 4 }}>TANGÍVEL ESTIMADO</div>
                 <div style={{ fontSize: '0.92rem' }}>{p.estimValor ? brl(estimCiclo) + ' por ciclo' + (p.estimPer === 'mes' ? ' (' + brl(p.estimValor) + '/mês)' : '') : '—'}</div>
-                {typeof p.valorPonderado === 'number' && (
-                  <div className="tf-small" style={{ fontSize: '0.74rem', marginTop: 4 }}>
+                {podePonderar ? (
+                  <div style={{ marginTop: 8 }}>
+                    <label className="tf-mono" style={{ fontSize: '0.54rem' }}>RETORNO TANGÍVEL PONDERADO (ADM) · R$</label>
+                    <input className="f-input" inputMode="numeric" style={{ padding: '8px 10px', fontSize: '0.85rem' }}
+                      placeholder={p.valorPonderado ? String(p.valorPonderado) : 'estimativa da administração'}
+                      value={vp} onChange={(e) => setVp(e.target.value.replace(/[^\d]/g, ''))} />
+                  </div>
+                ) : typeof p.valorPonderado === 'number' && (
+                  <div className="tf-small" style={{ fontSize: '0.74rem', marginTop: 6 }}>
                     <span className="tf-mono" style={{ fontSize: '0.54rem' }}>RETORNO TANGÍVEL PONDERADO (ADM)</span><br />{brl(p.valorPonderado)}
                   </div>
                 )}
@@ -188,6 +203,12 @@ export default function Projeto() {
                 <div style={{ fontSize: '0.92rem', lineHeight: 1.55, color: 'var(--tf-ink-2)' }}>{p.just}</div>
               </div>
             </div>
+            {podePonderar && (
+              <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid var(--tf-line)', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                <button onClick={() => store.salvarPonderados(p.id, Number(vp) || undefined, dp || undefined)} className="tf-btn tf-btn-ghost" style={{ flex: 'none' }}>Salvar ponderados</button>
+                <span className="tf-small" style={{ fontSize: '0.7rem', flex: 1, minWidth: 200 }}>Referência da administração — não entram no ranking (o ranking usa o Valor Realizado após a avaliação). Também são salvos ao definir o acesso.</span>
+              </div>
+            )}
           </div>
 
           {p.resultado && (
@@ -325,22 +346,10 @@ export default function Projeto() {
 
       {/* Triagem de acesso (RF-24, P12): faixa full-width com as pílulas lado a
           lado — admin/comitê decidem sem sair da ficha. Só enquanto pende. */}
-      {(ehFluxAdmin(me) || me.roles.includes('avaliador')) && !emBacklog && cc?.status === 'ativo' && !p.tier && !p.reprovado && (
+      {ehFluxAdmin(me) && !emBacklog && cc?.status === 'ativo' && !p.tier && !p.reprovado && (
         <div className="tf-card" style={{ marginTop: 16, padding: '18px 24px' }}>
-          <span className="tf-mono" style={{ fontSize: '0.56rem' }}>[ TRIAGEM DE ACESSO · COMITÊ E ADMINS ]</span>
-          <div style={{ display: 'flex', gap: 12, marginTop: 12, flexWrap: 'wrap' }}>
-            <div style={{ flex: 1, minWidth: 200 }}>
-              <label className="tf-mono" style={{ fontSize: '0.56rem' }}>RETORNO TANGÍVEL PONDERADO · R$</label>
-              <input className="f-input" inputMode="numeric" placeholder={p.valorPonderado ? String(p.valorPonderado) : 'estimativa da administração'}
-                value={vp} onChange={(e) => setVp(e.target.value.replace(/[^\d]/g, ''))} />
-            </div>
-            <div style={{ flex: 1, minWidth: 180 }}>
-              <label className="tf-mono" style={{ fontSize: '0.56rem' }}>DEADLINE PONDERADO</label>
-              <input type="date" className="f-input" value={dp || (p.deadlinePonderado ?? '')} onChange={(e) => setDp(e.target.value)} />
-            </div>
-            <button onClick={() => store.salvarPonderados(p.id, Number(vp) || undefined, dp || undefined)} className="tf-btn tf-btn-ghost" style={{ flex: 'none', alignSelf: 'flex-end' }}>Salvar ponderados</button>
-          </div>
-          <p className="tf-small" style={{ fontSize: '0.68rem', margin: '4px 0 0' }}>Referência da administração — não entram no ranking (o ranking usa o Valor Realizado após a avaliação). Também são salvos ao definir o acesso.</p>
+          <span className="tf-mono" style={{ fontSize: '0.56rem' }}>[ TRIAGEM DE ACESSO · ADMIN DO FLUX ]</span>
+          <p className="tf-small" style={{ fontSize: '0.7rem', margin: '6px 0 0' }}>Os valores ponderados (deadline e retorno tangível) ficam no card do pitch, abaixo dos valores do titular — e também são salvos ao definir o acesso abaixo.</p>
           <div style={{ display: 'flex', gap: 10, marginTop: 14, flexWrap: 'wrap' }}>
             <button onClick={() => store.definirTier(p.id, 'Enterprise', Number(vp) || undefined, dp || undefined)} className="tf-btn tf-btn-accent" style={{ flex: 1, minWidth: 180, justifyContent: 'center' }}>Definir Enterprise</button>
             <button onClick={() => store.definirTier(p.id, 'Basic', Number(vp) || undefined, dp || undefined)} className="tf-btn tf-btn-primary" style={{ flex: 1, minWidth: 180, justifyContent: 'center' }}>Definir Basic</button>

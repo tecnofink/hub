@@ -23,7 +23,6 @@ const Gestor = lazy(() => import('./pages/gestor/Gestor'));
 const Tarefas = lazy(() => import('./pages/gestor/Tarefas'));
 const ProjetoAdmin = lazy(() => import('./pages/gestor/ProjetoAdmin'));
 const ComiteLayout = lazy(() => import('./pages/comite/ComiteLayout'));
-const Acesso = lazy(() => import('./pages/comite/Acesso'));
 const Fila = lazy(() => import('./pages/comite/Fila'));
 const Avaliar = lazy(() => import('./pages/comite/Avaliar'));
 const AdminLayout = lazy(() => import('./pages/admin/AdminLayout'));
@@ -67,8 +66,7 @@ export default function App() {
               path="/comite"
               element={<RequireRole role="avaliador"><ComiteLayout /></RequireRole>}
             >
-              <Route index element={<Navigate to="/comite/acesso" replace />} />
-              <Route path="acesso" element={<Acesso />} />
+              <Route index element={<Navigate to="/comite/fila" replace />} />
               <Route path="fila" element={<Fila />} />
               <Route path="avaliar/:id" element={<Avaliar />} />
             </Route>

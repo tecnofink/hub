@@ -224,7 +224,7 @@ export default function Shell() {
             <NavPill on={emFlux} to="/flux">Flux</NavPill>
             <NavPill on={emGestor} to="/tarefas">Produtividade</NavPill>
             <NavPill on={emPlaybook} to="/playbook">Marketing</NavPill>
-            {fluxCtx && souAval && <NavPill on={emComite} to="/comite/acesso">Comitê</NavPill>}
+            {fluxCtx && souAval && <NavPill on={emComite} to="/comite/fila">Comitê</NavPill>}
             {fluxCtx && souFluxAdmin && <NavPill on={emAdminFlux} to="/admin/flux">Admin do Flux</NavPill>}
             {!fluxCtx && !emGestor && !emPlaybook && souHubAdmin && <NavPill on={emAdminHub} to="/admin/hub/dominios">Admin do Hub</NavPill>}
           </nav>

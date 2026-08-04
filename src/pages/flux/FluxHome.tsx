@@ -9,6 +9,7 @@ import { useStore, useUI } from '../../store/AppStore';
 import { dbr, diasAte, mesesDoCiclo, mesesLabel, todayISO, diffDias } from '../../lib/dates';
 import { brl, brlK } from '../../lib/format';
 import { catNome, isAvaliado, score, tangValidado } from '../../lib/scoring';
+import { ehFluxAdmin } from '../../lib/roles';
 import type { Projeto } from '../../lib/types';
 import { Avatar, Badge, MetricStat, Modal, L } from '../../components/ui';
 import ALink from '../../components/ALink';
@@ -278,7 +279,8 @@ function KanbanCard({ p, col, onReativar }: { p: Projeto; col: ColunaId; onReati
   if (col === 'back') { meta1 = 'Ideia guardada para uma próxima rodada'; meta2 = 'Registrada em ' + dbr(p.criadoEm); }
 
   // RF-27: reativação disponível ao titular quando um novo ciclo abre inscrições
-  const reativavel = col === 'back' && mine && !!cicloAtivo && cicloAtivo.id !== p.backlogDe && todayISO() <= cicloAtivo.limite;
+  // reativar do backlog: só admin do Flux (decisão do VP — era o titular)
+  const reativavel = col === 'back' && ehFluxAdmin(me) && !!cicloAtivo && cicloAtivo.id !== p.backlogDe && todayISO() <= cicloAtivo.limite;
   const clickOn = col !== 'back';
   // todo card abre a FICHA (comentários da triagem, resultado, ações); de lá o
   // titular alcança o quadro por "Abrir em Produtividade →"

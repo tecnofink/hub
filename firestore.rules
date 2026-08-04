@@ -161,9 +161,9 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['resultado'])
         && request.resource.data.resultado.validacoes.size() == 0;
 
-      // RF-27/P16: titular reativa pitch do backlog (volta ao ciclo, zera avaliação)
-      allow update: if isActive()
-        && resource.data.uid == request.auth.uid
+      // RF-27/P16: reativar pitch do backlog (volta ao ciclo, zera avaliação) —
+      // SOMENTE admin do Flux (decisão do VP: era o titular).
+      allow update: if ehFluxAdmin()
         && resource.data.ciclo == 'backlog'
         && request.resource.data.ciclo != 'backlog'
         && request.resource.data.tier == null
@@ -177,13 +177,19 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys()
              .hasOnly(['ciclo', 'backlogDe', 'deadline', 'criadoEm', 'tier', 'resultado', 'reprovado', 'notas']);
 
-      // RF-24..28 (P12): triagem — comitê e admins do Flux com os mesmos poderes.
-      // valorPonderado (pedido do VP): estimativa da administração na análise,
-      // gravada junto com o tier (referência; não entra no ranking).
-      allow update: if (hasRole('avaliador') || ehFluxAdmin())
+      // RF-24..28 · triagem — SOMENTE admin do Flux (decisão do VP: o comitê não
+      // faz mais triagem). Define tier, backlog/reprovar e os ponderados
+      // (deadline + retorno tangível — referência, não entram no ranking).
+      allow update: if ehFluxAdmin()
         && request.resource.data.diff(resource.data).affectedKeys()
              .hasOnly(['tier', 'ciclo', 'backlogDe', 'reprovado', 'valorPonderado', 'deadlinePonderado'])
         && (!('valorPonderado' in request.resource.data) || request.resource.data.valorPonderado is number);
+
+      // RF-40 · desclassificação pelo comitê DURANTE a avaliação: o comitê não
+      // faz mais triagem, mas ainda pode reprovar um projeto já avaliado — só o
+      // campo reprovado (nunca tier/ponderados).
+      allow update: if hasRole('avaliador')
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reprovado']);
 
       // Edição do pitch pelo TITULAR (pedido do VP): todos os campos MENOS o
       // título, só nas DUAS PRIMEIRAS etapas — Inscrito e Em desenvolvimento, ou
