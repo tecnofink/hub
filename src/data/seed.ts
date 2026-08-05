@@ -231,6 +231,7 @@ export function seedState(): AppState {
   return {
     uid: null,
     tema: 'light',
+    kanbanLabels: {},
     users: [
       u('ana', 'Ana Lima', 'ana.lima@tecnofink.com', 'Analista de Operações', 'Operações', ['user'], 'Automatizo o que for repetitivo.', '12/03'),
       u('rafael', 'Rafael Costa', 'rafael.costa@tecnofink.com', 'Executivo de Contas', 'Comercial', ['user'], 'Vendas orientadas a dados.', '28/07'),

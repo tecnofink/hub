@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useStore, useUI } from '../../store/AppStore';
 import { addDias, dbr, todayISO } from '../../lib/dates';
 import { Badge, L, Mono } from '../../components/ui';
+import { KB_COLS } from '../flux/statusProjeto';
 
 export default function AdmCiclos() {
   const store = useStore();
@@ -16,6 +17,10 @@ export default function AdmCiclos() {
     setCe(c ? { nome: c.nome, inicio: c.inicio, limite: c.limite, fim: c.fim } : { nome: '', inicio: '', limite: '', fim: '' });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [c?.id]);
+
+  // rótulos custom do kanban — sincroniza com o config quando ele chega/muda
+  const [rotulos, setRotulos] = useState<Record<string, string>>(state.kanbanLabels);
+  useEffect(() => { setRotulos(state.kanbanLabels); }, [state.kanbanLabels]);
   const [nc, setNc] = useState(() => ({
     nome: 'Ciclo ' + (state.cycles.length + 1),
     inicio: todayISO(),
@@ -84,6 +89,28 @@ export default function AdmCiclos() {
           </div>
         </div>
       )}
+
+      {/* Rótulos das etapas do kanban — o admin renomeia; a lógica de avanço
+          dos cards não muda (só o nome exibido nas colunas). */}
+      <div className="tf-card" style={{ padding: 26, marginTop: 16 }}>
+        <Mono accent>[ ETAPAS DO KANBAN ]</Mono>
+        <p className="tf-small" style={{ fontSize: '0.78rem', margin: '6px 0 14px' }}>
+          Renomeie as colunas do kanban do Flux. Só o rótulo muda — o avanço automático dos cards continua o mesmo. Deixe em branco para voltar ao nome padrão.
+        </p>
+        <div className="g-1col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          {KB_COLS.map((col) => (
+            <div key={col.id}>
+              <L>{col.label}</L>
+              <input className="f-input" style={{ padding: '10px 13px', fontSize: '0.9rem' }} maxLength={40}
+                placeholder={col.label} value={rotulos[col.id] ?? ''}
+                onChange={(e) => setRotulos({ ...rotulos, [col.id]: e.target.value })} />
+            </div>
+          ))}
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>
+          <button onClick={() => store.salvarKanbanLabels(rotulos)} className="tf-btn tf-btn-accent">Salvar nomes das etapas</button>
+        </div>
+      </div>
 
       <div className="tf-mono" style={{ margin: '24px 0 12px' }}>[ TODOS OS CICLOS ]</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>

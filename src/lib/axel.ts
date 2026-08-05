@@ -58,6 +58,7 @@ export const AXEL_CATEGORIA: Record<string, string> = {
 /** Mascote de cada coluna do kanban — substitui o antigo [ VAZIO ]. */
 export const AXEL_COLUNA: Record<ColunaId, string> = {
   inscrito: AXEL.inscrito,
+  intro: AXEL.inscrever, // sentado com o laptop — estudando/apurando ganhos
   dev: AXEL.dev,
   aval: AXEL.aval,
   conc: AXEL.conc,
@@ -76,7 +77,9 @@ export interface NoticiaAxel {
 export function noticiaEtapa(col: ColunaId, projeto: string): NoticiaAxel {
   switch (col) {
     case 'inscrito':
-      return { img: AXEL.inscrito, titulo: 'Pitch no jogo!', texto: `"${projeto}" está na coluna Inscrito — o comitê vai definir seu acesso ao Claude.` };
+      return { img: AXEL.inscrito, titulo: 'Pitch no jogo!', texto: `"${projeto}" está na coluna Inscrito — a administração vai definir seu acesso ao Claude.` };
+    case 'intro':
+      return { img: AXEL.inscrever, titulo: 'Hora de apurar os ganhos!', texto: `"${projeto}" entrou em Introdução / Apurando ganhos — organize o levantamento; a administração move o projeto para o desenvolvimento.` };
     case 'dev':
       return { img: AXEL.dev, titulo: 'Em desenvolvimento!', texto: `"${projeto}" entrou em execução. Bom trabalho — registre o resultado até o seu deadline.` };
     case 'aval':

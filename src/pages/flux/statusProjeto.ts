@@ -22,10 +22,12 @@ export function statusDe(p: Projeto): StatusInfo {
   return { k: 'avaliado', label: 'AVALIADO', badge: 'live', sub: 'Avaliação completa do comitê' };
 }
 
-export type ColunaId = 'inscrito' | 'dev' | 'aval' | 'conc' | 'rep' | 'back';
+export type ColunaId = 'inscrito' | 'intro' | 'dev' | 'aval' | 'conc' | 'rep' | 'back';
 
+/** Rótulos padrão — o admin do Flux pode renomeá-los (config/flux.kanban). */
 export const KB_COLS: { id: ColunaId; label: string }[] = [
   { id: 'inscrito', label: 'Inscrito' },
+  { id: 'intro', label: 'Introdução / Apurando ganhos' },
   { id: 'dev', label: 'Em desenvolvimento' },
   { id: 'aval', label: 'Aguardando Avaliação' },
   { id: 'conc', label: 'Concluído' },
@@ -33,12 +35,14 @@ export const KB_COLS: { id: ColunaId; label: string }[] = [
   { id: 'back', label: 'Backlog de Projetos' },
 ];
 
-/** RF-30: os cards avançam automaticamente conforme o pitch evolui. */
+/** RF-30: os cards avançam automaticamente conforme o pitch evolui. A única
+ *  transição manual é intro → dev: ao liberar o acesso o card entra em
+ *  "Introdução / Apurando ganhos" e o ADMIN o move para Em desenvolvimento. */
 export function colunaDe(p: Projeto): ColunaId {
   if (p.ciclo === 'backlog') return 'back';
   if (p.reprovado) return 'rep';
   if (!p.tier) return 'inscrito';
-  if (!p.resultado) return 'dev';
+  if (!p.resultado) return p.introConcluida ? 'dev' : 'intro';
   if (!isAvaliado(p)) return 'aval';
   return 'conc';
 }

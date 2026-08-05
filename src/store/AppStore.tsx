@@ -92,6 +92,10 @@ interface StoreApi {
   definirTier(pid: string, tier: Tier, valorPonderado?: number, deadlinePonderado?: string): void;
   /** ADM/comitê definem os ponderados (retorno tangível e deadline) na triagem. */
   salvarPonderados(pid: string, valorPonderado?: number, deadlinePonderado?: string): void;
+  /** Admin move o card de "Introdução / Apurando ganhos" para Em desenvolvimento. */
+  concluirIntro(pid: string): void;
+  /** Admin renomeia os rótulos das colunas do kanban do Flux. */
+  salvarKanbanLabels(labels: Record<string, string>): void;
   enviarBacklog(pid: string): void;
   reprovarPitch(pid: string, contexto: 'triagem' | 'avaliacao'): void;
   validarTangivel(pid: string, valor: number): void;
@@ -207,6 +211,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
   const [cycles, setCycles] = useState<Ciclo[]>([]);
   const [tools, setTools] = useState<Ferramenta[]>([]);
   const [domains, setDomains] = useState<string[]>([]);
+  const [kanbanLabels, setKanbanLabels] = useState<Record<string, string>>({});
   const [extraProjs, setExtraProjs] = useState<ProjetoLivre[]>([]);
   const [tarefas, setTarefas] = useState<Record<string, QuadroProjeto>>({});
   const [access, setAccess] = useState<Record<string, { apl: boolean }>>({});
@@ -349,7 +354,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!uid) {
-      setUsers([]); setCycles([]); setTools([]); setDomains([]);
+      setUsers([]); setCycles([]); setTools([]); setDomains([]); setKanbanLabels({});
       setExtraProjs([]); setTarefas({}); setCarregadas(new Set());
       return;
     }
@@ -368,6 +373,10 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
       }, acessoRevogado),
       onSnapshot(doc(db, 'config', 'portal'), (s) => {
         setDomains((s.data()?.domains as string[]) ?? []);
+      }, acessoRevogado),
+      // rótulos customizados do kanban do Flux (admin renomeia — config/flux)
+      onSnapshot(doc(db, 'config', 'flux'), (s) => {
+        setKanbanLabels((s.data()?.kanban as Record<string, string>) ?? {});
       }, acessoRevogado),
       // projetos livres e quadros dos quais participo (multi-membro — CRM/P15)
       onSnapshot(query(collection(db, 'extraProjs'), where('membrosIds', 'array-contains', uid)), (s) => {
@@ -498,8 +507,8 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
   }, [projects, me?.id, dataReady]);
 
   const state = useMemo<AppState>(() => ({
-    uid, tema, users, projects, cycles, domains, tools, extraProjs, tarefas, access, logs,
-  }), [uid, tema, users, projects, cycles, domains, tools, extraProjs, tarefas, access, logs]);
+    uid, tema, users, projects, cycles, domains, tools, extraProjs, tarefas, access, logs, kanbanLabels,
+  }), [uid, tema, users, projects, cycles, domains, tools, extraProjs, tarefas, access, logs, kanbanLabels]);
 
   const api = useMemo<StoreApi>(() => {
     const byId = (id: string) => users.find((x) => x.id === id);
@@ -726,6 +735,23 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
         if (!Object.keys(patch).length) return;
         updateDoc(doc(db, 'projects', pid), patch)
           .then(() => { addLog('Ponderados definidos', (proj(pid)?.nome ?? pid), 'avaliacao'); showToast('Valores ponderados salvos.'); })
+          .catch(falha);
+      },
+
+      // admin move o card de "Introdução / Apurando ganhos" para Em desenvolvimento
+      concluirIntro: (pid) => {
+        const nome = proj(pid)?.nome ?? pid;
+        updateDoc(doc(db, 'projects', pid), { introConcluida: true })
+          .then(() => { addLog('Introdução concluída', nome, 'flux'); showToast('"' + nome + '" entrou em desenvolvimento.'); })
+          .catch(falha);
+      },
+
+      // admin renomeia os rótulos das colunas do kanban (config/flux)
+      salvarKanbanLabels: (labels) => {
+        const limpo: Record<string, string> = {};
+        for (const [k, v] of Object.entries(labels)) { const t = v.trim(); if (t) limpo[k] = t.slice(0, 40); }
+        setDoc(doc(db, 'config', 'flux'), { kanban: limpo }, { merge: true })
+          .then(() => { addLog('Etapas do kanban renomeadas', Object.keys(limpo).join(', ') || '(padrão)', 'admin'); showToast('Nomes das etapas atualizados.'); })
           .catch(falha);
       },
 

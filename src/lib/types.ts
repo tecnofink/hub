@@ -76,6 +76,9 @@ export interface Projeto {
    *  cálculo do ranking) — exibidos abaixo dos valores do titular. */
   valorPonderado?: number;        // retorno tangível ponderado
   deadlinePonderado?: string | null; // deadline ponderado (ISO)
+  /** Fase "Introdução / Apurando ganhos" concluída: com acesso liberado, o card
+   *  fica nessa coluna até o admin movê-lo para Em desenvolvimento. */
+  introConcluida?: boolean;
   reprovado?: boolean;
   resultado: Resultado | null;
   notas: Record<MembroId, NotaTrio | null>;
@@ -241,5 +244,7 @@ export interface AppState {
   tarefas: Record<string, QuadroProjeto>;
   /** Status da aplicação manual do acesso no console do Claude (RF-54). */
   access: Record<string, { apl: boolean }>;
+  /** Rótulos customizados das colunas do kanban (config/flux — admin renomeia). */
+  kanbanLabels: Record<string, string>;
   logs: LogEntry[];
 }

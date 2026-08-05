@@ -22,7 +22,7 @@ import { AXEL, AXEL_COLUNA } from '../../lib/axel';
     estouravam quando dimensionadas pela largura). Reprovado é deitado (arte
     larga) — fica no teto que a largura da coluna permite. */
 const ALTURA_MASCOTE: Record<ColunaId, number> = {
-  inscrito: 138, dev: 205, aval: 180, conc: 150, rep: 145, back: 142,
+  inscrito: 138, intro: 150, dev: 205, aval: 180, conc: 150, rep: 145, back: 142,
 };
 
 export default function FluxHome() {
@@ -143,19 +143,20 @@ export default function FluxHome() {
         <button className="kb-seta" aria-label="Rolar colunas para a direita" onClick={() => kbRef.current?.scrollBy({ left: 272, behavior: 'smooth' })} onMouseEnter={() => scrollStart(9)} onMouseLeave={scrollStop} title="Rolar para a direita" style={setaStyle('right')}>›</button>
         <div className="kb-scroll" ref={kbRef} style={{ display: 'flex', gap: 12, overflowX: 'auto', scrollbarWidth: 'none', paddingBottom: 10, alignItems: 'flex-start' }}>
           {KB_COLS.map((col) => {
+            const rotulo = state.kanbanLabels[col.id] || col.label; // admin pode renomear
             const cards = all
               .filter((p) => colunaDe(p) === col.id)
               .sort((a, b) => ((b.uid === me.id ? 1 : 0) - (a.uid === me.id ? 1 : 0)) || (a.criadoEm < b.criadoEm ? -1 : 1));
             return (
               <div key={col.id} style={{ flex: 'none', width: 260, background: 'var(--tf-bg-2)', border: '1px solid var(--tf-line)', borderRadius: 12, height: 539, overflowY: 'auto', scrollbarWidth: 'none' }} className="kb-scroll">
                 <div style={{ position: 'sticky', top: 0, zIndex: 2, background: 'var(--tf-bg-2)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 16px 10px', borderBottom: '1px solid var(--tf-line)', borderRadius: '12px 12px 0 0' }}>
-                  <span className="tf-mono" style={{ fontSize: '0.6rem' }}>{col.label.toUpperCase()}</span>
+                  <span className="tf-mono" style={{ fontSize: '0.6rem' }}>{rotulo.toUpperCase()}</span>
                   <span style={{ fontFamily: 'var(--tf-font-mono)', fontSize: '0.62rem', background: 'var(--tf-bg-pure)', border: '1px solid var(--tf-line)', borderRadius: 999, padding: '2px 9px', color: 'var(--tf-ink-2)' }}>{cards.length}</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10, padding: '10px 12px 12px' }}>
                   {cards.length === 0 && (
                     <div style={{ textAlign: 'center', padding: '24px 8px 6px' }}>
-                      <img src={AXEL_COLUNA[col.id]} alt={'Axel — nenhum projeto em ' + col.label} loading="lazy" style={{ height: ALTURA_MASCOTE[col.id], width: 'auto', maxWidth: '88%', objectFit: 'contain' }} />
+                      <img src={AXEL_COLUNA[col.id]} alt={'Axel — nenhum projeto em ' + rotulo} loading="lazy" style={{ height: ALTURA_MASCOTE[col.id], width: 'auto', maxWidth: '88%', objectFit: 'contain' }} />
                     </div>
                   )}
                   {cards.map((p) => (
@@ -257,6 +258,7 @@ function KanbanCard({ p, col, onReativar }: { p: Projeto; col: ColunaId; onReati
 
   let meta1 = '', meta2 = '', chip: string | null = null;
   if (col === 'inscrito') { meta1 = 'Aguardando acesso ao Claude'; meta2 = 'Inscrito em ' + dbr(p.criadoEm); }
+  if (col === 'intro') { meta1 = 'Levantando os ganhos do projeto'; meta2 = 'Acesso ' + (p.tier ?? '') + ' liberado'; }
   if (col === 'dev') {
     const d = p.deadline ? diasAte(p.deadline) : 0;
     meta1 = 'Deadline · ' + dbr(p.deadline);
@@ -330,6 +332,11 @@ function KanbanCard({ p, col, onReativar }: { p: Projeto; col: ColunaId; onReati
       {reativavel && (
         <button onClick={(e) => { e.stopPropagation(); onReativar(); }} className="tf-btn tf-btn-accent" style={{ padding: '8px 14px', fontSize: '0.78rem', justifyContent: 'center' }}>
           Reativar neste ciclo →
+        </button>
+      )}
+      {col === 'intro' && ehFluxAdmin(me) && (
+        <button onClick={(e) => { e.stopPropagation(); e.preventDefault(); store.concluirIntro(p.id); }} className="tf-btn tf-btn-accent" style={{ padding: '8px 14px', fontSize: '0.78rem', justifyContent: 'center' }}>
+          Mover para desenvolvimento →
         </button>
       )}
     </Envelope>

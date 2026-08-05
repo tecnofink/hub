@@ -28,7 +28,8 @@ export default function PitchEdicao({ pitch, editavel, onClose }: { pitch: Proje
       cat: form.cat as Projeto['cat'],
       estimValor: Number(form.estimValor) || 0,
       estimPer: form.estimPer as Projeto['estimPer'],
-      deadline: form.deadline || null,
+      // com o acesso já liberado o deadline está congelado — nem enviamos
+      ...(pitch.tier ? {} : { deadline: form.deadline || null }),
       just: form.just.trim(),
     });
     onClose();
@@ -59,7 +60,11 @@ export default function PitchEdicao({ pitch, editavel, onClose }: { pitch: Proje
             </div>
             <div style={{ flex: 1, minWidth: 140 }}>
               <label className="tf-mono" style={{ fontSize: '0.56rem' }}>DEADLINE</label>
-              <input type="date" className="f-input" value={form.deadline} onChange={(e) => setForm({ ...form, deadline: e.target.value })} />
+              {/* congelado após a triagem: mudar a data depois do acesso liberado
+                  reescreveria a Pontualidade (10% da nota) */}
+              <input type="date" className="f-input" value={form.deadline} disabled={!!pitch.tier}
+                onChange={(e) => setForm({ ...form, deadline: e.target.value })} />
+              {!!pitch.tier && <span className="tf-small" style={{ fontSize: '0.68rem' }}>Fixado na liberação do acesso.</span>}
             </div>
           </div>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>

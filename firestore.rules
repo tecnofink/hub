@@ -64,6 +64,15 @@ service cloud.firestore {
       allow read: if ehFluxAdmin() || ehHubAdmin();
     }
 
+    // ── Configuração do Flux (rótulos do kanban — admin renomeia as etapas) ──
+    match /config/flux {
+      allow read: if isActive();
+      allow write: if ehFluxAdmin()
+        && request.resource.data.keys().hasOnly(['kanban'])
+        && request.resource.data.kanban is map
+        && request.resource.data.kanban.keys().hasOnly(['inscrito', 'intro', 'dev', 'aval', 'conc', 'rep', 'back']);
+    }
+
     // ── Configuração do portal (domínios liberados — RF-02/RF-56) ──
     match /config/portal {
       // leitura antes do perfil existir: necessária para orientar o primeiro login
@@ -182,14 +191,22 @@ service cloud.firestore {
       // (deadline + retorno tangível — referência, não entram no ranking).
       allow update: if ehFluxAdmin()
         && request.resource.data.diff(resource.data).affectedKeys()
-             .hasOnly(['tier', 'ciclo', 'backlogDe', 'reprovado', 'valorPonderado', 'deadlinePonderado'])
-        && (!('valorPonderado' in request.resource.data) || request.resource.data.valorPonderado is number);
+             .hasOnly(['tier', 'ciclo', 'backlogDe', 'reprovado', 'valorPonderado', 'deadlinePonderado', 'introConcluida'])
+        && (!('valorPonderado' in request.resource.data) || request.resource.data.valorPonderado is number)
+        // o único movimento de ciclo na triagem é enviar ao BACKLOG; a volta ao
+        // ciclo passa pela regra de reativação (que zera notas/tier e valida o
+        // deadline) — senão aquelas guardas seriam contornáveis por aqui
+        && request.resource.data.ciclo in [resource.data.ciclo, 'backlog'];
 
       // RF-40 · desclassificação pelo comitê DURANTE a avaliação: o comitê não
       // faz mais triagem, mas ainda pode reprovar um projeto já avaliado — só o
       // campo reprovado (nunca tier/ponderados).
       allow update: if hasRole('avaliador')
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reprovado']);
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reprovado'])
+        // só DESCLASSIFICA (nunca reverte) e só projeto com resultado registrado
+        // — reverter/reprovar na triagem é competência do admin do Flux
+        && request.resource.data.reprovado == true
+        && resource.data.resultado != null;
 
       // Edição do pitch pelo TITULAR (pedido do VP): todos os campos MENOS o
       // título, só nas DUAS PRIMEIRAS etapas — Inscrito e Em desenvolvimento, ou
@@ -202,6 +219,11 @@ service cloud.firestore {
         && !(('reprovado' in resource.data) && resource.data.reprovado == true)
         && request.resource.data.diff(resource.data).affectedKeys()
              .hasOnly(['cat', 'estimValor', 'estimPer', 'deadline', 'intang', 'just'])
+        // DEADLINE CONGELA NA TRIAGEM: depois do tier definido o titular não
+        // pode mais mexer na data — senão bastaria estender o prazo vencido para
+        // recuperar os 10% de Pontualidade (auditoria v6, gravidade alta).
+        && (resource.data.tier == null
+            || !('deadline' in request.resource.data.diff(resource.data).affectedKeys()))
         && request.resource.data.deadline >= get(/databases/$(database)/documents/cycles/$(resource.data.ciclo)).data.inicio
         && request.resource.data.deadline <= get(/databases/$(database)/documents/cycles/$(resource.data.ciclo)).data.fim;
 
@@ -216,7 +238,10 @@ service cloud.firestore {
         // "Valor Realizado" (pedido do VP): o comitê confirma/ajusta e pode ser
         // MAIOR ou menor que o declarado — sem teto ≤ declarado. Só >= 0.
         && request.resource.data.resultado.validacoes[request.auth.uid] is number
-        && request.resource.data.resultado.validacoes[request.auth.uid] >= 0;
+        && request.resource.data.resultado.validacoes[request.auth.uid] >= 0
+        // teto de sanidade (não é o "teto do declarado", que o VP removeu):
+        // barra Infinity/valor absurdo, que zeraria o Tangível de todo o ciclo
+        && request.resource.data.resultado.validacoes[request.auth.uid] <= 1000000000;
 
       // RF-39: cada membro do comitê grava apenas as próprias notas
       allow update: if hasRole('avaliador')
