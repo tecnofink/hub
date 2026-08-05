@@ -39,6 +39,14 @@ service cloud.firestore {
       return request.auth.token.email.split('@')[1];
     }
 
+    // Data (yyyy-mm-dd) de um timestamp — para amarrar datas declaradas pelo
+    // cliente ao relógio do SERVIDOR (strings ISO comparam lexicograficamente).
+    function ymd(ts) {
+      return string(ts.year())
+        + (ts.month() < 10 ? '-0' : '-') + string(ts.month())
+        + (ts.day() < 10 ? '-0' : '-') + string(ts.day());
+    }
+
     function allowedDomains() {
       return get(/databases/$(database)/documents/config/portal).data.domains;
     }
@@ -142,6 +150,18 @@ service cloud.firestore {
       // RF-29/RF-33: kanban e ficha públicos para qualquer usuário logado
       allow read: if isActive();
 
+      // forma dos campos de conteúdo do pitch (v6): o doc é lido AO VIVO por
+      // todos os usuários — campo sem teto vira payload distribuído a todos.
+      function pitchValido(d) {
+        return d.nome is string && d.nome.size() <= 120
+          && d.just is string && d.just.size() <= 5000
+          && d.cat is string && d.cat.size() <= 40
+          && d.estimValor is number && d.estimValor >= 0 && d.estimValor <= 1000000000
+          && d.estimPer in ['mes', 'ciclo']
+          && d.intang is list && d.intang.size() <= 30
+          && d.deadline is string;
+      }
+
       // RF-17/RF-21/RF-23: pitch criado pelo titular, sem tier/resultado/reprovação
       allow create: if isActive()
         && request.resource.data.uid == request.auth.uid
@@ -153,6 +173,7 @@ service cloud.firestore {
         && !('valorPonderado' in request.resource.data)
         && !('deadlinePonderado' in request.resource.data)
         && !('introConcluida' in request.resource.data)
+        && pitchValido(request.resource.data)
         // pitch preso ao ciclo ATIVO e deadline dentro do ciclo (antes só o
         // cliente validava; com repo público a regra é a fronteira real)
         && get(/databases/$(database)/documents/cycles/$(request.resource.data.ciclo)).data.status == 'ativo'
@@ -164,14 +185,35 @@ service cloud.firestore {
         && resource.data.uid == request.auth.uid
         && resource.data.resultado == null;
 
-      // RF-34/RF-35: titular registra o resultado uma única vez, com tier definido
+      // RF-34/RF-35: titular registra o resultado uma única vez, com tier definido.
+      // A FORMA é validada aqui (v6): sem isto o titular escrevia `resultado.data`
+      // retroativa (Pontualidade = 10% da nota, auto-concedida) e `tang` absurdo,
+      // que estoura a normalização do ciclo inteiro.
       allow update: if isActive()
         && resource.data.uid == request.auth.uid
         && resource.data.tier != null
         && resource.data.resultado == null
         && request.resource.data.resultado != null
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['resultado'])
-        && request.resource.data.resultado.validacoes.size() == 0;
+        && request.resource.data.resultado.validacoes.size() == 0
+        && request.resource.data.resultado.keys().hasOnly(['valor', 'per', 'tang', 'intang', 'desc', 'anexos', 'data', 'validacoes'])
+        && request.resource.data.resultado.tang is number
+        && request.resource.data.resultado.tang >= 0
+        && request.resource.data.resultado.tang <= 1000000000
+        && request.resource.data.resultado.valor is number
+        && request.resource.data.resultado.valor >= 0
+        && request.resource.data.resultado.per in ['mes', 'ciclo']
+        && request.resource.data.resultado.desc is string
+        && request.resource.data.resultado.desc.size() <= 5000
+        && request.resource.data.resultado.intang is list
+        && request.resource.data.resultado.intang.size() <= 30
+        && request.resource.data.resultado.anexos is list
+        && request.resource.data.resultado.anexos.size() <= 20
+        // data amarrada ao relógio do servidor (janela de ±2 dias absorve o
+        // fuso local do cliente; impede registrar com data retroativa)
+        && request.resource.data.resultado.data is string
+        && request.resource.data.resultado.data >= ymd(request.time - duration.value(2, 'd'))
+        && request.resource.data.resultado.data <= ymd(request.time + duration.value(2, 'd'));
 
       // RF-27/P16: reativar pitch do backlog (volta ao ciclo, zera avaliação) —
       // SOMENTE admin do Flux (decisão do VP: era o titular).
@@ -223,6 +265,7 @@ service cloud.firestore {
         && !(('reprovado' in resource.data) && resource.data.reprovado == true)
         && request.resource.data.diff(resource.data).affectedKeys()
              .hasOnly(['cat', 'estimValor', 'estimPer', 'deadline', 'intang', 'just'])
+        && pitchValido(request.resource.data)
         // DEADLINE CONGELA NA TRIAGEM: depois do tier definido o titular não
         // pode mais mexer na data — senão bastaria estender o prazo vencido para
         // recuperar os 10% de Pontualidade (auditoria v6, gravidade alta).
@@ -287,7 +330,11 @@ service cloud.firestore {
         // feita pela Function, que não passa pelas regras).
         allow update: if isActive()
           && resource.data.autorId == request.auth.uid
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['texto', 'editadoEm']);
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['texto', 'editadoEm'])
+          // sem tipo/tamanho na EDIÇÃO, um texto gigante quebrava o chat de
+          // todos os participantes (o create já validava) — v6
+          && request.resource.data.texto is string
+          && request.resource.data.texto.size() <= 5000;
       }
 
       // ── Histórico de edições do pitch pelo admin (pedido do VP): visível ao
@@ -298,10 +345,17 @@ service cloud.firestore {
           return get(/databases/$(database)/documents/projects/$(projectId)).data.uid;
         }
         allow read: if isActive() && (pitchDono() == request.auth.uid || ehFluxAdmin());
-        // o titular (que agora edita o próprio pitch) e os admins registram
+        // o titular (que agora edita o próprio pitch) e os admins registram.
+        // porNome tem de bater com o cadastro e a forma é validada — senão a
+        // própria trilha de edições teria autoria forjável (v6).
         allow create: if isActive()
           && request.resource.data.por == request.auth.uid
-          && (pitchDono() == request.auth.uid || ehFluxAdmin());
+          && request.resource.data.porNome == meDoc().nome
+          && (pitchDono() == request.auth.uid || ehFluxAdmin())
+          && request.resource.data.keys().hasOnly(['por', 'porNome', 'em', 'mudancas'])
+          && request.resource.data.em is string
+          && request.resource.data.mudancas is list
+          && request.resource.data.mudancas.size() <= 20;
       }
     }
 
@@ -409,8 +463,12 @@ service cloud.firestore {
           && request.resource.data.autorId == request.auth.uid
           && (quadroPai().uid == request.auth.uid
               || (ehProjetoLivre(projectId) && papelNoProjeto(projectId) in ['admin', 'editor']));
-        // editar: só o autor; excluir: o autor ou um admin do projeto
-        allow update: if isActive() && resource.data.autorId == request.auth.uid;
+        // editar: só o autor, e SÓ o texto — sem isto dava para reescrever
+        // autorId/tarefaId (forjar autoria, mover de thread) na edição (v6)
+        allow update: if isActive() && resource.data.autorId == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['texto', 'editadoEm'])
+          && request.resource.data.texto is string
+          && request.resource.data.texto.size() <= 5000;
         allow delete: if isActive()
           && (resource.data.autorId == request.auth.uid
               || (ehProjetoLivre(projectId) && papelNoProjeto(projectId) == 'admin')

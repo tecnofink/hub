@@ -274,9 +274,21 @@ export const aoMudarMembrosProjeto = onDocumentUpdated('extraProjs/{pid}', async
   const a = JSON.stringify((antes?.membrosIds ?? []).slice().sort());
   const b = JSON.stringify((depois.membrosIds ?? []).slice().sort());
   if (a === b) return; // só quando a membresia muda
-  const quadroRef = db().doc('tarefas/' + event.params.pid);
-  if (!(await quadroRef.get()).exists) return; // quadro só existe após a 1ª tarefa
-  await quadroRef.update({ membrosIds: depois.membrosIds ?? [] });
+  const pid = event.params.pid;
+  const quadroRef = db().doc('tarefas/' + pid);
+  // v6: grava a membresia ATUAL do projeto (relida na transação), não a do
+  // snapshot — eventos fora de ordem (Eventarc não garante ordem) reverteriam
+  // uma remoção/inclusão recente, deixando acesso residual ou tirando o de quem
+  // é membro. Reler torna a Function convergente em qualquer ordem de entrega.
+  await db().runTransaction(async (tx) => {
+    const [proj, quadro] = await Promise.all([
+      tx.get(db().doc('extraProjs/' + pid)),
+      tx.get(quadroRef),
+    ]);
+    if (!quadro.exists) return; // quadro só existe após a 1ª tarefa
+    if (!proj.exists) return;   // projeto excluído — a cascata cuida do quadro
+    tx.update(quadroRef, { membrosIds: (proj.data()!.membrosIds as string[]) ?? [] });
+  });
 });
 
 /* ── RF-51 · lembretes de deadline (7 dias e 1 dia) + alerta de atraso ──── */
@@ -289,26 +301,34 @@ export const lembretesDeadline = onSchedule(
     const ciclo = ciclos.docs[0];
     const projs = await db().collection('projects').where('ciclo', '==', ciclo.id).get();
 
+    let falhas = 0;
     for (const doc of projs.docs) {
-      const p = doc.data();
-      if (!p.tier || p.resultado || p.reprovado || !p.deadline) continue;
-      const dias = Math.round((Date.parse(p.deadline) - Date.parse(hoje)) / 864e5);
-      if (dias === 7 || dias === 1) {
-        const u = await usuario(p.uid);
-        if (u) {
-          await enviar({
-            para: u.email,
-            assunto: `Deadline em ${dias === 1 ? '1 dia' : '7 dias'} — ${p.nome}`,
-            corpo: `Olá, ${u.nome}!\n\nO deadline do projeto "${p.nome}" é ${dbr(p.deadline)}.\nRegistre o resultado no Portal Flux até lá — Pontualidade vale 10% da nota.`,
-          });
+      // v6: uma falha isolada (leitura/e-mail) não pode abortar o lote e deixar
+      // o restante dos titulares sem lembrete no dia
+      try {
+        const p = doc.data();
+        if (!p.tier || p.resultado || p.reprovado || !p.deadline) continue;
+        const dias = Math.round((Date.parse(p.deadline) - Date.parse(hoje)) / 864e5);
+        if (dias === 7 || dias === 1) {
+          const u = await usuario(p.uid);
+          if (u) {
+            await enviar({
+              para: u.email,
+              assunto: `Deadline em ${dias === 1 ? '1 dia' : '7 dias'} — ${p.nome}`,
+              corpo: `Olá, ${u.nome}!\n\nO deadline do projeto "${p.nome}" é ${dbr(p.deadline)}.\nRegistre o resultado no Portal Flux até lá — Pontualidade vale 10% da nota.`,
+            });
+          }
         }
-      }
-      if (dias === -1) {
-        // RF-36: sinalização de atraso, sem desclassificação automática
-        await logSistema('Alerta de atraso', p.nome + ' — deadline vencido', 'flux');
+        if (dias === -1) {
+          // RF-36: sinalização de atraso, sem desclassificação automática
+          await logSistema('Alerta de atraso', p.nome + ' — deadline vencido', 'flux');
+        }
+      } catch (e) {
+        falhas++;
+        logger.warn('lembrete falhou para um projeto', { pid: doc.id, erro: String(e) });
       }
     }
-    logger.info('lembretes processados', { ciclo: ciclo.id, projetos: projs.size });
+    logger.info('lembretes processados', { ciclo: ciclo.id, projetos: projs.size, falhas });
   },
 );
 
@@ -416,9 +436,15 @@ export const aoReceberComando = onDocumentCreated('comandos/{comandoId}', async 
   // protegia nada. Aqui REIVINDICAMOS o comando numa transação: lê o doc ATUAL
   // do servidor e só segue se ninguém o pegou/tratou — evita reprocessar
   // (re-apagar tools, re-encerrar ciclo, reenviar broadcast).
+  // v6: o claim tem LEASE — sem isso, um crash entre reivindicar e concluir
+  // deixava o comando travado para sempre (processandoEm setado e ninguém
+  // retoma). Passados 10 min sem conclusão, outra execução pode assumir.
+  const LEASE_MS = 10 * 60 * 1000;
   const reivindicado = await db().runTransaction(async (tx) => {
     const atual = (await tx.get(ref)).data() ?? {};
-    if (atual.status || atual.processadoEm || atual.processandoEm) return false;
+    if (atual.status || atual.processadoEm) return false;
+    const desde = (atual.processandoEm as { toMillis?: () => number } | undefined)?.toMillis?.();
+    if (desde && Date.now() - desde < LEASE_MS) return false; // outra execução em curso
     tx.update(ref, { processandoEm: FieldValue.serverTimestamp() });
     return true;
   });
@@ -527,7 +553,13 @@ export const aoReceberComando = onDocumentCreated('comandos/{comandoId}', async 
     return;
   }
 
-  if (cmd.tipo !== 'encerrarCiclo') return;
+  if (cmd.tipo !== 'encerrarCiclo') {
+    // v6: tipo desconhecido era reivindicado e nunca marcado — ficava pendente
+    // para sempre, sem rastro do motivo
+    logger.warn('comando de tipo desconhecido', { tipo: cmd.tipo });
+    await marcar({ status: 'erro', erro: 'tipo de comando desconhecido: ' + String(cmd.tipo) });
+    return;
+  }
   if (!autorAtivo || !(papeis.includes('fluxAdmin') || papeis.includes('admin'))) {
     logger.warn('comando encerrarCiclo recusado — autor não é admin do Flux', { por: cmd.por });
     await marcar({ status: 'erro', erro: 'autor não é administrador do Flux' });
@@ -541,9 +573,14 @@ export const aoReceberComando = onDocumentCreated('comandos/{comandoId}', async 
   // broadcast do ranking p/ a empresa toda. Aqui só UM vence a transição
   // ativo→encerrando; o outro cai no erro sem reenviar e-mail.
   const ciclo = await cicloRef.get();
+  // v6: aceita RETOMAR um ciclo preso em 'encerrando' (crash/timeout entre o
+  // claim e o congelamento deixava o ciclo travado, sem recuperação pelo app —
+  // congelar é idempotente, então reprocessar é seguro).
   const podeEncerrar = await db().runTransaction(async (tx) => {
     const cs = await tx.get(cicloRef);
-    if (!cs.exists || cs.data()!.status !== 'ativo') return false;
+    if (!cs.exists) return false;
+    const st = cs.data()!.status;
+    if (st !== 'ativo' && st !== 'encerrando') return false;
     tx.update(cicloRef, { status: 'encerrando' });
     return true;
   });

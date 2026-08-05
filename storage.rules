@@ -18,13 +18,21 @@ service firebase.storage {
 
     // evidências do resultado do Flux (RF-35) — só o titular do projeto grava/apaga
     match /anexos/{projectId}/{fileName} {
+      function pitch() {
+        return firestore.get(/databases/(default)/documents/projects/$(projectId)).data;
+      }
       function donoDoProjeto() {
-        return ativo()
-          && firestore.get(/databases/(default)/documents/projects/$(projectId)).data.uid == request.auth.uid;
+        return ativo() && pitch().uid == request.auth.uid;
+      }
+      // v6: a evidência é a base da validação do comitê — depois de registrada,
+      // o titular não apaga nem troca o arquivo (antes dava para substituir a
+      // prova após a validação). Enquanto não há resultado, pode corrigir.
+      function resultadoAberto() {
+        return pitch().resultado == null;
       }
       allow read: if ativo();
-      allow write: if donoDoProjeto() && tamanhoOk();
-      allow delete: if donoDoProjeto();
+      allow write: if donoDoProjeto() && resultadoAberto() && tamanhoOk();
+      allow delete: if donoDoProjeto() && resultadoAberto();
     }
 
     // anexos dos comentários de triagem do pitch — thread restrita: só o
@@ -37,8 +45,12 @@ service firebase.storage {
         );
       }
       allow read: if participanteDaTriagem();
-      allow write: if participanteDaTriagem() && tamanhoOk();
-      allow delete: if participanteDaTriagem();
+      // v6: o chat da triagem é histórico íntegro (sem exclusão de mensagem) —
+      // os anexos seguem a mesma regra: só CRIAR (resource == null impede
+      // sobrescrever) e nunca apagar. A limpeza cabe às Functions (cascata do
+      // pitch e anonimização), que usam o Admin SDK e não passam por aqui.
+      allow write: if participanteDaTriagem() && tamanhoOk() && resource == null;
+      allow delete: if false;
     }
 
     // anexos de tarefas — só dono/membro do quadro (denormalizado em tarefas/{pid}.membrosIds).
