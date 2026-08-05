@@ -40,6 +40,7 @@
   --tf-warn: #E85D2E;  /* laranja — em andamento / atenção */
   --tf-live: #2DBA70;  /* verde — ativo / concluído */
   --tf-crit: #D62B2B;  /* vermelho — crítico / erro */
+  --tf-amber: #C8890B; /* âmbar — reta final do prazo (30 dias p/ o deadline) */
 
   /* grade de fundo */
   --tf-grid: rgba(12, 0, 89, 0.025);
@@ -94,6 +95,7 @@
   --tf-warn: #F2703E;
   --tf-live: #35C77C;
   --tf-crit: #E5484D;
+  --tf-amber: #E0A62A;
 
   --tf-grid: rgba(79, 124, 255, 0.045);
 

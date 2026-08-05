@@ -14,7 +14,7 @@ import type { Projeto } from '../../lib/types';
 import { Avatar, Badge, MetricStat, Modal, L } from '../../components/ui';
 import ALink from '../../components/ALink';
 import FluxPills from './FluxPills';
-import { colunaDe, statusDe, KB_COLS, ColunaId } from './statusProjeto';
+import { colunaDe, statusDe, prazoDe, KB_COLS, RETA_FINAL_DIAS, ColunaId, Prazo } from './statusProjeto';
 import { AXEL, AXEL_COLUNA } from '../../lib/axel';
 
 /** Altura do mascote por coluna, calibrada para o CAPACETE do Axel ter o mesmo
@@ -247,6 +247,37 @@ function setaStyle(side: 'left' | 'right'): React.CSSProperties {
   } as React.CSSProperties;
 }
 
+/**
+ * Linha do tempo do prazo (pedido do VP): régua da inscrição até o deadline do
+ * titular, com marco aos 30 dias do fim, marco do deadline e o traço de hoje.
+ */
+function LinhaDoTempo({ pr, mine }: { pr: Prazo; mine: boolean }) {
+  const corProg = mine ? '#fff' : pr.fase === 'venc' ? 'var(--tf-crit)' : pr.fase === 'reta' ? 'var(--tf-amber)' : 'var(--tf-accent-2)';
+  const trilho = mine ? 'rgba(255,255,255,0.25)' : 'var(--tf-bg-3)';
+  const borda = mine ? 'transparent' : 'var(--tf-bg-pure)';
+  const legenda = mine ? 'rgba(255,255,255,0.8)' : 'var(--tf-ink-3)';
+  const marco = (left: number, cor: string, titulo: string) => (
+    <span title={titulo} style={{
+      position: 'absolute', left: left + '%', top: '50%', width: 9, height: 9, borderRadius: '50%',
+      transform: 'translate(-50%,-50%)', background: mine ? '#fff' : cor, border: '2px solid ' + borda,
+    }} />
+  );
+  return (
+    <div>
+      <div style={{ position: 'relative', height: 6, borderRadius: 999, background: trilho }}>
+        <div style={{ position: 'absolute', inset: '0 auto 0 0', width: pr.pct + '%', borderRadius: 999, background: corProg }} />
+        {marco(pr.pctMarco30, 'var(--tf-amber)', RETA_FINAL_DIAS + ' dias para o deadline')}
+        {marco(100, 'var(--tf-crit)', 'Deadline')}
+        <span title="Hoje" style={{ position: 'absolute', left: pr.pct + '%', top: -3, width: 2, height: 12, background: mine ? '#fff' : 'var(--tf-ink)', transform: 'translateX(-50%)', borderRadius: 2 }} />
+      </div>
+      <div className="tf-mono" style={{ display: 'flex', justifyContent: 'space-between', marginTop: 5, fontSize: '0.5rem', color: legenda }}>
+        <span>INSCRIÇÃO</span>
+        <span>{pr.dias < 0 ? 'VENCIDO HÁ ' + -pr.dias + 'D' : pr.dias === 0 ? 'DEADLINE HOJE' : pr.dias + ' DIAS'}</span>
+      </div>
+    </div>
+  );
+}
+
 /** Card do kanban (RF-31/32). */
 function KanbanCard({ p, col, onReativar }: { p: Projeto; col: ColunaId; onReativar: () => void }) {
   const store = useStore();
@@ -262,8 +293,9 @@ function KanbanCard({ p, col, onReativar }: { p: Projeto; col: ColunaId; onReati
   if (col === 'dev') {
     const d = p.deadline ? diasAte(p.deadline) : 0;
     meta1 = 'Deadline · ' + dbr(p.deadline);
-    meta2 = d < 0 ? 'Vencido há ' + -d + ' dias' : d === 0 ? 'O deadline é hoje' : d + ' dias restantes';
+    meta2 = d < 0 ? 'Vencido há ' + -d + ' dias' : d === 0 ? 'O deadline é hoje' : d + ' dias restantes' + (d <= RETA_FINAL_DIAS ? ' — reta final' : '');
     if (d < 0) chip = 'ATRASADO · ' + (-d) + 'D';
+    else if (d <= RETA_FINAL_DIAS) chip = 'RETA FINAL · ' + d + 'D';
   }
   if (col === 'aval') {
     meta1 = 'Registrado em ' + dbr(p.resultado!.data);
@@ -289,6 +321,9 @@ function KanbanCard({ p, col, onReativar }: { p: Projeto; col: ColunaId; onReati
   const destino = '/flux/projeto/' + p.id;
 
   const atrasado = statusDe(p).k === 'atrasado';
+  // linha do tempo só nas colunas com prazo correndo (VP)
+  const pr = (col === 'dev' || col === 'intro') ? prazoDe(p) : null;
+  const retaFinal = pr?.fase === 'reta';
   const fg = mine ? '#fff' : 'var(--tf-ink)';
   const sub = mine ? 'rgba(255,255,255,0.85)' : 'var(--tf-ink-3)';
 
@@ -296,9 +331,12 @@ function KanbanCard({ p, col, onReativar }: { p: Projeto; col: ColunaId; onReati
     background: atrasado
       ? (mine ? 'var(--tf-crit)' : 'color-mix(in srgb, var(--tf-crit) 8%, var(--tf-bg-pure))')
       : (mine ? 'var(--tf-accent)' : 'var(--tf-bg-pure)'),
+    // reta final (≤30 dias): destaque SÓ NA BORDA — o fundo continua neutro
     border: (atrasado && !mine)
       ? '2px solid var(--tf-crit)'
-      : '1px solid ' + (atrasado ? 'var(--tf-crit)' : (mine ? 'var(--tf-accent)' : 'var(--tf-line)')),
+      : retaFinal
+        ? '2px solid var(--tf-amber)'
+        : '1px solid ' + (atrasado ? 'var(--tf-crit)' : (mine ? 'var(--tf-accent)' : 'var(--tf-line)')),
     borderRadius: 10, padding: 16, display: 'flex', flexDirection: 'column', gap: 9,
     cursor: clickOn ? 'pointer' : 'default', boxShadow: 'var(--tf-shadow)', color: 'inherit',
   };
@@ -318,11 +356,12 @@ function KanbanCard({ p, col, onReativar }: { p: Projeto; col: ColunaId; onReati
         <Avatar nome={u.nome} cor={store.cor(u.id)} foto={u.foto} size={24} fontSize="0.52rem" />
         <span style={{ fontSize: '0.78rem', color: sub }}>{u.nome}</span>
       </div>
+      {pr && <LinhaDoTempo pr={pr} mine={mine} />}
       <div style={{ borderTop: '1px solid ' + (mine ? 'rgba(255,255,255,0.25)' : 'var(--tf-line)'), paddingTop: 9, display: 'flex', flexDirection: 'column', gap: 3 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8, alignItems: 'center' }}>
           <span style={{ fontSize: '0.74rem', color: sub }}>{meta1}</span>
           {sc && <span style={{ fontFamily: 'var(--tf-font-display)', fontWeight: 700, fontSize: '1.3rem', lineHeight: 1, color: mine ? '#fff' : 'var(--tf-accent)', flex: 'none' }}>{sc.final}<span style={{ fontSize: '0.66rem', fontWeight: 600 }}> pts</span></span>}
-          {chip && <span style={{ fontFamily: 'var(--tf-font-mono)', fontSize: '0.54rem', letterSpacing: '0.05em', padding: '3px 8px', borderRadius: 999, background: mine ? 'rgba(255,255,255,0.16)' : 'rgba(214,43,43,0.1)', color: mine ? '#FFD8CF' : 'var(--tf-crit)', flex: 'none' }}>{chip}</span>}
+          {chip && <span style={{ fontFamily: 'var(--tf-font-mono)', fontSize: '0.54rem', letterSpacing: '0.05em', padding: '3px 8px', borderRadius: 999, background: mine ? 'rgba(255,255,255,0.16)' : retaFinal ? 'rgba(200,137,11,0.14)' : 'rgba(214,43,43,0.1)', color: mine ? '#fff' : retaFinal ? 'var(--tf-amber)' : 'var(--tf-crit)', flex: 'none' }}>{chip}</span>}
         </div>
         <span style={{ fontSize: '0.74rem', color: sub }}>{meta2}</span>
       </div>
