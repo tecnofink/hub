@@ -89,7 +89,7 @@ export function noticiaEtapa(col: ColunaId, projeto: string): NoticiaAxel {
     case 'rep':
       return { img: AXEL.rep, titulo: 'Decisão do comitê', texto: `"${projeto}" foi reprovado neste ciclo e sai do ranking. A ideia fica registrada — o aprendizado conta.` };
     case 'back':
-      return { img: AXEL.back, titulo: 'Guardado no backlog', texto: `"${projeto}" foi para o Backlog de Projetos. Quando um novo ciclo abrir inscrições, você poderá reativá-lo.` };
+      return { img: AXEL.back, titulo: 'Guardado no backlog', texto: `"${projeto}" foi para o Backlog de Projetos. Quando um novo ciclo abrir inscrições, a administração do Flux pode trazê-lo de volta.` };
   }
 }
 

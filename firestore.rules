@@ -148,8 +148,11 @@ service cloud.firestore {
         && request.resource.data.tier == null
         && request.resource.data.resultado == null
         && !('reprovado' in request.resource.data && request.resource.data.reprovado == true)
-        // não pode semear notas do comitê na inscrição
+        // não pode semear notas do comitê nem os campos da administração
         && (!('notas' in request.resource.data) || request.resource.data.notas.size() == 0)
+        && !('valorPonderado' in request.resource.data)
+        && !('deadlinePonderado' in request.resource.data)
+        && !('introConcluida' in request.resource.data)
         // pitch preso ao ciclo ATIVO e deadline dentro do ciclo (antes só o
         // cliente validava; com repo público a regra é a fronteira real)
         && get(/databases/$(database)/documents/cycles/$(request.resource.data.ciclo)).data.status == 'ativo'
@@ -184,7 +187,8 @@ service cloud.firestore {
         // reativar só ZERA notas — nunca semeia notas do comitê
         && (!('notas' in request.resource.data) || request.resource.data.notas.size() == 0)
         && request.resource.data.diff(resource.data).affectedKeys()
-             .hasOnly(['ciclo', 'backlogDe', 'deadline', 'criadoEm', 'tier', 'resultado', 'reprovado', 'notas']);
+             .hasOnly(['ciclo', 'backlogDe', 'deadline', 'criadoEm', 'tier', 'resultado', 'reprovado', 'notas',
+                       'valorPonderado', 'deadlinePonderado', 'introConcluida']);
 
       // RF-24..28 · triagem — SOMENTE admin do Flux (decisão do VP: o comitê não
       // faz mais triagem). Define tier, backlog/reprovar e os ponderados

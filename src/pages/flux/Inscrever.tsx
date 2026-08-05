@@ -47,7 +47,7 @@ export default function Inscrever() {
         <div style={{ flex: 1, minWidth: 'min(420px, 100%)' }}>
           <h1 className="tf-h2" style={{ margin: '0 0 8px' }}>Inscrever pitch</h1>
           <p className="tf-body" style={{ margin: 0, maxWidth: 640 }}>
-            Descreva seu projeto de IA. Depois de enviado, o pitch <strong>não poderá ser editado</strong> — mas o produto final pode ser um pouco diferente do descrito.
+            Descreva seu projeto de IA. Depois de enviado, você ainda pode <strong>editar o pitch</strong> (menos o título) até registrar o resultado — o produto final pode ser um pouco diferente do descrito.
           </p>
         </div>
         {/* Axel no laptop — ao lado do cabeçalho, alinhado à direita com o card de identificação */}

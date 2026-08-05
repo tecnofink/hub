@@ -50,8 +50,10 @@ export default function Avaliar() {
 
   const confirmarAjuste = () => {
     const v = num(ajuste);
-    if (!v || v <= 0) return ui.showToast('Informe um valor válido em R$ por ciclo.');
-    if (v >= declarado) return ui.showToast('O valor ajustado precisa ser menor que o declarado (' + brl(declarado) + ').');
+    // "Valor Realizado" (VP): pode ser MAIOR ou menor que o declarado — só não
+    // pode ser negativo nem absurdo (mesmo teto de sanidade da regra).
+    if (!Number.isFinite(v) || v < 0) return ui.showToast('Informe um valor válido em R$ por ciclo.');
+    if (v > 1_000_000_000) return ui.showToast('Valor acima do limite aceito (R$ 1 bilhão por ciclo).');
     store.validarTangivel(p.id, v);
     setAjusteOn(false);
     setAjuste('');

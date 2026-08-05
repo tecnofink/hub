@@ -39,8 +39,9 @@ export default function Projeto() {
   // para não redirecionar nem mostrar dado velho ao trocar de projeto.
   const [busca, setBusca] = React.useState<{ id: string; p?: ProjetoT; set?: ProjetoT[]; ausente?: boolean } | null>(null);
   const [chatMax, setChatMax] = React.useState(false);
-  const [vp, setVp] = React.useState('');
-  const [dp, setDp] = React.useState('');
+  // null = admin não mexeu no campo; '' = quer LIMPAR o ponderado
+  const [vp, setVp] = React.useState<string | null>(null);
+  const [dp, setDp] = React.useState<string | null>(null);
   const [edicao, setEdicao] = React.useState<null | 'editar' | 'historico'>(null);
   React.useEffect(() => {
     if (!id || emEscopo) return; // em escopo: o store já tem tudo
@@ -171,9 +172,9 @@ export default function Projeto() {
                     <label className="tf-mono" style={{ fontSize: '0.54rem' }}>DEADLINE PONDERADO (ADM)</label>
                     <div style={{ display: 'flex', gap: 6 }}>
                       <input type="date" className="f-input" style={{ flex: 1, padding: '8px 10px', fontSize: '0.85rem' }}
-                        value={dp || (p.deadlinePonderado ?? '')} onChange={(e) => setDp(e.target.value)} />
+                        value={dp ?? (p.deadlinePonderado ?? '')} onChange={(e) => setDp(e.target.value)} />
                       <button type="button" aria-label="Salvar ponderados" title="Salvar ponderados"
-                        onClick={() => store.salvarPonderados(p.id, Number(vp) || undefined, dp || undefined)}
+                        onClick={() => store.salvarPonderados(p.id, vp === null ? undefined : vp === '' ? null : Number(vp), dp === null ? undefined : dp === '' ? null : dp)}
                         className="foco-tf" style={{ flex: 'none', border: 'none', background: 'transparent', cursor: 'pointer', padding: '0 6px', fontSize: '1.2rem', lineHeight: 1 }}>💾</button>
                     </div>
                   </div>
@@ -191,10 +192,10 @@ export default function Projeto() {
                     <label className="tf-mono" style={{ fontSize: '0.54rem' }}>RETORNO TANGÍVEL PONDERADO (ADM) · R$</label>
                     <div style={{ display: 'flex', gap: 6 }}>
                       <input className="f-input" inputMode="numeric" style={{ flex: 1, padding: '8px 10px', fontSize: '0.85rem' }}
-                        placeholder={p.valorPonderado ? String(p.valorPonderado) : 'estimativa da administração'}
-                        value={vp} onChange={(e) => setVp(e.target.value.replace(/[^\d]/g, ''))} />
+                        placeholder="estimativa da administração"
+                        value={vp ?? (p.valorPonderado != null ? String(p.valorPonderado) : '')} onChange={(e) => setVp(e.target.value.replace(/[^\d]/g, ''))} />
                       <button type="button" aria-label="Salvar ponderados" title="Salvar ponderados"
-                        onClick={() => store.salvarPonderados(p.id, Number(vp) || undefined, dp || undefined)}
+                        onClick={() => store.salvarPonderados(p.id, vp === null ? undefined : vp === '' ? null : Number(vp), dp === null ? undefined : dp === '' ? null : dp)}
                         className="foco-tf" style={{ flex: 'none', border: 'none', background: 'transparent', cursor: 'pointer', padding: '0 6px', fontSize: '1.2rem', lineHeight: 1 }}>💾</button>
                     </div>
                   </div>
@@ -279,7 +280,7 @@ export default function Projeto() {
                 <>
                   <Badge kind="neutral">aguardando definição</Badge>
                   <p className="tf-small" style={{ fontSize: '0.76rem', margin: '12px 0 0' }}>
-                    Todo mundo começa sem acesso: o comitê avalia o pitch e libera o tier de Claude para a execução, válido até o fim do ciclo.
+                    Todo mundo começa sem acesso: a administração do Flux analisa o pitch e libera o tier de Claude para a execução, válido até o fim do ciclo.
                   </p>
                 </>
               )}
@@ -360,12 +361,12 @@ export default function Projeto() {
           <span className="tf-mono" style={{ fontSize: '0.56rem' }}>[ TRIAGEM DE ACESSO · ADMIN DO FLUX ]</span>
           <p className="tf-small" style={{ fontSize: '0.7rem', margin: '6px 0 0' }}>Os valores ponderados (deadline e retorno tangível) ficam no card do pitch, abaixo dos valores do titular — e também são salvos ao definir o acesso abaixo.</p>
           <div style={{ display: 'flex', gap: 10, marginTop: 14, flexWrap: 'wrap' }}>
-            <button onClick={() => store.definirTier(p.id, 'Enterprise', Number(vp) || undefined, dp || undefined)} className="tf-btn tf-btn-accent" style={{ flex: 1, minWidth: 180, justifyContent: 'center' }}>Definir Enterprise</button>
-            <button onClick={() => store.definirTier(p.id, 'Basic', Number(vp) || undefined, dp || undefined)} className="tf-btn tf-btn-primary" style={{ flex: 1, minWidth: 180, justifyContent: 'center' }}>Definir Basic</button>
+            <button onClick={() => store.definirTier(p.id, 'Enterprise', vp ? Number(vp) : undefined, dp || undefined)} className="tf-btn tf-btn-accent" style={{ flex: 1, minWidth: 180, justifyContent: 'center' }}>Definir Enterprise</button>
+            <button onClick={() => store.definirTier(p.id, 'Basic', vp ? Number(vp) : undefined, dp || undefined)} className="tf-btn tf-btn-primary" style={{ flex: 1, minWidth: 180, justifyContent: 'center' }}>Definir Basic</button>
             <button
               onClick={() => ui.confirmar({
                 titulo: 'Enviar pitch para o backlog?',
-                texto: '"' + p.nome + '" sai deste ciclo e fica guardado no Backlog de Projetos. O titular pode reativá-lo quando um novo ciclo abrir as inscrições.',
+                texto: '"' + p.nome + '" sai deste ciclo e fica guardado no Backlog de Projetos. A administração do Flux pode reativá-lo quando um novo ciclo abrir as inscrições.',
                 cta: 'Enviar para o backlog',
                 onConfirm: () => store.enviarBacklog(p.id),
               })}

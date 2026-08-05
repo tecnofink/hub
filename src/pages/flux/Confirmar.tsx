@@ -61,7 +61,7 @@ export default function Confirmar() {
       <div style={{ background: 'rgba(232,93,46,0.1)', border: '1px solid rgba(232,93,46,0.35)', borderRadius: 10, padding: '16px 18px', marginBottom: 20, display: 'flex', gap: 12, alignItems: 'flex-start' }}>
         <Badge kind="warn" style={{ flex: 'none', marginTop: 2 }}>atenção</Badge>
         <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--tf-ink-2)', lineHeight: 1.5 }}>
-          Depois de enviado, <strong>o pitch não poderá ser editado</strong>. Você poderá excluí-lo até o fim das inscrições — e o produto final pode ser um pouco diferente do descrito aqui.
+          Depois de enviado, você ainda pode <strong>editar o pitch</strong> (menos o título) enquanto não registrar o resultado; o deadline fica fixo assim que o acesso for liberado. A exclusão vale até o fim das inscrições.
         </p>
       </div>
       <div className="tf-card" style={{ padding: '8px 28px' }}>

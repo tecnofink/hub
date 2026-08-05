@@ -43,7 +43,7 @@ export default function AdmPitches() {
     <div>
       <h1 className="tf-h3" style={{ margin: '0 0 6px' }}>Avaliação de acesso dos pitches</h1>
       <p className="tf-body" style={{ margin: '0 0 22px' }}>
-        Todo mundo começa sem acesso: o tier definido aqui libera o Claude do colaborador para executar o pitch neste ciclo, até o encerramento. Comitê e administradores têm os mesmos poderes — vale a primeira decisão registrada.
+        Todo mundo começa sem acesso: o tier definido aqui libera o Claude do colaborador para executar o pitch neste ciclo, até o encerramento. A triagem é da administração do Flux — vale a primeira decisão registrada.
       </p>
       {fila.length === 0 && (
         <Vazio mono="[ FILA VAZIA ]" texto="Todos os pitches inscritos já têm tier definido. Novos pitches aparecem aqui automaticamente." />
@@ -67,7 +67,7 @@ export default function AdmPitches() {
                   <button
                     onClick={() => ui.confirmar({
                       titulo: 'Enviar pitch para o backlog?',
-                      texto: '"' + p.nome + '" sai deste ciclo e fica guardado no Backlog de Projetos. O titular pode reativá-lo quando um novo ciclo abrir as inscrições.',
+                      texto: '"' + p.nome + '" sai deste ciclo e fica guardado no Backlog de Projetos. A administração do Flux pode reativá-lo quando um novo ciclo abrir as inscrições.',
                       cta: 'Enviar para o backlog',
                       onConfirm: () => store.enviarBacklog(p.id),
                     })}

@@ -91,7 +91,7 @@ interface StoreApi {
 
   definirTier(pid: string, tier: Tier, valorPonderado?: number, deadlinePonderado?: string): void;
   /** ADM/comitê definem os ponderados (retorno tangível e deadline) na triagem. */
-  salvarPonderados(pid: string, valorPonderado?: number, deadlinePonderado?: string): void;
+  salvarPonderados(pid: string, valorPonderado?: number | null, deadlinePonderado?: string | null): void;
   /** Admin move o card de "Introdução / Apurando ganhos" para Em desenvolvimento. */
   concluirIntro(pid: string): void;
   /** Admin renomeia os rótulos das colunas do kanban do Flux. */
@@ -679,6 +679,9 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
         updateDoc(doc(db, 'projects', pid), {
           ciclo: c.id, backlogDe: deleteField(), deadline, criadoEm: todayISO(),
           tier: null, resultado: null, reprovado: false, notas: {},
+          // ponderados e a fase de introdução são do ciclo anterior — zeram na
+          // reativação (senão o pitch volta com a análise antiga colada — v6)
+          valorPonderado: deleteField(), deadlinePonderado: deleteField(), introConcluida: deleteField(),
         })
           .then(() => {
             addLog('Pitch reativado do backlog', p.nome + ' — ' + c.nome, 'flux');
@@ -729,9 +732,13 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
       // ADM/comitê definem os ponderados (retorno tangível e deadline) na triagem
       // — referência, não entram no ranking. Pode ser antes de decidir o tier.
       salvarPonderados: (pid, valorPonderado, deadlinePonderado) => {
+        // null = LIMPAR o campo; undefined = não mexeu (antes não dava para
+        // apagar um ponderado já salvo — v6)
         const patch: Record<string, unknown> = {};
-        if (typeof valorPonderado === 'number' && !Number.isNaN(valorPonderado)) patch.valorPonderado = valorPonderado;
-        if (deadlinePonderado !== undefined) patch.deadlinePonderado = deadlinePonderado || null;
+        if (valorPonderado === null) patch.valorPonderado = deleteField();
+        else if (typeof valorPonderado === 'number' && Number.isFinite(valorPonderado)) patch.valorPonderado = Math.min(Math.max(0, valorPonderado), 1_000_000_000);
+        if (deadlinePonderado === null) patch.deadlinePonderado = deleteField();
+        else if (deadlinePonderado) patch.deadlinePonderado = deadlinePonderado;
         if (!Object.keys(patch).length) return;
         updateDoc(doc(db, 'projects', pid), patch)
           .then(() => { addLog('Ponderados definidos', (proj(pid)?.nome ?? pid), 'avaliacao'); showToast('Valores ponderados salvos.'); })
@@ -792,7 +799,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
           if (d.tier || d.reprovado || d.ciclo === 'backlog') throw new Error('Este pitch já foi decidido na triagem — recarregue a página para ver a decisão registrada.');
           tx.update(ref, { ciclo: 'backlog', backlogDe: d.ciclo, tier: null });
         })
-          .then(() => { addLog('Pitch enviado ao backlog', nome, 'avaliacao'); showToast('"' + nome + '" foi para o Backlog de Projetos — o titular pode reativá-lo quando um novo ciclo abrir.'); })
+          .then(() => { addLog('Pitch enviado ao backlog', nome, 'avaliacao'); showToast('"' + nome + '" foi para o Backlog de Projetos — a administração pode reativá-lo quando um novo ciclo abrir.'); })
           .catch(falha);
       },
 
@@ -815,8 +822,10 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
         const p = proj(pid)!;
         const declarado = p.resultado!.tang;
         // "Valor Realizado" (VP): o comitê confirma/ajusta — pode ser MAIOR ou
-        // menor que o declarado; só não é negativo.
-        const validado = Math.max(0, valor);
+        // menor que o declarado. Só barra negativo, não-finito e magnitude
+        // absurda (Infinity/1e15 zerava o Tangível de todo o ciclo — v6).
+        if (!Number.isFinite(valor)) { showErro('Valor inválido.'); return; }
+        const validado = Math.min(Math.max(0, valor), 1_000_000_000);
         const integral = validado === declarado;
         updateDoc(doc(db, 'projects', pid), { ['resultado.validacoes.' + me!.id]: validado })
           .then(() => {
