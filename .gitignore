@@ -24,3 +24,6 @@ credentials.json
 .env.production.local
 .env.workspace.local
 *.tsbuildinfo
+
+# documentos internos (PII em metadados de arquivos Office) — fora do repo público
+Referências/
