@@ -175,7 +175,7 @@ export default function Projeto() {
                         value={dp ?? (p.deadlinePonderado ?? '')} onChange={(e) => setDp(e.target.value)} />
                       <button type="button" aria-label="Salvar ponderados" title="Salvar ponderados"
                         onClick={() => store.salvarPonderados(p.id, vp === null ? undefined : vp === '' ? null : Number(vp), dp === null ? undefined : dp === '' ? null : dp)}
-                        className="foco-tf" style={{ flex: 'none', border: 'none', background: 'transparent', cursor: 'pointer', padding: '0 6px', fontSize: '1.2rem', lineHeight: 1 }}>💾</button>
+                        className="foco-tf" style={{ flex: 'none', border: 'none', background: 'transparent', cursor: 'pointer', width: 44, height: 40, fontSize: '1.2rem', lineHeight: 1, display: 'grid', placeItems: 'center' }}>💾</button>
                     </div>
                   </div>
                 ) : p.deadlinePonderado && (
@@ -196,7 +196,7 @@ export default function Projeto() {
                         value={vp ?? (p.valorPonderado != null ? String(p.valorPonderado) : '')} onChange={(e) => setVp(e.target.value.replace(/[^\d]/g, ''))} />
                       <button type="button" aria-label="Salvar ponderados" title="Salvar ponderados"
                         onClick={() => store.salvarPonderados(p.id, vp === null ? undefined : vp === '' ? null : Number(vp), dp === null ? undefined : dp === '' ? null : dp)}
-                        className="foco-tf" style={{ flex: 'none', border: 'none', background: 'transparent', cursor: 'pointer', padding: '0 6px', fontSize: '1.2rem', lineHeight: 1 }}>💾</button>
+                        className="foco-tf" style={{ flex: 'none', border: 'none', background: 'transparent', cursor: 'pointer', width: 44, height: 40, fontSize: '1.2rem', lineHeight: 1, display: 'grid', placeItems: 'center' }}>💾</button>
                     </div>
                   </div>
                 ) : typeof p.valorPonderado === 'number' && (

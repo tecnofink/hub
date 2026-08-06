@@ -100,7 +100,7 @@ interface StoreApi {
   reprovarPitch(pid: string, contexto: 'triagem' | 'avaliacao'): void;
   validarTangivel(pid: string, valor: number): void;
   /** Titular edita o pitch (todos os campos menos o título) nas 2 primeiras etapas. */
-  editarPitch(pid: string, dados: Partial<Pick<Projeto, 'cat' | 'estimValor' | 'estimPer' | 'deadline' | 'intang' | 'just'>>): void;
+  editarPitch(pid: string, dados: Partial<Pick<Projeto, 'cat' | 'estimValor' | 'estimPer' | 'deadline' | 'intang' | 'just'>>): Promise<void>;
   /** Histórico de edições do pitch (titular + admins). */
   observarEdicoesPitch(pid: string, cb: (es: EdicaoPitch[]) => void): () => void;
   salvarNotas(pid: string, notas: NotaTrio): void;
@@ -716,7 +716,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
           const ref = doc(db, 'projects', pid);
           const d = (await tx.get(ref)).data();
           if (!d) throw new Error('Pitch não encontrado.');
-          if (d.tier || d.reprovado || d.ciclo === 'backlog') throw new Error('Este pitch já foi decidido na triagem — recarregue a página para ver a decisão registrada.');
+          if (d.tier || d.reprovado || d.ciclo === 'backlog') throw new Error('Outra pessoa já decidiu a triagem deste pitch — a tela acabou de se atualizar com a decisão registrada.');
           // ponderados da administração/comitê gravados junto com o tier (referência)
           const patch: Record<string, unknown> = { tier };
           if (typeof valorPonderado === 'number' && !Number.isNaN(valorPonderado)) patch.valorPonderado = valorPonderado;
@@ -765,7 +765,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
       // Edição do pitch pelo TITULAR (pedido do VP): todos os campos MENOS o
       // título, nas duas primeiras etapas. Registra a diferença em edicoes/
       // (histórico visível ao titular e aos admins). As regras impõem a janela.
-      editarPitch: (pid, dados) => {
+      editarPitch: async (pid, dados) => {
         const p = proj(pid);
         if (!p || !me) return;
         const rotulos: Record<string, string> = { cat: 'Categoria', estimValor: 'Valor estimado', estimPer: 'Periodicidade', deadline: 'Deadline', intang: 'Intangíveis', just: 'Justificativa' };
@@ -775,14 +775,15 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
           .filter((k) => fmt(dados[k]) !== fmt(antes[k as string]))
           .map((k) => ({ campo: rotulos[k as string] ?? String(k), de: fmt(antes[k as string]), para: fmt(dados[k]) }));
         if (!mudancas.length) { showToast('Nenhuma mudança para salvar.'); return; }
-        updateDoc(doc(db, 'projects', pid), dados)
-          .then(() => {
-            setDoc(doc(collection(db, 'projects', pid, 'edicoes')), { por: me.id, porNome: me.nome, em: new Date().toISOString(), mudancas })
-              .catch(() => { /* histórico é best-effort — não bloqueia a edição */ });
-            addLog('Pitch editado', p.nome + ' — ' + mudancas.map((m) => m.campo).join(', '), 'flux');
-            showToast('Pitch atualizado. As mudanças ficam no histórico de edições.');
-          })
-          .catch(falha);
+        // aguarda a gravação: o modal só fecha quando o servidor confirma (v6 —
+        // antes fechava otimista e um erro de regra passava despercebido)
+        try {
+          await updateDoc(doc(db, 'projects', pid), dados);
+        } catch (e) { falha(e); throw e; }
+        setDoc(doc(collection(db, 'projects', pid, 'edicoes')), { por: me.id, porNome: me.nome, em: new Date().toISOString(), mudancas })
+          .catch(() => { /* histórico é best-effort — não bloqueia a edição */ });
+        addLog('Pitch editado', p.nome + ' — ' + mudancas.map((m) => m.campo).join(', '), 'flux');
+        showToast('Pitch atualizado. As mudanças ficam no histórico de edições.');
       },
 
       observarEdicoesPitch: (pid, cb) =>
@@ -796,7 +797,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
           const ref = doc(db, 'projects', pid);
           const d = (await tx.get(ref)).data();
           if (!d) throw new Error('Pitch não encontrado.');
-          if (d.tier || d.reprovado || d.ciclo === 'backlog') throw new Error('Este pitch já foi decidido na triagem — recarregue a página para ver a decisão registrada.');
+          if (d.tier || d.reprovado || d.ciclo === 'backlog') throw new Error('Outra pessoa já decidiu a triagem deste pitch — a tela acabou de se atualizar com a decisão registrada.');
           tx.update(ref, { ciclo: 'backlog', backlogDe: d.ciclo, tier: null });
         })
           .then(() => { addLog('Pitch enviado ao backlog', nome, 'avaliacao'); showToast('"' + nome + '" foi para o Backlog de Projetos — a administração pode reativá-lo quando um novo ciclo abrir.'); })
@@ -810,7 +811,7 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
           const d = (await tx.get(ref)).data();
           if (!d) throw new Error('Pitch não encontrado.');
           if (d.reprovado) throw new Error('Este pitch já foi reprovado.');
-          if (contexto === 'triagem' && (d.tier || d.ciclo === 'backlog')) throw new Error('Este pitch já foi decidido na triagem — recarregue a página.');
+          if (contexto === 'triagem' && (d.tier || d.ciclo === 'backlog')) throw new Error('Outra pessoa já decidiu a triagem deste pitch — a tela acabou de se atualizar.');
           tx.update(ref, { reprovado: true });
         })
           .then(() => { addLog(contexto === 'triagem' ? 'Pitch reprovado na triagem' : 'Projeto desclassificado pelo comitê', nome, 'avaliacao'); showToast('"' + nome + '" foi reprovado e está fora do ranking do ciclo.'); })

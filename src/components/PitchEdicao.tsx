@@ -5,34 +5,60 @@
  * `editavel` liga o formulário (admin, pitch pendente); sem ele, é só o histórico.
  */
 import React, { useEffect, useState } from 'react';
-import { useStore } from '../store/AppStore';
+import { useStore, useUI } from '../store/AppStore';
 import type { EdicaoPitch, Projeto } from '../lib/types';
-import { CATS } from '../lib/scoring';
+import { CATS, INTANGIVEIS } from '../lib/scoring';
 import { Modal } from './ui';
 
 export default function PitchEdicao({ pitch, editavel, onClose }: { pitch: Projeto; editavel: boolean; onClose: () => void }) {
   const store = useStore();
+  const ui = useUI();
   const [edicoes, setEdicoes] = useState<EdicaoPitch[]>([]);
+  const [salvando, setSalvando] = useState(false);
   const [form, setForm] = useState({
     cat: pitch.cat as string,
     estimValor: String(pitch.estimValor ?? ''),
     estimPer: pitch.estimPer,
     deadline: pitch.deadline ?? '',
+    intang: [...(pitch.intang ?? [])],
     just: pitch.just,
   });
 
   useEffect(() => store.observarEdicoesPitch(pitch.id, setEdicoes), [pitch.id]);
 
-  const salvar = () => {
-    store.editarPitch(pitch.id, {
-      cat: form.cat as Projeto['cat'],
-      estimValor: Number(form.estimValor) || 0,
-      estimPer: form.estimPer as Projeto['estimPer'],
-      // com o acesso já liberado o deadline está congelado — nem enviamos
-      ...(pitch.tier ? {} : { deadline: form.deadline || null }),
-      just: form.just.trim(),
-    });
-    onClose();
+  // limites do deadline vêm do ciclo do pitch (a regra exige a mesma janela)
+  const ciclo = store.state.cycles.find((c) => c.id === pitch.ciclo);
+  const toggleIntang = (item: string) => setForm((f) => ({
+    ...f,
+    intang: f.intang.includes(item) ? f.intang.filter((x) => x !== item) : [...f.intang, item],
+  }));
+
+  const salvar = async () => {
+    if (salvando) return;
+    // valida no cliente o que a regra exige — mensagem clara em vez de
+    // "ação não permitida para o seu perfil" (v6)
+    if (!form.just.trim()) return ui.showToast('A justificativa não pode ficar vazia.');
+    if (!(Number(form.estimValor) > 0)) return ui.showToast('Informe o valor estimado do retorno.');
+    if (!form.intang.length) return ui.showToast('Escolha ao menos um ganho intangível.');
+    if (!pitch.tier) {
+      if (!form.deadline) return ui.showToast('Informe o deadline.');
+      if (ciclo && (form.deadline < ciclo.inicio || form.deadline > ciclo.fim)) {
+        return ui.showToast('O deadline precisa ficar dentro do ciclo (' + ciclo.inicio.split('-').reverse().join('/') + ' a ' + ciclo.fim.split('-').reverse().join('/') + ').');
+      }
+    }
+    setSalvando(true);
+    try {
+      await store.editarPitch(pitch.id, {
+        cat: form.cat as Projeto['cat'],
+        estimValor: Number(form.estimValor),
+        estimPer: form.estimPer as Projeto['estimPer'],
+        // com o acesso já liberado o deadline está congelado — nem enviamos
+        ...(pitch.tier ? {} : { deadline: form.deadline || null }),
+        intang: form.intang,
+        just: form.just.trim(),
+      });
+      onClose(); // só fecha quando o servidor confirma
+    } catch { setSalvando(false); }
   };
 
   const dtBR = (iso: string) => { try { return new Date(iso).toLocaleString('pt-BR'); } catch { return iso; } };
@@ -63,6 +89,7 @@ export default function PitchEdicao({ pitch, editavel, onClose }: { pitch: Proje
               {/* congelado após a triagem: mudar a data depois do acesso liberado
                   reescreveria a Pontualidade (10% da nota) */}
               <input type="date" className="f-input" value={form.deadline} disabled={!!pitch.tier}
+                min={ciclo?.inicio} max={ciclo?.fim}
                 onChange={(e) => setForm({ ...form, deadline: e.target.value })} />
               {!!pitch.tier && <span className="tf-small" style={{ fontSize: '0.68rem' }}>Fixado na liberação do acesso.</span>}
             </div>
@@ -81,12 +108,31 @@ export default function PitchEdicao({ pitch, editavel, onClose }: { pitch: Proje
             </div>
           </div>
           <div>
+            <label className="tf-mono" style={{ fontSize: '0.56rem' }}>GANHOS INTANGÍVEIS PREVISTOS</label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
+              {INTANGIVEIS.flatMap((g) => g.itens).map((item) => {
+                const on = form.intang.includes(item);
+                return (
+                  <button key={item} type="button" onClick={() => toggleIntang(item)} className="foco-tf"
+                    style={{
+                      fontSize: '0.74rem', padding: '5px 11px', borderRadius: 999, cursor: 'pointer',
+                      border: '1px solid ' + (on ? 'var(--tf-accent)' : 'var(--tf-line-2)'),
+                      background: on ? 'var(--tf-accent)' : 'transparent',
+                      color: on ? '#fff' : 'var(--tf-ink-2)',
+                    }}>
+                    {item}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <div>
             <label className="tf-mono" style={{ fontSize: '0.56rem' }}>JUSTIFICATIVA</label>
             <textarea className="f-textarea" rows={4} value={form.just} onChange={(e) => setForm({ ...form, just: e.target.value })} />
           </div>
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-            <button onClick={onClose} className="tf-btn tf-btn-ghost">Cancelar</button>
-            <button onClick={salvar} className="tf-btn tf-btn-accent" disabled={!form.deadline}>Salvar edição</button>
+            <button onClick={onClose} className="tf-btn tf-btn-ghost" disabled={salvando}>Cancelar</button>
+            <button onClick={() => void salvar()} className="tf-btn tf-btn-accent" disabled={salvando}>{salvando ? 'Salvando…' : 'Salvar edição'}</button>
           </div>
           <p className="tf-small" style={{ fontSize: '0.72rem', margin: 0 }}>
             Edição liberada só nas etapas Inscrito e Em desenvolvimento (antes de registrar o resultado). Cada mudança fica registrada abaixo, visível a você e aos admins.
