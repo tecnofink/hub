@@ -32,7 +32,15 @@ export interface PbEvento {
   ordem: number;
 }
 
-export interface PbEventoCatalogo { id: string; nome: string; data?: string; ordem: number }
+export interface PbEventoCatalogo {
+  id: string;
+  nome: string;
+  /** rótulo livre do período ("27-29/05") — legado da planilha */
+  data?: string;
+  /** data de INÍCIO do evento (ISO yyyy-mm-dd) — base do "comprar antes de" */
+  dataISO?: string;
+  ordem: number;
+}
 
 export interface PbCatalogo {
   id: string;
@@ -170,4 +178,16 @@ export interface PbConfig {
   editores: string[];      // uids com escrita no Marketing (admins do hub também escrevem)
   observadores?: string[]; // uids somente-leitura que veem TUDO; os demais logados são
                            // "leitor" e não veem Página da Feira nem Stands 2027
+}
+
+/**
+ * Editor MASTER do Marketing — Fernanda Berli (marketing@tecnofink.com).
+ * É editora por definição: o papel não pode ser removido pela interface nem
+ * por escrita direta (a regra do Firestore exige que ela permaneça na lista).
+ */
+export const PB_EDITOR_MASTER = 'RGelqbq5ROU2Ey4RdpZod2pHZfS2';
+
+/** Lista de editores garantindo o master (defesa contra config legado/vazio). */
+export function pbEditores(cfg: PbConfig): string[] {
+  return cfg.editores.includes(PB_EDITOR_MASTER) ? cfg.editores : [...cfg.editores, PB_EDITOR_MASTER];
 }

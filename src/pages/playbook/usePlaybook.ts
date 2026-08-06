@@ -12,7 +12,7 @@ import type {
   PbArquivo, PbAssociacao, PbBrinde, PbConfig, PbDocCatalogos, PbDocChecklist,
   PbDocProspeccao, PbEvento, PbFeira, PbStand, PbWorkshop,
 } from '../../lib/playbook';
-import { FEIRA_VAZIA } from '../../lib/playbook';
+import { FEIRA_VAZIA, pbEditores } from '../../lib/playbook';
 
 export interface PlaybookDocs {
   eventos: { lista: PbEvento[] };
@@ -61,7 +61,9 @@ export function usePlaybook() {
   //  · editor    — escreve o conteúdo e gere os papéis (admin do hub: socorro)
   //  · observador — somente leitura, mas vê TUDO
   //  · leitor     — somente leitura e NÃO vê Página da Feira nem Stands 2027
-  const podeEditar = !!me && docs.config.editores.includes(me.id);
+  // pbEditores garante o editor master (Fernanda Berli): mesmo que a lista
+  // gravada não a inclua, ela edita — o papel é fixo em código e na regra
+  const podeEditar = !!me && pbEditores(docs.config).includes(me.id);
   const ehObservador = !!me && (docs.config.observadores ?? []).includes(me.id);
   const podeVerTudo = podeEditar || ehObservador || ehHubAdmin(me);
   const podeGerirEditores = podeEditar || ehHubAdmin(me);

@@ -81,8 +81,11 @@ service firebase.storage {
       function cfgPlaybook() {
         return firestore.get(/databases/(default)/documents/playbook/config).data;
       }
+      // a editora master do Marketing (Fernanda Berli) é editora por definição,
+      // como no Firestore — não depende da lista gravada
       function editorPlaybook() {
-        return ativo() && request.auth.uid in cfgPlaybook().editores;
+        return ativo() && (request.auth.uid in cfgPlaybook().editores
+          || request.auth.uid == 'RGelqbq5ROU2Ey4RdpZod2pHZfS2');
       }
       // leads (PII: nome/e-mail/telefone) ficam em playbook/leads/** — leitura só
       // por editor/observador/hubAdmin, espelhando a fronteira do Firestore

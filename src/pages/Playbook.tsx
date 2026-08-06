@@ -13,6 +13,7 @@ import React, { useState } from 'react';
 import { useStore } from '../store/AppStore';
 import { Avatar, Badge, Modal, Mono } from '../components/ui';
 import { usePlaybook, type PapelPlaybook } from './playbook/usePlaybook';
+import { PB_EDITOR_MASTER, pbEditores } from '../lib/playbook';
 import SecEventos from './playbook/SecEventos';
 import SecCatalogos from './playbook/SecCatalogos';
 import SecChecklist from './playbook/SecChecklist';
@@ -51,11 +52,14 @@ export default function Playbook() {
     );
   }
 
-  const editores = pb.docs.config.editores ?? [];
+  const editores = pbEditores(pb.docs.config); // inclui sempre o editor master
   const observadores = pb.docs.config.observadores ?? [];
   const papelDe = (uid: string): PapelPlaybook =>
     editores.includes(uid) ? 'editor' : observadores.includes(uid) ? 'observador' : 'leitor';
   const definirPapel = (uid: string, papel: PapelPlaybook) => {
+    // o editor master é fixo: ninguém rebaixa pela interface (a regra do
+    // Firestore também recusa uma lista sem ele)
+    if (uid === PB_EDITOR_MASTER) return;
     const eds = editores.filter((x) => x !== uid);
     const obs = observadores.filter((x) => x !== uid);
     if (papel === 'editor') eds.push(uid);
@@ -106,6 +110,11 @@ export default function Playbook() {
                 <div key={u.id} style={{ display: 'flex', alignItems: 'center', gap: 12, border: '1px solid var(--tf-line)', borderRadius: 10, padding: '9px 12px', flexWrap: 'wrap' }}>
                   <Avatar nome={u.nome} cor={store.cor(u.id)} foto={u.foto} size={26} fontSize="0.56rem" />
                   <span style={{ flex: 1, minWidth: 160, fontSize: '0.86rem', fontWeight: 600 }}>{u.nome}</span>
+                  {u.id === PB_EDITOR_MASTER ? (
+                    <span title="Responsável pelo Marketing — papel fixo, não pode ser alterado" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: '0.76rem', fontWeight: 600, padding: '6px 13px', borderRadius: 999, border: '1px solid var(--tf-accent)', background: 'var(--tf-accent)', color: '#fff' }}>
+                      🔒 Editor (fixo)
+                    </span>
+                  ) : (
                   <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
                     {PAPEIS.map((pp) => {
                       const on = atual === pp.id;
@@ -121,6 +130,7 @@ export default function Playbook() {
                       );
                     })}
                   </div>
+                  )}
                 </div>
               );
             })}

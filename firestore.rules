@@ -511,7 +511,12 @@ service cloud.firestore {
       allow create, delete: if secao != 'config' && ehEditorPlaybook();
     }
     match /playbook/config {
-      allow write: if ehEditorPlaybook() || ehHubAdmin();
+      // a lista de papéis é gerida por editores do Marketing e pelo admin do
+      // hub — e NUNCA pode remover a editora master (Fernanda Berli,
+      // marketing@tecnofink.com): responsável pela ferramenta, papel fixo.
+      allow write: if (ehEditorPlaybook() || ehHubAdmin())
+        && request.resource.data.editores is list
+        && request.resource.data.editores.hasAny(['RGelqbq5ROU2Ey4RdpZod2pHZfS2']);
     }
     match /playbookFeira/{eventoId} {
       // leads (PII) e credenciais de portal: leitura só para editor/observador

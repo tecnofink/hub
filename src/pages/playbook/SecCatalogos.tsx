@@ -12,6 +12,29 @@ import { BotaoRemover, NumeroBlur, SecHead } from './comum';
 
 const LIMIAR_ATENCAO = 200;
 
+/**
+ * Data de início do evento em ISO. Usa o campo estruturado (dataISO) e, na
+ * falta dele, lê o rótulo legado da planilha ("27-29/05", "08-10/07",
+ * "12/11/2026"), pegando o PRIMEIRO dia do período. Sem ano no texto, assume o
+ * ANO CORRENTE — a projeção é do calendário do ano (a tabela é "CONSUMO
+ * <ano>"), então jogar um evento já realizado para o ano seguinte enganaria.
+ * Para outro ano, o editor define a data no campo próprio.
+ */
+export function eventoISO(ev: { dataISO?: string; data?: string }): string | null {
+  if (ev.dataISO) return ev.dataISO;
+  const txt = (ev.data ?? '').trim();
+  const m = txt.match(/(\d{1,2})\s*(?:[-–a]\s*\d{1,2})?\s*\/\s*(\d{1,2})(?:\s*\/\s*(\d{2,4}))?/);
+  if (!m) return null;
+  const dia = Number(m[1]);
+  const mes = Number(m[2]);
+  if (dia < 1 || dia > 31 || mes < 1 || mes > 12) return null;
+  const ano = m[3] ? Number(m[3].length === 2 ? '20' + m[3] : m[3]) : new Date().getFullYear();
+  return `${ano}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+}
+
+/** yyyy-mm-dd → dd/mm/aaaa */
+const dBR = (iso: string) => iso.split('-').reverse().join('/');
+
 export default function SecCatalogos({ dados, podeEditar, salvar }: {
   dados: PbDocCatalogos;
   podeEditar: boolean;
@@ -27,14 +50,26 @@ export default function SecCatalogos({ dados, podeEditar, salvar }: {
   const consumoFuturo = (c: PbCatalogo) => eventos.reduce((a, ev) => a + (dados.consumo[c.id]?.[ev.id] ?? 0), 0);
   const historico = (c: PbCatalogo) => Math.max(0, c.consumoAnual - consumoFuturo(c));
   const saldoFinal = (c: PbCatalogo) => c.estoque - consumoFuturo(c);
-  const comprarAntesDe = (c: PbCatalogo): string | null => {
+  // primeiro evento em que o estoque fica negativo: é ANTES dele que a compra
+  // precisa chegar. Mostra a data do evento em dd/mm/aaaa (antes exibia o
+  // rótulo cru da planilha, "21-24/09", que não dizia o ano nem o dia da compra)
+  const comprarAntesDe = (c: PbCatalogo): { texto: string; titulo: string } | null => {
     let saldo = c.estoque;
     for (const ev of eventos) {
       saldo -= dados.consumo[c.id]?.[ev.id] ?? 0;
-      if (saldo < 0) return ev.data ?? ev.nome;
+      if (saldo < 0) {
+        const iso = eventoISO(ev);
+        return {
+          texto: iso ? dBR(iso) : (ev.data ?? ev.nome),
+          titulo: ev.nome + (ev.data ? ' · ' + ev.data : ''),
+        };
+      }
     }
     return null;
   };
+
+  const setDataEvento = (evId: string, iso: string) =>
+    salvar({ ...dados, eventos: dados.eventos.map((e) => (e.id === evId ? { ...e, dataISO: iso || undefined } : e)) });
 
   const todos = [...dados.catalogos].sort((a, b) => a.ordem - b.ordem);
   const estoqueTotal = todos.reduce((a, c) => a + c.estoque, 0);
@@ -71,7 +106,7 @@ export default function SecCatalogos({ dados, podeEditar, salvar }: {
               <span>{podeEditar ? <NumeroBlur valor={c.estoque} onSalvar={(v) => setEstoque(c, v)} largura={78} /> : <span style={{ fontFamily: 'var(--tf-font-mono)', fontSize: '0.8rem' }}>{c.estoque}</span>}</span>
               <span style={{ fontFamily: 'var(--tf-font-mono)', fontSize: '0.8rem' }}>{consumoFuturo(c)}</span>
               <span style={{ fontFamily: 'var(--tf-font-mono)', fontSize: '0.8rem', fontWeight: 700, color: cor }}>{saldo}</span>
-              <span style={{ fontSize: '0.78rem', color: compra ? 'var(--tf-crit)' : 'var(--tf-ink-3)' }}>{compra ?? '—'}</span>
+              <span title={compra?.titulo} style={{ fontFamily: compra ? 'var(--tf-font-mono)' : undefined, fontSize: '0.78rem', color: compra ? 'var(--tf-crit)' : 'var(--tf-ink-3)' }}>{compra?.texto ?? '—'}</span>
               <span style={{ textAlign: 'right' }}>
                 {c.isCustom && (
                   <BotaoRemover
@@ -140,6 +175,26 @@ export default function SecCatalogos({ dados, podeEditar, salvar }: {
               <span className="tf-mono" style={{ fontSize: '0.56rem' }}>CATÁLOGO</span>
               <span className="tf-mono" style={{ fontSize: '0.56rem' }}>FBCC (HIST.)</span>
               {eventos.map((ev) => <span key={ev.id} className="tf-mono" style={{ fontSize: '0.56rem' }}>{ev.nome.toUpperCase()}</span>)}
+            </div>
+            {/* data de início de cada evento — base do "comprar antes de".
+                Sem data definida, o sistema lê o rótulo antigo da planilha. */}
+            <div style={{ display: 'grid', gridTemplateColumns: `200px 90px repeat(${eventos.length}, 90px)`, minWidth: 300 + eventos.length * 90, gap: 0, padding: '7px 20px', borderBottom: '1px solid var(--tf-line)', alignItems: 'center' }}>
+              <span className="tf-mono" style={{ fontSize: '0.54rem', color: 'var(--tf-ink-3)' }}>DATA DO EVENTO</span>
+              <span />
+              {eventos.map((ev) => {
+                const iso = eventoISO(ev);
+                return (
+                  <span key={ev.id}>
+                    {podeEditar ? (
+                      <input type="date" className="f-input" value={ev.dataISO ?? iso ?? ''}
+                        onChange={(e) => setDataEvento(ev.id, e.target.value)}
+                        style={{ padding: '4px 6px', fontSize: '0.7rem', width: 84 }} />
+                    ) : (
+                      <span style={{ fontFamily: 'var(--tf-font-mono)', fontSize: '0.7rem', color: 'var(--tf-ink-3)' }}>{iso ? dBR(iso) : '—'}</span>
+                    )}
+                  </span>
+                );
+              })}
             </div>
             {todos.map((c) => (
               <div key={c.id} style={{ display: 'grid', gridTemplateColumns: `200px 90px repeat(${eventos.length}, 90px)`, minWidth: 300 + eventos.length * 90, gap: 0, padding: '7px 20px', borderBottom: '1px solid var(--tf-line)', alignItems: 'center' }}>
