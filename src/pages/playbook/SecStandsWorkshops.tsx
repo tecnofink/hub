@@ -3,7 +3,7 @@ import React from 'react';
 import type { PbStand, PbStandStatus, PbWorkshop } from '../../lib/playbook';
 import { brl } from '../../lib/format';
 import { MetricStat, L } from '../../components/ui';
-import { pbId } from './usePlaybook';
+import { pbId, removerArquivoPb } from './usePlaybook';
 import { BotaoRemover, CampoBlur, NumeroBlur, SecHead, UploadCampo } from './comum';
 
 const STAND_STATUS: PbStandStatus[] = ['A avaliar', 'Orçamento solicitado', 'Reservado', 'Confirmado / Pago'];
@@ -39,7 +39,13 @@ export function SecStands({ lista, podeEditar, salvar }: { lista: PbStand[]; pod
           <div key={s.id} className="tf-card" style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <CampoBlur valor={s.nome ?? ''} onSalvar={(v) => up(s.id, (x) => ({ ...x, nome: v }))} desabilitado={!podeEditar} placeholder="Nome do evento" style={{ fontWeight: 700, fontSize: '0.96rem', padding: '7px 10px', flex: 1 }} />
-              <BotaoRemover podeEditar={podeEditar} titulo="Remover stand?" texto={`"${s.nome ?? 'Stand'}" sai do planejamento 2027.`} onConfirmar={() => salvar({ lista: lista.filter((x) => x.id !== s.id) })} />
+              <BotaoRemover podeEditar={podeEditar} titulo="Remover stand?" texto={`"${s.nome ?? 'Stand'}" e os documentos dele (planta e projeto) saem do planejamento 2027.`}
+                onConfirmar={() => {
+                  // apaga também os arquivos do Storage — antes ficavam órfãos
+                  removerArquivoPb(s.docs?.planta?.url);
+                  removerArquivoPb(s.docs?.projeto?.url);
+                  salvar({ lista: lista.filter((x) => x.id !== s.id) });
+                }} />
             </div>
             <select
               className="f-select" value={s.status} disabled={!podeEditar}

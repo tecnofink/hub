@@ -63,7 +63,13 @@ export function SecAssociacoes({ lista, podeEditar, salvar }: { lista: PbAssocia
 /* ── [05] Prospecção ── */
 const PARTICIPACOES: PbParticipacao[] = ['A avaliar', 'Stand', 'Presença de equipe', 'Stand + equipe'];
 
-export function SecProspeccao({ dados, podeEditar, salvar }: { dados: PbDocProspeccao; podeEditar: boolean; salvar: (d: PbDocProspeccao) => void }) {
+export function SecProspeccao({ dados, podeEditar, salvar }: {
+  dados: PbDocProspeccao;
+  podeEditar: boolean;
+  /** transacional: recebe o estado do SERVIDOR — a Prospecção é colaborativa
+   *  (qualquer ativo edita) e o estado local ressuscitava itens removidos */
+  salvar: (mutar: (atual: PbDocProspeccao) => PbDocProspeccao) => void;
+}) {
   const ui = useUI();
   return (
     <section>
@@ -80,19 +86,19 @@ export function SecProspeccao({ dados, podeEditar, salvar }: { dados: PbDocProsp
               <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {evs.map((e) => (
                   <div key={e.id} className="g-1col" style={{ display: 'grid', gridTemplateColumns: '1.2fr 170px 1fr 1fr 30px', gap: 8, alignItems: 'center' }}>
-                    <CampoBlur valor={e.nome} onSalvar={(v) => salvar({ ...dados, eventos: dados.eventos.map((x) => (x.id === e.id ? { ...x, nome: v } : x)) })} desabilitado={!podeEditar} style={{ padding: '7px 10px', fontSize: '0.84rem', fontWeight: 600 }} />
+                    <CampoBlur valor={e.nome} onSalvar={(v) => salvar((d) => ({ ...d, eventos: d.eventos.map((x) => (x.id === e.id ? { ...x, nome: v } : x)) }))} desabilitado={!podeEditar} style={{ padding: '7px 10px', fontSize: '0.84rem', fontWeight: 600 }} />
                     <select
                       className="f-select" value={e.participacao} disabled={!podeEditar} style={{ padding: '7px 8px', fontSize: '0.78rem' }}
-                      onChange={(ev2) => salvar({ ...dados, eventos: dados.eventos.map((x) => (x.id === e.id ? { ...x, participacao: ev2.target.value as PbParticipacao } : x)) })}
+                      onChange={(ev2) => salvar((d) => ({ ...d, eventos: d.eventos.map((x) => (x.id === e.id ? { ...x, participacao: ev2.target.value as PbParticipacao } : x)) }))}
                     >
                       {PARTICIPACOES.map((p) => <option key={p} value={p}>{p}</option>)}
                     </select>
                     <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                      <CampoBlur mono valor={e.link ?? ''} onSalvar={(v) => salvar({ ...dados, eventos: dados.eventos.map((x) => (x.id === e.id ? { ...x, link: v || undefined } : x)) })} desabilitado={!podeEditar} placeholder="https://…" style={{ flex: 1, padding: '7px 9px' }} />
+                      <CampoBlur mono valor={e.link ?? ''} onSalvar={(v) => salvar((d) => ({ ...d, eventos: d.eventos.map((x) => (x.id === e.id ? { ...x, link: v || undefined } : x)) }))} desabilitado={!podeEditar} placeholder="https://…" style={{ flex: 1, padding: '7px 9px' }} />
                       {e.link && <a href={e.link} target="_blank" rel="noreferrer" className="tf-mono" style={{ fontSize: '0.66rem', color: 'var(--tf-accent)', flex: 'none' }}>↗</a>}
                     </div>
-                    <CampoBlur valor={e.obs ?? ''} onSalvar={(v) => salvar({ ...dados, eventos: dados.eventos.map((x) => (x.id === e.id ? { ...x, obs: v } : x)) })} desabilitado={!podeEditar} placeholder="Obs" style={{ padding: '7px 10px', fontSize: '0.8rem' }} />
-                    <BotaoRemover podeEditar={podeEditar} titulo="Remover evento?" texto={`"${e.nome}" sai da prospecção.`} onConfirmar={() => salvar({ ...dados, eventos: dados.eventos.filter((x) => x.id !== e.id) })} />
+                    <CampoBlur valor={e.obs ?? ''} onSalvar={(v) => salvar((d) => ({ ...d, eventos: d.eventos.map((x) => (x.id === e.id ? { ...x, obs: v } : x)) }))} desabilitado={!podeEditar} placeholder="Obs" style={{ padding: '7px 10px', fontSize: '0.8rem' }} />
+                    <BotaoRemover podeEditar={podeEditar} titulo="Remover evento?" texto={`"${e.nome}" sai da prospecção.`} onConfirmar={() => salvar((d) => ({ ...d, eventos: d.eventos.filter((x) => x.id !== e.id) }))} />
                   </div>
                 ))}
                 {podeEditar && (
@@ -102,7 +108,7 @@ export function SecProspeccao({ dados, podeEditar, salvar }: { dados: PbDocProsp
                       if (ev2.key === 'Enter') {
                         const v = (ev2.target as HTMLInputElement).value.trim();
                         if (v) {
-                          salvar({ ...dados, eventos: [...dados.eventos, { id: pbId(), setorId: s.id, nome: v, participacao: 'A avaliar', obs: '', ordem: evs.length }] });
+                          salvar((d) => ({ ...d, eventos: [...d.eventos, { id: pbId(), setorId: s.id, nome: v, participacao: 'A avaliar', obs: '', ordem: d.eventos.filter((x) => x.setorId === s.id).length }] }));
                           (ev2.target as HTMLInputElement).value = '';
                         }
                       }
@@ -122,7 +128,7 @@ export function SecProspeccao({ dados, podeEditar, salvar }: { dados: PbDocProsp
               if (e.key === 'Enter') {
                 const v = (e.target as HTMLInputElement).value.trim();
                 if (v) {
-                  salvar({ ...dados, setores: [...dados.setores, { id: pbId(), nome: v, ordem: dados.setores.reduce((a, x) => Math.max(a, x.ordem), 0) + 1 }] });
+                  salvar((d) => ({ ...d, setores: [...d.setores, { id: pbId(), nome: v, ordem: d.setores.reduce((a, x) => Math.max(a, x.ordem), 0) + 1 }] }));
                   (e.target as HTMLInputElement).value = '';
                 }
               }
@@ -134,7 +140,7 @@ export function SecProspeccao({ dados, podeEditar, salvar }: { dados: PbDocProsp
                 const ultimo = [...dados.setores].sort((a, b) => a.ordem - b.ordem)[dados.setores.length - 1];
                 ui.confirmar({
                   titulo: 'Remover setor?', texto: `"${ultimo.nome}" e os eventos dele saem da prospecção.`, cta: 'Remover', danger: true,
-                  onConfirm: () => salvar({ setores: dados.setores.filter((x) => x.id !== ultimo.id), eventos: dados.eventos.filter((x) => x.setorId !== ultimo.id) }),
+                  onConfirm: () => salvar((d) => ({ ...d, setores: d.setores.filter((x) => x.id !== ultimo.id), eventos: d.eventos.filter((x) => x.setorId !== ultimo.id) })),
                 });
               }}
               className="tf-btn tf-btn-ghost tf-btn-danger" style={{ padding: '8px 13px', fontSize: '0.78rem' }}

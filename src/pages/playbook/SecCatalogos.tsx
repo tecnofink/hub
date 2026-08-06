@@ -8,7 +8,7 @@ import type { PbCatalogo, PbDocCatalogos, PbGrupoCatalogo } from '../../lib/play
 import { MetricStat } from '../../components/ui';
 import { useUI } from '../../store/AppStore';
 import { pbId } from './usePlaybook';
-import { BotaoRemover, NumeroBlur, SecHead } from './comum';
+import { BotaoRemover, CampoBlur, NumeroBlur, SecHead } from './comum';
 
 const LIMIAR_ATENCAO = 200;
 
@@ -186,8 +186,11 @@ export default function SecCatalogos({ dados, podeEditar, salvar }: {
                 return (
                   <span key={ev.id}>
                     {podeEditar ? (
-                      <input type="date" className="f-input" value={ev.dataISO ?? iso ?? ''}
-                        onChange={(e) => setDataEvento(ev.id, e.target.value)}
+                      // salva no BLUR (padrão do playbook): com onChange, cada
+                      // tecla do date picker regravava o documento inteiro e o
+                      // valor "voltava" durante a digitação
+                      <CampoBlur tipo="date" valor={ev.dataISO ?? iso ?? ''}
+                        onSalvar={(v) => setDataEvento(ev.id, v)}
                         style={{ padding: '4px 6px', fontSize: '0.7rem', width: 84 }} />
                     ) : (
                       <span style={{ fontFamily: 'var(--tf-font-mono)', fontSize: '0.7rem', color: 'var(--tf-ink-3)' }}>{iso ? dBR(iso) : '—'}</span>

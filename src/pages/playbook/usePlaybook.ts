@@ -3,7 +3,7 @@
  * seção + gravação (regras do Firestore restringem escrita a editores/admins).
  */
 import { useEffect, useMemo, useState } from 'react';
-import { deleteDoc, doc, getDoc, onSnapshot, setDoc } from 'firebase/firestore';
+import { deleteDoc, doc, getDoc, onSnapshot, runTransaction, setDoc } from 'firebase/firestore';
 import { deleteObject, getDownloadURL, ref as sRef, uploadBytes } from 'firebase/storage';
 import { db, storage } from '../../lib/firebase';
 import { useStore, useUI } from '../../store/AppStore';
@@ -114,6 +114,21 @@ export function usePlaybook() {
     salvar: <K extends keyof PlaybookDocs>(secao: K, dados: PlaybookDocs[K]) => {
       if (!pronto) { ui.showToast('Aguarde o Marketing carregar antes de editar.'); return; }
       setDoc(doc(db, 'playbook', secao), dados, { merge: true }).catch((e) => ui.showToast(msg(e)));
+    },
+    /**
+     * Grava aplicando a mutação sobre o estado do SERVIDOR (transação), não
+     * sobre o render local. Usado onde há vários escritores simultâneos — a
+     * Prospecção é colaborativa: com o estado local, salvar um campo
+     * ressuscitava um item que outra pessoa acabara de remover.
+     */
+    salvarTx: <K extends keyof PlaybookDocs>(secao: K, mutar: (atual: PlaybookDocs[K]) => PlaybookDocs[K]) => {
+      if (!pronto) { ui.showToast('Aguarde o Marketing carregar antes de editar.'); return; }
+      const ref = doc(db, 'playbook', secao);
+      runTransaction(db, async (tx) => {
+        const snap = await tx.get(ref);
+        const base = (snap.exists() ? snap.data() : (VAZIO as unknown as Record<string, unknown>)[secao]) as PlaybookDocs[K];
+        tx.set(ref, mutar(base) as object, { merge: true });
+      }).catch((e) => ui.showToast(msg(e)));
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [docs, pronto, podeEditar, podeVerTudo, podeGerirEditores, papel, me?.id]);

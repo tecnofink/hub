@@ -157,7 +157,7 @@ export default function Playbook() {
       )}
       <SecAssociacoes lista={pb.docs.associacoes.lista} podeEditar={pb.podeEditar} salvar={(d) => pb.salvar('associacoes', d)} />
       {/* Prospecção é colaborativa: editável por qualquer colaborador logado */}
-      <SecProspeccao dados={pb.docs.prospeccao} podeEditar salvar={(d) => pb.salvar('prospeccao', d)} />
+      <SecProspeccao dados={pb.docs.prospeccao} podeEditar salvar={(mutar) => pb.salvarTx('prospeccao', mutar)} />
       <SecBrindes lista={pb.docs.brindes.lista} podeEditar={pb.podeEditar} salvar={(d) => pb.salvar('brindes', d)} />
       {pb.podeVerTudo && (
         <SecStands lista={pb.docs.stands2027.lista} podeEditar={pb.podeEditar} salvar={(d) => pb.salvar('stands2027', d)} />

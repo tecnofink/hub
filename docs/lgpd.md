@@ -12,6 +12,9 @@ Portal Flux · projeto `portal-flux-tecnofink`. Cobre os dados pessoais tratados
 | `logs` | `quem` (nome), ação | Auditoria / segurança |
 | `logsFalhas` | nome, `uid`, conteúdo do pitch, `userAgent` | Diagnóstico de falha de inscrição |
 | Storage `anexos-pitches/`, `anexos-tarefas/`, `anexos/` | arquivos anexados às mensagens/tarefas | Comprovações e evidências |
+| `playbookFeira/{eventoId}.leads` (Marketing) | **PII de terceiros**: nome, e-mail, telefone e empresa de visitantes captados em feiras (leads manuais e planilhas do coletor) | Prospecção comercial |
+| `playbookFeira/{eventoId}.portal` (Marketing) | credenciais de portais de expositor (login/senha) | Operação do evento |
+| Storage `playbook/leads/**` | planilhas de leads (mesma PII acima) | Prospecção comercial |
 | Firebase Auth | e-mail, foto (do Google Workspace) | Autenticação |
 
 ## Retenção (automática — Function `limparRetencao`, diária às 03:30 BRT)
@@ -19,6 +22,13 @@ Portal Flux · projeto `portal-flux-tecnofink`. Cobre os dados pessoais tratados
 - **`logs` (auditoria)**: **365 dias**.
 - Limite de 400 remoções por coleção a cada execução (converge diariamente; sem impacto em pico).
 - Dados de negócio (`projects`, `cycles`, `users` ativos) **não** têm expiração automática — seguem o ciclo de vida do programa.
+
+### Leads de feira (Marketing) — PII de terceiros
+Os leads captados em feiras são **dados de pessoas de fora da empresa**, com base em legítimo interesse comercial. Regras de tratamento:
+- **Acesso restrito**: só editores/observadores do Marketing e admin do hub leem `playbookFeira/*` e baixam `playbook/leads/**` (imposto nas regras do Firestore e do Storage).
+- **Retenção**: excluir a página da feira do evento remove os leads e as planilhas (o botão "remover evento" já faz a limpeza). Recomenda-se **eliminar os leads de um evento em até 24 meses** após a feira, salvo se o contato virou relacionamento comercial ativo.
+- **Credenciais de portal** (`portal.login`/`senha`) são segredo operacional, não PII — mas seguem a mesma restrição de acesso e devem ser trocadas ao fim do evento.
+- Pedido de eliminação de um lead (titular externo): remover a linha na Página da Feira → Leads, ou a planilha correspondente. Não há rotina automática.
 
 ## Eliminação / anonimização (a pedido ou no desligamento)
 Ação de **Admin do Hub** em **Admin do Hub → Usuários do portal → Anonimizar** (só aparece em contas já **desativadas**; irreversível, com confirmação). Dispara o comando `anonimizarUsuario` (coleção `comandos`), processado pela Function `aoReceberComando`, que:
