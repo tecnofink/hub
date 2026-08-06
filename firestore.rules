@@ -401,15 +401,19 @@ service cloud.firestore {
         // compartilhado, então criar extraProjs/{idDePitch} sequestraria/destruiria
         // o quadro do pitch alheio. IDs auto-gerados nunca colidem — seguro.
         && !exists(/databases/$(database)/documents/projects/$(projId));
-      // gestão de membros, arquivamento e edição: admin do projeto
-      allow update: if isActive() && resource.data.papeis[request.auth.uid] == 'admin';
+      // gestão de membros, arquivamento e edição: admin do projeto. O projeto
+      // nunca pode ficar SEM admin (a invariante existia só no cliente — v6).
+      allow update: if isActive() && resource.data.papeis[request.auth.uid] == 'admin'
+        && request.resource.data.papeis.values().hasAny(['admin']);
       // sair do projeto: o próprio membro remove APENAS a si mesmo (não pode
       // adulterar membrosIds/papeis de terceiros na mesma escrita)
       allow update: if isActive()
         && request.auth.uid in resource.data.membrosIds
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['membrosIds', 'papeis'])
         && request.resource.data.membrosIds == resource.data.membrosIds.removeAll([request.auth.uid])
-        && request.resource.data.papeis.diff(resource.data.papeis).affectedKeys().hasOnly([request.auth.uid]);
+        && request.resource.data.papeis.diff(resource.data.papeis).affectedKeys().hasOnly([request.auth.uid])
+        // sair não pode deixar o projeto órfão (v6)
+        && request.resource.data.papeis.values().hasAny(['admin']);
       // zona perigosa: excluir projeto — admin do projeto
       allow delete: if isActive() && resource.data.papeis[request.auth.uid] == 'admin';
     }

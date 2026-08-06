@@ -25,7 +25,6 @@ export default function ComiteLayout() {
         </Pill>
       </div>
       <Outlet />
-      {c && todayISO() > c.limite && null}
     </div>
   );
 }

@@ -34,10 +34,12 @@ export function Avatar({ nome, cor, foto, size = 30, fontSize }: { nome: string;
 }
 
 /** Botão-pílula selecionável (categorias, intangíveis, filtros, notas...). */
-export function Pill({ on, onClick, children, style }: { on: boolean; onClick: () => void; children: React.ReactNode; style?: React.CSSProperties }) {
+export function Pill({ on, onClick, children, style, disabled, title }: { on: boolean; onClick?: () => void; children: React.ReactNode; style?: React.CSSProperties; disabled?: boolean; title?: string }) {
   return (
     <button
       onClick={onClick}
+      disabled={disabled}
+      title={title}
       aria-pressed={on}
       style={{
         padding: '7px 13px', borderRadius: 999,

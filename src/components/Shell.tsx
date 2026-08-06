@@ -247,7 +247,7 @@ export default function Shell() {
         <div style={{ maxWidth: 1320, margin: '0 auto', padding: '18px 32px', display: 'flex', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
           <span className="tf-mono" style={{ fontSize: '0.6rem' }}>TECNOFINK LTDA — PORTAL FLUX</span>
           <span style={{ display: 'flex', gap: 20, alignItems: 'center' }}>
-            <a href="mailto:analista.dados1@tecnofink.com" className="tf-mono" style={{ fontSize: '0.6rem', color: 'var(--tf-accent)', fontWeight: 700, textDecoration: 'none' }}>✉ SUPORTE</a>
+            <a href="mailto:ti@tecnofink.com" className="tf-mono" style={{ fontSize: '0.6rem', color: 'var(--tf-accent)', fontWeight: 700, textDecoration: 'none' }}>✉ SUPORTE</a>
             <span className="tf-mono" style={{ fontSize: '0.6rem' }}>V1 · PRODUÇÃO</span>
           </span>
         </div>

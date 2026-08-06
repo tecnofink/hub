@@ -29,7 +29,8 @@ Ação de **Admin do Hub** em **Admin do Hub → Usuários do portal → Anonimi
 
 O que **permanece** (pseudonimizado): os documentos de `projects` do usuário e as evidências de resultado continuam ligados ao `uid` (chave pseudônima), para não quebrar a integridade dos rankings — mas sem identificador pessoal, já que o nome exibido resolve como "Usuário removido".
 
-**Resíduo conhecido**: a coleção `logs` (auditoria) guarda `quem` (nome) sem `uid`, então não é anonimizada por chave — some pela retenção de 365 dias. Corrigir depende de gravar `quemUid` (item #2 da auditoria, previsto).
+5. **Logs de auditoria (`logs`)**: as entradas gravam `quemUid` (identidade real, imposta pela regra) além de `quem` (nome para exibição) — a anonimização substitui o nome nas entradas do usuário; o que sobrar some pela retenção de 365 dias.
+6. **Histórico de edições (`projects/{id}/edicoes`)**: `porNome` das entradas do usuário → "Usuário removido".
 
 ### Passos manuais complementares (fora do app)
 - **Firebase Auth**: excluir a conta do usuário no console (Authentication) para encerrar o login — o app não remove contas de Auth (ação prohibida por política; feita por pessoa autorizada).

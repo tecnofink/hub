@@ -42,7 +42,12 @@ export default function AdmUsuarios() {
             </span>
             <span style={{ display: 'flex', gap: 5 }}>
               <Pill on={u.roles.includes('avaliador')} onClick={() => store.toggleRole(u.id, 'avaliador')} style={{ padding: '6px 11px', fontSize: '0.72rem' }}>Comitê</Pill>
-              <Pill on={ehFluxAdmin(u)} onClick={() => store.toggleRole(u.id, 'fluxAdmin')} style={{ padding: '6px 11px', fontSize: '0.72rem' }}>Admin do Flux</Pill>
+              {/* conta com o papel legado 'admin' é admin do Flux por herança —
+                  o toggle de 'fluxAdmin' não a revogaria (e as regras negam ao
+                  fluxAdmin mexer em 'admin'): mostra o estado sem prometer ação */}
+              {u.roles.includes('admin')
+                ? <Pill on disabled title="Papel legado 'admin' — gerido pelo Admin do Hub" style={{ padding: '6px 11px', fontSize: '0.72rem', opacity: 0.7, cursor: 'not-allowed' }}>Admin do Flux (legado)</Pill>
+                : <Pill on={ehFluxAdmin(u)} onClick={() => store.toggleRole(u.id, 'fluxAdmin')} style={{ padding: '6px 11px', fontSize: '0.72rem' }}>Admin do Flux</Pill>}
             </span>
             <span style={{ textAlign: 'center' }}>
               {u.roles.includes('avaliador') && <Badge kind="warn">avaliador</Badge>}

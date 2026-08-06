@@ -675,17 +675,26 @@ export function AppStoreProvider({ children }: { children: React.ReactNode }) {
       // RF-27 / P16
       reativarBacklog: (pid, deadline) => {
         const c = cicloAtivo!;
-        const p = proj(pid)!;
-        updateDoc(doc(db, 'projects', pid), {
-          ciclo: c.id, backlogDe: deleteField(), deadline, criadoEm: todayISO(),
-          tier: null, resultado: null, reprovado: false, notas: {},
-          // ponderados e a fase de introdução são do ciclo anterior — zeram na
-          // reativação (senão o pitch volta com a análise antiga colada — v6)
-          valorPonderado: deleteField(), deadlinePonderado: deleteField(), introConcluida: deleteField(),
+        const nome = proj(pid)?.nome ?? pid;
+        // transação: dois admins reativando ao mesmo tempo davam "ação não
+        // permitida" no segundo (a regra exige ciclo == 'backlog') — agora a
+        // segunda tentativa recebe uma mensagem que explica o que aconteceu (v6)
+        runTransaction(db, async (tx) => {
+          const ref = doc(db, 'projects', pid);
+          const d = (await tx.get(ref)).data();
+          if (!d) throw new Error('Pitch não encontrado.');
+          if (d.ciclo !== 'backlog') throw new Error('Este pitch já foi reativado por outra pessoa.');
+          tx.update(ref, {
+            ciclo: c.id, backlogDe: deleteField(), deadline, criadoEm: todayISO(),
+            tier: null, resultado: null, reprovado: false, notas: {},
+            // ponderados e a fase de introdução são do ciclo anterior — zeram na
+            // reativação (senão o pitch volta com a análise antiga colada — v6)
+            valorPonderado: deleteField(), deadlinePonderado: deleteField(), introConcluida: deleteField(),
+          });
         })
           .then(() => {
-            addLog('Pitch reativado do backlog', p.nome + ' — ' + c.nome, 'flux');
-            showToast('"' + p.nome + '" foi reinscrito no ' + c.nome + ' e entrou de novo na triagem de acesso.');
+            addLog('Pitch reativado do backlog', nome + ' — ' + c.nome, 'flux');
+            showToast('"' + nome + '" foi reinscrito no ' + c.nome + ' e entrou de novo na triagem de acesso.');
           })
           .catch(falha);
       },

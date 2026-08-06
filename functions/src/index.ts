@@ -540,6 +540,16 @@ export const aoReceberComando = onDocumentCreated('comandos/{comandoId}', async 
     } catch (e) {
       logger.warn('anonimização: falha ao tratar histórico de edições (índice ausente?)', { erro: String(e) });
     }
+    // 3c) logs de auditoria: `quem` é o nome exibido; `quemUid` (imposto pela
+    //     regra) permite anonimizar por chave. Limite por execução — o resto
+    //     some pela retenção de 365 dias.
+    let logsTratados = 0;
+    try {
+      const ls = await db().collection('logs').where('quemUid', '==', alvoId).limit(500).get();
+      for (const d of ls.docs) { await d.ref.update({ quem: anon }); logsTratados++; }
+    } catch (e) {
+      logger.warn('anonimização: falha ao tratar logs (índice ausente?)', { erro: String(e) });
+    }
     // 4) POR ÚLTIMO: cadastro (zera PII, revoga acesso). Deixar por último mantém
     //    oldNome legível se a entrega at-least-once reprocessar os laços acima.
     await alvoRef.set({
@@ -548,8 +558,8 @@ export const aoReceberComando = onDocumentCreated('comandos/{comandoId}', async 
       roles: ['user'], ativo: false, perfilPendente: false,
       anonimizadoEm: FieldValue.serverTimestamp(),
     }, { merge: true });
-    await logSistema('Usuário anonimizado (LGPD)', 'cadastro, ' + falhas.size + ' falha(s), ' + rankingsAjustados + ' ranking(s), ' + comentsTratados + ' comentário(s) e ' + edicoesTratadas + ' edição(ões) tratados', 'admin');
-    await marcar({ status: 'ok', falhasRemovidas: falhas.size, rankingsAjustados, comentsTratados, edicoesTratadas });
+    await logSistema('Usuário anonimizado (LGPD)', 'cadastro, ' + falhas.size + ' falha(s), ' + rankingsAjustados + ' ranking(s), ' + comentsTratados + ' comentário(s), ' + edicoesTratadas + ' edição(ões) e ' + logsTratados + ' log(s) tratados', 'admin');
+    await marcar({ status: 'ok', falhasRemovidas: falhas.size, rankingsAjustados, comentsTratados, edicoesTratadas, logsTratados });
     return;
   }
 

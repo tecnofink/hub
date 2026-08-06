@@ -439,7 +439,9 @@ function NovaTarefa({ pid, membros, onFechar }: { pid: string; membros: { id: st
     let etapaNova: { id: string; nome: string; inicio: string; fim: string } | undefined;
     if (novaEtapaOn) {
       if (!novaEtapa.trim()) return ui.showToast('Dê um nome à nova etapa.');
-      et = 'F' + q.etapas.length;
+      // id único: 'F'+length colidia quando dois membros criavam etapa ao
+      // mesmo tempo (a segunda era descartada e a tarefa caía na etapa errada)
+      et = 'F' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
       const inicio = todayISO();
       const fim = q.etapas.reduce((a, e) => (e.fim > a ? e.fim : a), f.prazo || todayISO());
       etapaNova = { id: et, nome: novaEtapa.trim(), inicio, fim: fim < inicio ? inicio : fim };

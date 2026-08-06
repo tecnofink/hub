@@ -74,12 +74,10 @@ function AnexosDaMensagem({ anexos }: { anexos: AnexoTarefa[] }) {
  * Corpo do chat (sem moldura): usado inline na ficha do projeto e dentro do
  * modal em /admin/flux/pitches. `onClose` só é passado no modal — nesse caso
  * o cabeçalho ganha o X de fechar e o nome do pitch (redundante inline).
- * `compacto` (ficha): mostra só as 2 últimas mensagens + botão Maximizar
- * (onMaximizar) para abrir a conversa inteira no modal — evita que uma thread
- * longa deixe a ficha desproporcional.
+ * `onMaximizar` (ficha): abre a conversa inteira no modal.
  */
-export function ChatTriagem({ pitch, onClose, compacto, onMaximizar }: {
-  pitch: Projeto; onClose?: () => void; compacto?: boolean; onMaximizar?: () => void;
+export function ChatTriagem({ pitch, onClose, onMaximizar }: {
+  pitch: Projeto; onClose?: () => void; onMaximizar?: () => void;
 }) {
   const store = useStore();
   const ui = useUI();
@@ -94,11 +92,16 @@ export function ChatTriagem({ pitch, onClose, compacto, onMaximizar }: {
   const fimRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => store.observarComentariosPitch(pitch.id, setMensagens), [pitch.id]);
-  useEffect(() => { fimRef.current?.scrollIntoView({ block: 'end' }); }, [mensagens.length]);
+  // rola só a CAIXA da conversa — scrollIntoView arrastava a página inteira ao
+  // abrir a ficha (o chat fica no rodapé da tela) — v6
+  useEffect(() => {
+    const fim = fimRef.current;
+    const caixa = fim?.parentElement?.parentElement; // wrapper com overflow-y
+    if (caixa) caixa.scrollTop = caixa.scrollHeight;
+  }, [mensagens.length]);
 
   if (!me) return null;
   const souAdmin = ehFluxAdmin(me);
-  const visiveis = compacto ? mensagens.slice(-2) : mensagens;
 
   const escolher = (files: FileList | null) => {
     if (!files) return;
@@ -110,10 +113,15 @@ export function ChatTriagem({ pitch, onClose, compacto, onMaximizar }: {
 
   const enviar = async () => {
     if ((!texto.trim() && !arquivos.length) || enviando) return;
+    // guarda o que está sendo enviado: durante um upload lento a pessoa pode
+    // continuar digitando/anexando — limpar às cegas apagava isso (v6)
+    const textoEnviado = texto;
+    const arquivosEnviados = arquivos;
     setEnviando(true);
     try {
-      await store.addComentarioPitch(pitch.id, texto, arquivos);
-      setTexto(''); setArquivos([]);
+      await store.addComentarioPitch(pitch.id, textoEnviado, arquivosEnviados);
+      setTexto((atual) => (atual === textoEnviado ? '' : atual));
+      setArquivos((atual) => atual.filter((f) => !arquivosEnviados.includes(f)));
     } catch { /* falha já vira toast no store */ }
     finally { setEnviando(false); }
   };
@@ -143,28 +151,21 @@ export function ChatTriagem({ pitch, onClose, compacto, onMaximizar }: {
 
       <div style={{
         // no modal a thread ESTICA para preencher os 80vh; inline usa altura fixa
-        ...(onClose ? { flex: 1, minHeight: 0 } : { minHeight: compacto ? 0 : 160, maxHeight: compacto ? 300 : 380 }),
+        ...(onClose ? { flex: 1, minHeight: 0 } : { minHeight: 160, maxHeight: 380 }),
         overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8, padding: '4px 4px 4px 0', background: 'var(--tf-bg-2)', borderRadius: 12, border: '1px solid var(--tf-line)',
       }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: 12 }}>
           {mensagens.length === 0 && (
-            <p className="tf-small" style={{ fontSize: '0.8rem', color: 'var(--tf-ink-3)', textAlign: 'center', padding: compacto ? '14px 8px' : '28px 12px' }}>
+            <p className="tf-small" style={{ fontSize: '0.8rem', color: 'var(--tf-ink-3)', textAlign: 'center', padding: '28px 12px' }}>
               Nenhuma mensagem ainda. {souAdmin
                 ? 'Use este chat para tirar dúvidas e pedir comprovações ao titular antes de definir o acesso — ele será avisado por e-mail.'
                 : 'Use este chat para conversar com os admins do Flux sobre a triagem do seu pitch — eles serão avisados por e-mail.'}
             </p>
           )}
-          {/* na ficha (compacto) mostra só as 2 últimas — o resto fica no modal */}
-          {compacto && mensagens.length > 2 && (
-            <button type="button" onClick={onMaximizar} className="acao foco-tf"
-              style={{ alignSelf: 'center', fontSize: '0.72rem', color: 'var(--tf-accent)' }}>
-              ↑ ver conversa completa ({mensagens.length} mensagens)
-            </button>
-          )}
-          {visiveis.map((c, i) => {
+          {mensagens.map((c, i) => {
             const minha = c.autorId === me.id;
             const doTitular = c.autorId === pitch.uid;
-            const diaAnterior = i > 0 ? diaDe(visiveis[i - 1].criadoEm) : null;
+            const diaAnterior = i > 0 ? diaDe(mensagens[i - 1].criadoEm) : null;
             const dia = diaDe(c.criadoEm);
             return (
               <React.Fragment key={c.id}>
