@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import type { PbEvento, PbStatusEvento } from '../../lib/playbook';
 import { Badge, L } from '../../components/ui';
 import { useUI } from '../../store/AppStore';
-import { pbId } from './usePlaybook';
+import { pbId, removerFeira } from './usePlaybook';
 import { SecHead } from './comum';
 
 const CICLO: PbStatusEvento[] = ['NÃO INICIADO', 'EM ANDAMENTO', 'CONCLUÍDO'];
@@ -50,7 +50,12 @@ export default function SecEventos({ lista, podeEditar, salvar }: {
                 className="acao foco-tf"
                 onClick={() => ui.confirmar({
                   titulo: 'Remover evento?', texto: `"${ev.nome}" e a página da feira dele (checklist, logística, leads e portal) serão removidos.`, cta: 'Remover', danger: true,
-                  onConfirm: () => salvar({ lista: lista.filter((x) => x.id !== ev.id) }),
+                  onConfirm: () => {
+                    salvar({ lista: lista.filter((x) => x.id !== ev.id) });
+                    // apaga também a página da feira (leads/PII, logística e
+                    // credenciais do portal), como o texto acima promete
+                    void removerFeira(ev.id).catch(() => ui.showToast('Evento removido, mas a página da feira dele não pôde ser apagada.'));
+                  },
                 })}
                 style={{ color: 'var(--tf-crit)', fontWeight: 700 }}
               >

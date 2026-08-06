@@ -97,8 +97,13 @@ service firebase.storage {
           || firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.roles.hasAny(['hubAdmin', 'admin'])
         );
       }
+      // espelha a fronteira do Firestore: além dos leads (PII), os documentos
+      // da Página da Feira (logistica/) e dos Stands 2027 (stands/) são
+      // restritos — o leitor comum não vê essas seções no Firestore e não pode
+      // baixá-las aqui. O sufixo (/.*)? cobre também a LISTAGEM do prefixo,
+      // que com 'leads/.*' escapava (o wildcard recebe 'leads' sem barra).
       allow read: if ativo()
-        && (!caminho.matches('leads/.*') || podeVerRestrito());
+        && (!caminho.matches('(leads|logistica|stands)(/.*)?') || podeVerRestrito());
       allow write: if editorPlaybook() && tamanhoOk();
       allow delete: if editorPlaybook();
     }

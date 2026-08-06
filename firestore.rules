@@ -485,9 +485,13 @@ service cloud.firestore {
     //    Escrita: SOMENTE editores do playbook (cada ferramenta gere o próprio
     //    acesso). A lista de editores é autogerida pelos editores; o admin do
     //    hub mantém acesso de socorro à lista. ──
+    // A editora MASTER do Marketing (Fernanda Berli) é editora por definição —
+    // não depende da lista gravada (se o config sumir/for corrompido, ela
+    // continua administrando a ferramenta).
     function ehEditorPlaybook() {
       return isActive()
-        && request.auth.uid in get(/databases/$(database)/documents/playbook/config).data.editores;
+        && (request.auth.uid == 'RGelqbq5ROU2Ey4RdpZod2pHZfS2'
+            || request.auth.uid in get(/databases/$(database)/documents/playbook/config).data.editores);
     }
     // observador: vê tudo (só leitura). Leitor (demais ativos) NÃO vê Página da
     // Feira (checklist), Stands 2027 nem as páginas de feira (playbookFeira).

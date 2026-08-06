@@ -3,7 +3,7 @@
  * seção + gravação (regras do Firestore restringem escrita a editores/admins).
  */
 import { useEffect, useMemo, useState } from 'react';
-import { doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { deleteDoc, doc, getDoc, onSnapshot, setDoc } from 'firebase/firestore';
 import { deleteObject, getDownloadURL, ref as sRef, uploadBytes } from 'firebase/storage';
 import { db, storage } from '../../lib/firebase';
 import { useStore, useUI } from '../../store/AppStore';
@@ -72,12 +72,20 @@ export function usePlaybook() {
   // seções visíveis a todos + config
   useEffect(() => {
     const abertas = ['config', 'eventos', 'catalogos', 'associacoes', 'prospeccao', 'brindes', 'workshops'];
+    // "pronto" só quando TODAS as seções abertas tiveram o primeiro snapshot.
+    // Antes era marcado de forma síncrona: a tela montava com listas vazias e
+    // um clique em "+ Novo …" gravava a lista só com o item novo, apagando o
+    // conteúdo real (setDoc reescreve o documento).
+    const faltam = new Set(abertas);
+    const chegou = (id: string) => {
+      faltam.delete(id);
+      if (!faltam.size) setPronto(true);
+    };
     const subs = abertas.map((id) => onSnapshot(
       doc(db, 'playbook', id),
-      (s) => { if (s.exists()) setSecao(id, s.data()); },
-      () => { /* sem acesso/erro: mantém vazio */ },
+      (s) => { if (s.exists()) setSecao(id, s.data()); chegou(id); },
+      () => { chegou(id); /* sem acesso/erro: mantém vazio */ },
     ));
-    setPronto(true);
     return () => subs.forEach((u) => u());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -100,9 +108,12 @@ export function usePlaybook() {
 
   return useMemo(() => ({
     docs, pronto, podeEditar, podeVerTudo, podeGerirEditores, papel,
-    /** regrava o documento inteiro da seção (documentos pequenos, edição rara) */
+    /** grava a seção. `merge` protege campos que a tela não tocou; e nada é
+     *  gravado antes do primeiro snapshot (evita salvar por cima com o estado
+     *  vazio inicial — apagava listas inteiras). */
     salvar: <K extends keyof PlaybookDocs>(secao: K, dados: PlaybookDocs[K]) => {
-      setDoc(doc(db, 'playbook', secao), dados).catch((e) => ui.showToast(msg(e)));
+      if (!pronto) { ui.showToast('Aguarde o Marketing carregar antes de editar.'); return; }
+      setDoc(doc(db, 'playbook', secao), dados, { merge: true }).catch((e) => ui.showToast(msg(e)));
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [docs, pronto, podeEditar, podeVerTudo, podeGerirEditores, papel, me?.id]);
@@ -112,10 +123,15 @@ export function usePlaybook() {
 export function useFeira(eventoId: string | null) {
   const ui = useUI();
   const [feira, setFeira] = useState<PbFeira>(FEIRA_VAZIA);
+  // qual evento JÁ recebeu o primeiro snapshot. Sem isso, uma marcação feita
+  // nos milissegundos entre abrir a feira e a resposta da rede gravava
+  // FEIRA_VAZIA por cima e apagava leads (PII), logística e credenciais.
+  const [carregado, setCarregado] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!eventoId) return;
+    if (!eventoId) { setCarregado(null); return; }
     setFeira(FEIRA_VAZIA);
+    setCarregado(null);
     return onSnapshot(doc(db, 'playbookFeira', eventoId), (s) => {
       const d = s.data() as Partial<PbFeira> | undefined;
       setFeira({
@@ -124,20 +140,47 @@ export function useFeira(eventoId: string | null) {
         leads: { manuais: [], ...d?.leads },
         portal: d?.portal ?? {},
       });
-    });
+      setCarregado(eventoId);
+    }, () => { /* sem acesso: segue bloqueado para escrita */ });
   }, [eventoId]);
 
   const salvar = (nova: PbFeira) => {
     if (!eventoId) return;
-    setDoc(doc(db, 'playbookFeira', eventoId), nova).catch((e) => ui.showToast(msg(e)));
+    // trava de segurança: só grava depois de ter lido a feira ATUAL deste
+    // evento — e com merge, para nunca zerar seções que não foram tocadas
+    if (carregado !== eventoId) {
+      ui.showToast('Aguarde os dados da feira carregarem antes de editar.');
+      return;
+    }
+    setDoc(doc(db, 'playbookFeira', eventoId), nova, { merge: true }).catch((e) => ui.showToast(msg(e)));
   };
 
-  return { feira, salvar };
+  return { feira, salvar, carregado: carregado === eventoId };
 }
 
 function msg(e: unknown): string {
   const s = String((e as { code?: string })?.code ?? e);
   return s.includes('permission') ? 'Somente editores podem alterar o conteúdo.' : s;
+}
+
+/**
+ * Remove a página da feira de um evento — a UI promete isso ao excluir o
+ * evento, mas o doc ficava órfão no banco com PII (leads manuais, planilhas)
+ * e as credenciais do portal. Apaga também os arquivos referenciados.
+ */
+export async function removerFeira(eventoId: string): Promise<void> {
+  const ref = doc(db, 'playbookFeira', eventoId);
+  try {
+    const snap = await getDoc(ref);
+    const d = snap.data() as Partial<PbFeira> | undefined;
+    const urls = [
+      ...((d?.logistica?.docs ?? []) as PbArquivo[]).map((x) => x?.url),
+      d?.leads?.planilha?.url,
+      d?.leads?.manualPlanilha?.url,
+    ].filter(Boolean) as string[];
+    await Promise.all(urls.map((u) => removerArquivoPb(u)));
+  } catch { /* melhor esforço: seguir para o delete do doc mesmo assim */ }
+  await deleteDoc(ref);
 }
 
 /** Upload de documento do playbook → Storage; devolve {n, url}. */
