@@ -4,7 +4,7 @@
  * A árvore do checklist (setores → categorias → itens) é global; as marcações,
  * a logística, os leads e o portal são por feira (playbookFeira/{eventoId}).
  */
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import type { PbDocChecklist, PbEvento, PbFeira } from '../../lib/playbook';
 import { useUI } from '../../store/AppStore';
 import { pbId, useFeira } from './usePlaybook';
@@ -29,8 +29,19 @@ export default function SecChecklist({ eventos, arvore, podeEditar, salvarArvore
   const [aba, setAba] = useState<Aba>('checklist');
   const { feira, salvar: salvarFeira } = useFeira(feiraId);
 
+  // os eventos chegam pelo listener: no primeiro render a lista é vazia e
+  // nenhuma feira ficava selecionada. Seleciona a primeira quando chegarem —
+  // e também se a feira aberta for removida.
+  useEffect(() => {
+    if (!eventos.length) { if (feiraId) setFeiraId(null); return; }
+    if (!feiraId || !eventos.some((e) => e.id === feiraId)) setFeiraId(eventos[0].id);
+  }, [eventos, feiraId]);
+
   const evento = eventos.find((e) => e.id === feiraId) ?? null;
   const totalItens = arvore.itens.length;
+  // conta só marcações de itens que AINDA existem na estrutura — itens
+  // removidos deixam marcação órfã e o contador passava do total
+  const marcadosValidos = arvore.itens.filter((i) => feira.checklist[i.id]?.marcado).length;
 
   return (
     <section>
@@ -63,7 +74,7 @@ export default function SecChecklist({ eventos, arvore, podeEditar, salvarArvore
               <span className="tf-small" style={{ fontSize: '0.78rem' }}>{[evento.local, evento.data].filter(Boolean).join(' · ')}</span>
             </div>
             <span className="tf-mono" style={{ fontSize: '0.62rem' }}>
-              {Object.values(feira.checklist).filter((m) => m.marcado).length} DE {totalItens} ITENS MARCADOS
+              {marcadosValidos} DE {totalItens} ITENS MARCADOS
             </span>
           </div>
           <div style={{ display: 'flex', gap: 5, borderBottom: '1px solid var(--tf-line)', margin: '16px 0 20px', overflowX: 'auto' }}>
@@ -121,7 +132,7 @@ function AbaChecklist({ arvore, feira, podeEditar, salvarFeira, salvarArvore }: 
       .sort((a, b) => a.ordem - b.ordem);
 
   const blocoCategoria = (catId: string, nome: string) => {
-    const itens = arvore.itens.filter((i) => i.categoriaId === catId).sort((a, b) => a.ordem - b.ordem);
+    const itens = arvore.itens.filter((i) => i.categoriaId === catId).slice().sort((a, b) => a.ordem - b.ordem);
     const marcados = itens.filter((i) => feira.checklist[i.id]?.marcado).length;
     return (
       <div key={catId} style={{ border: '1px solid var(--tf-line)', borderRadius: 10, padding: '14px 16px' }}>
@@ -160,7 +171,7 @@ function AbaChecklist({ arvore, feira, podeEditar, salvarFeira, salvarArvore }: 
 
   return (
     <div>
-      {arvore.setores.sort((a, b) => a.ordem - b.ordem).map((s) => {
+      {[...arvore.setores].sort((a, b) => a.ordem - b.ordem).map((s) => {
         const cats = categoriasDe(s.id);
         if (!cats.length) return null;
         return (
@@ -201,7 +212,7 @@ function EditorEstrutura({ arvore, salvar }: { arvore: PbDocChecklist; salvar: (
 
   return (
     <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>
-      {arvore.setores.sort((a, b) => a.ordem - b.ordem).map((s) => (
+      {[...arvore.setores].sort((a, b) => a.ordem - b.ordem).map((s) => (
         <div key={s.id} style={{ border: '1px solid var(--tf-line)', borderRadius: 10, padding: '12px 14px' }}>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <CampoBlur valor={s.nome} onSalvar={(v) => salvar({ ...arvore, setores: arvore.setores.map((x) => (x.id === s.id ? { ...x, nome: v } : x)) })} style={{ maxWidth: 320, padding: '7px 10px', fontSize: '0.86rem', fontWeight: 700 }} />
@@ -219,7 +230,7 @@ function EditorEstrutura({ arvore, salvar }: { arvore: PbDocChecklist; salvar: (
             </button>
           </div>
           <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {arvore.categorias.filter((c) => c.setorId === s.id).sort((a, b) => a.ordem - b.ordem).map((c) => (
+            {arvore.categorias.filter((c) => c.setorId === s.id).slice().sort((a, b) => a.ordem - b.ordem).map((c) => (
               <div key={c.id} style={{ paddingLeft: 14, borderLeft: '2px solid var(--tf-line)' }}>
                 <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                   <CampoBlur valor={c.nome} onSalvar={(v) => salvar({ ...arvore, categorias: arvore.categorias.map((x) => (x.id === c.id ? { ...x, nome: v } : x)) })} style={{ maxWidth: 300, padding: '6px 9px', fontSize: '0.82rem' }} />
@@ -236,7 +247,7 @@ function EditorEstrutura({ arvore, salvar }: { arvore: PbDocChecklist; salvar: (
                   </button>
                 </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, margin: '6px 0 0' }}>
-                  {arvore.itens.filter((i) => i.categoriaId === c.id).sort((a, b) => a.ordem - b.ordem).map((i) => (
+                  {arvore.itens.filter((i) => i.categoriaId === c.id).slice().sort((a, b) => a.ordem - b.ordem).map((i) => (
                     <span key={i.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, border: '1px solid var(--tf-line)', borderRadius: 999, padding: '3px 10px', fontSize: '0.76rem' }}>
                       {i.nome}
                       <button type="button" className="acao foco-tf" onClick={() => salvar({ ...arvore, itens: arvore.itens.filter((x) => x.id !== i.id) })} style={{ color: 'var(--tf-crit)', fontWeight: 700 }}>×</button>

@@ -35,7 +35,7 @@ export function SecStands({ lista, podeEditar, salvar }: { lista: PbStand[]; pod
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(min(340px,100%),1fr))', gap: 12, marginTop: 14 }}>
-        {lista.sort((a, b) => a.ordem - b.ordem).map((s) => (
+        {[...lista].sort((a, b) => a.ordem - b.ordem).map((s) => (
           <div key={s.id} className="tf-card" style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <CampoBlur valor={s.nome ?? ''} onSalvar={(v) => up(s.id, (x) => ({ ...x, nome: v }))} desabilitado={!podeEditar} placeholder="Nome do evento" style={{ fontWeight: 700, fontSize: '0.96rem', padding: '7px 10px', flex: 1 }} />
@@ -87,7 +87,7 @@ export function SecWorkshops({ lista, podeEditar, salvar }: { lista: PbWorkshop[
     <section>
       <SecHead id="workshops" num="08" titulo="Workshops" sub="Registro dos workshops técnicos: quem organizou, onde, quando e o que foi apresentado." />
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(min(340px,100%),1fr))', gap: 12 }}>
-        {lista.sort((a, b) => a.ordem - b.ordem).map((w) => (
+        {[...lista].sort((a, b) => a.ordem - b.ordem).map((w) => (
           <div key={w.id} className="tf-card" style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <CampoBlur valor={w.tema} onSalvar={(v) => up(w.id, (x) => ({ ...x, tema: v }))} desabilitado={!podeEditar} placeholder="Tema do workshop" style={{ fontWeight: 700, fontSize: '0.96rem', padding: '7px 10px', flex: 1 }} />

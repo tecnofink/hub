@@ -86,7 +86,7 @@ function AbaLogistica({ eventoId, feira, salvar, podeEditar }: { eventoId: strin
           <span className="tf-mono" style={{ fontSize: '0.66rem', color: 'var(--tf-accent)' }}>TOTAL · {brl(totalCustos)}</span>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-          {log.custos.sort((a, b) => a.ordem - b.ordem).map((c) => (
+          {[...log.custos].sort((a, b) => a.ordem - b.ordem).map((c) => (
             <div key={c.id} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <CampoBlur valor={c.descricao} onSalvar={(v) => setLog({ custos: log.custos.map((x) => (x.id === c.id ? { ...x, descricao: v } : x)) })} desabilitado={!podeEditar} placeholder="Descrição" style={{ flex: 1, padding: '8px 11px', fontSize: '0.84rem' }} />
               <NumeroBlur valor={c.valor} onSalvar={(v) => setLog({ custos: log.custos.map((x) => (x.id === c.id ? { ...x, valor: v ?? 0 } : x)) })} desabilitado={!podeEditar} largura={120} placeholder="R$" />
@@ -154,7 +154,7 @@ function AbaLeads({ eventoId, feira, salvar, podeEditar }: { eventoId: string; f
           <div style={{ display: 'grid', gridTemplateColumns: '150px 150px 130px 180px 130px 140px 1fr 40px', minWidth: 960, gap: 0, padding: '9px 4px', borderBottom: '1px solid var(--tf-line)' }}>
             {['NOME', 'EMPRESA', 'CARGO', 'E-MAIL', 'TELEFONE', 'ORIGEM', 'OBS', ''].map((h, i) => <span key={i} className="tf-mono" style={{ fontSize: '0.54rem' }}>{h}</span>)}
           </div>
-          {leads.manuais.sort((a, b) => a.ordem - b.ordem).map((l) => {
+          {[...leads.manuais].sort((a, b) => a.ordem - b.ordem).map((l) => {
             const setLead = (patch: Partial<PbLeadManual>) => setLeads({ manuais: leads.manuais.map((x) => (x.id === l.id ? { ...x, ...patch } : x)) });
             const campo = (k: keyof PbLeadManual, ph: string) => (
               <CampoBlur valor={(l[k] as string) ?? ''} onSalvar={(v) => setLead({ [k]: v } as Partial<PbLeadManual>)} desabilitado={!podeEditar} placeholder={ph} style={{ padding: '6px 8px', fontSize: '0.78rem', border: 'none', background: 'transparent' }} />

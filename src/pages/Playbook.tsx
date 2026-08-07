@@ -10,7 +10,7 @@
  *   · leitor     — somente leitura e NÃO vê Página da Feira nem Stands 2027.
  */
 import React, { useState } from 'react';
-import { useStore } from '../store/AppStore';
+import { useStore, useUI } from '../store/AppStore';
 import { Avatar, Badge, Modal, Mono } from '../components/ui';
 import { usePlaybook, type PapelPlaybook } from './playbook/usePlaybook';
 import { PB_EDITOR_MASTER, pbEditores } from '../lib/playbook';
@@ -41,6 +41,7 @@ const PAPEIS: { id: PapelPlaybook; nome: string }[] = [
 export default function Playbook() {
   const store = useStore();
   const { state } = store;
+  const ui = useUI();
   const pb = usePlaybook();
   const [papeisOn, setPapeisOn] = useState(false);
 
@@ -60,6 +61,20 @@ export default function Playbook() {
     // o editor master é fixo: ninguém rebaixa pela interface (a regra do
     // Firestore também recusa uma lista sem ele)
     if (uid === PB_EDITOR_MASTER) return;
+    // um clique errado na própria linha tirava o acesso de quem estava
+    // editando (e só outro editor poderia devolver) — confirma antes
+    if (uid === store.me?.id && papel !== 'editor') {
+      ui.confirmar({
+        titulo: 'Sair do modo editor?',
+        texto: 'Você perde o acesso de edição do Marketing agora. Só outro editor (ou o admin do hub) poderá devolvê-lo.',
+        cta: 'Sim, rebaixar meu acesso', danger: true,
+        onConfirm: () => aplicarPapel(uid, papel),
+      });
+      return;
+    }
+    aplicarPapel(uid, papel);
+  };
+  const aplicarPapel = (uid: string, papel: PapelPlaybook) => {
     const eds = editores.filter((x) => x !== uid);
     const obs = observadores.filter((x) => x !== uid);
     if (papel === 'editor') eds.push(uid);

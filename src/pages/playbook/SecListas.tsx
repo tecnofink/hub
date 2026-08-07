@@ -13,7 +13,7 @@ export function SecAssociacoes({ lista, podeEditar, salvar }: { lista: PbAssocia
     <section>
       <SecHead id="associacoes" num="04" titulo="Associações" sub="Entidades do setor e os descontos/benefícios que dão em stands e eventos." />
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(320px,1fr))', gap: 12 }}>
-        {lista.sort((a, b) => a.ordem - b.ordem).map((a) => (
+        {[...lista].sort((a, b) => a.ordem - b.ordem).map((a) => (
           <div key={a.id} className="tf-card" style={{ padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               <CampoBlur valor={a.nome} onSalvar={(v) => up(a.id, (x) => ({ ...x, nome: v }))} desabilitado={!podeEditar} style={{ fontWeight: 700, fontSize: '1rem', padding: '7px 10px', flex: 1 }} />
@@ -75,7 +75,7 @@ export function SecProspeccao({ dados, podeEditar, salvar }: {
     <section>
       <SecHead id="avaliacao" num="05" titulo="Prospecção" sub="Sugestões de novos eventos por setor da indústria — avalie a forma de participação." />
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {dados.setores.sort((a, b) => a.ordem - b.ordem).map((s) => {
+        {[...dados.setores].sort((a, b) => a.ordem - b.ordem).map((s) => {
           const evs = dados.eventos.filter((e) => e.setorId === s.id).sort((a, b) => a.ordem - b.ordem);
           return (
             <div key={s.id} className="tf-card" style={{ padding: '18px 22px' }}>
@@ -162,7 +162,7 @@ export function SecBrindes({ lista, podeEditar, salvar }: { lista: PbBrinde[]; p
     <section>
       <SecHead id="brindes" num="06" titulo="Brindes" sub="Controle de estoque e saídas dos brindes de feira." />
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(300px,1fr))', gap: 12 }}>
-        {lista.sort((a, b) => a.ordem - b.ordem).map((b) => {
+        {[...lista].sort((a, b) => a.ordem - b.ordem).map((b) => {
           const usado = b.usos.reduce((a, u) => a + u.qtd, 0);
           const saldo = (b.estoqueInicial ?? 0) - usado;
           const cor = saldo < 0 ? 'var(--tf-crit)' : b.estoqueInicial && saldo <= b.estoqueInicial * 0.1 ? 'var(--tf-warn)' : 'var(--tf-accent)';
