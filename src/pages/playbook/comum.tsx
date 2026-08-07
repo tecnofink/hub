@@ -4,6 +4,17 @@ import type { PbArquivo } from '../../lib/playbook';
 import { removerArquivoPb, subirArquivoPb } from './usePlaybook';
 import { useUI } from '../../store/AppStore';
 
+/**
+ * URL segura para href: só http(s). Links são digitados/colados pelos
+ * usuários — sem isso, um `javascript:…` colado no campo vira código
+ * executável para quem clicar (o React não bloqueia esse esquema).
+ */
+export function urlSegura(u?: string): string | undefined {
+  if (!u) return undefined;
+  const t = u.trim();
+  return /^https?:\/\//i.test(t) ? t : undefined;
+}
+
 /** Cabeçalho de seção do playbook: [ NN · TÍTULO ]. */
 export function SecHead({ id, num, titulo, sub }: { id: string; num: string; titulo: string; sub?: string }) {
   return (
@@ -15,7 +26,7 @@ export function SecHead({ id, num, titulo, sub }: { id: string; num: string; tit
 }
 
 /** Input não-controlado que salva no blur (padrão do playbook antigo). */
-export function CampoBlur({ valor, onSalvar, placeholder, tipo = 'text', desabilitado, style, area, mono }: {
+export function CampoBlur({ valor, onSalvar, placeholder, tipo = 'text', desabilitado, style, area, mono, autoComplete }: {
   valor: string;
   onSalvar: (v: string) => void;
   placeholder?: string;
@@ -24,6 +35,9 @@ export function CampoBlur({ valor, onSalvar, placeholder, tipo = 'text', desabil
   style?: React.CSSProperties;
   area?: boolean;
   mono?: boolean;
+  /** 'off'/'new-password' em campos de credencial — o autofill do navegador
+   *  preenchia login/senha pessoais e o onBlur gravava no doc da feira */
+  autoComplete?: string;
 }) {
   const ref = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
   useEffect(() => { if (ref.current && document.activeElement !== ref.current) ref.current.value = valor; }, [valor]);
@@ -31,6 +45,7 @@ export function CampoBlur({ valor, onSalvar, placeholder, tipo = 'text', desabil
     defaultValue: valor,
     placeholder,
     disabled: desabilitado,
+    autoComplete,
     onBlur: (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       if (e.target.value !== valor) onSalvar(e.target.value);
     },
@@ -117,7 +132,7 @@ export function UploadCampo({ rotulo, valor, pathPrefix, accept, podeEditar, onS
       <span className="tf-mono" style={{ fontSize: '0.58rem' }}>{rotulo.toUpperCase()}</span>
       {tem ? (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <a href={valor!.url || valor!.link} target="_blank" rel="noreferrer" style={{ flex: 1, minWidth: 0, fontFamily: 'var(--tf-font-mono)', fontSize: '0.74rem', color: 'var(--tf-accent)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <a href={valor!.url || urlSegura(valor!.link)} target="_blank" rel="noreferrer" style={{ flex: 1, minWidth: 0, fontFamily: 'var(--tf-font-mono)', fontSize: '0.74rem', color: 'var(--tf-accent)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {valor!.url ? '⇩ ' + (valor!.n ?? 'arquivo') : '↗ ' + (valor!.link ?? '')}
           </a>
           {podeEditar && (

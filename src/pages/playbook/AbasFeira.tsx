@@ -3,8 +3,9 @@ import React, { useState } from 'react';
 import type { PbFeira, PbLeadManual, PbLeadOrigem, PbLogisticaDoc } from '../../lib/playbook';
 import { brl } from '../../lib/format';
 import { useUI } from '../../store/AppStore';
-import { pbId } from './usePlaybook';
-import { CampoBlur, NumeroBlur, UploadCampo } from './comum';
+import { pbId, useRegistrarExportacaoLeads } from './usePlaybook';
+import { eventoISO } from './SecCatalogos';
+import { CampoBlur, NumeroBlur, UploadCampo, urlSegura } from './comum';
 import { L } from '../../components/ui';
 
 const DOC_SLOTS: { slot: PbLogisticaDoc['slot']; rotulo: string }[] = [
@@ -16,15 +17,17 @@ const DOC_SLOTS: { slot: PbLogisticaDoc['slot']; rotulo: string }[] = [
 
 const ORIGENS: PbLeadOrigem[] = ['Cartão de visita', 'Aplicativo', 'Outro'];
 
-export default function AbasFeira({ aba, eventoId, feira, salvar, podeEditar }: {
+export default function AbasFeira({ aba, eventoId, eventoData, feira, salvar, podeEditar }: {
   aba: 'logistica' | 'leads' | 'portal';
   eventoId: string;
+  /** rótulo de data do evento — usado no aviso de retenção dos leads */
+  eventoData?: string;
   feira: PbFeira;
   salvar: (f: PbFeira) => void;
   podeEditar: boolean;
 }) {
   if (aba === 'logistica') return <AbaLogistica eventoId={eventoId} feira={feira} salvar={salvar} podeEditar={podeEditar} />;
-  if (aba === 'leads') return <AbaLeads eventoId={eventoId} feira={feira} salvar={salvar} podeEditar={podeEditar} />;
+  if (aba === 'leads') return <AbaLeads eventoId={eventoId} eventoData={eventoData} feira={feira} salvar={salvar} podeEditar={podeEditar} />;
   return <AbaPortal feira={feira} salvar={salvar} podeEditar={podeEditar} />;
 }
 
@@ -107,8 +110,9 @@ function AbaLogistica({ eventoId, feira, salvar, podeEditar }: { eventoId: strin
 }
 
 /* ── Captação de Leads (PII — visível apenas dentro do portal logado) ── */
-function AbaLeads({ eventoId, feira, salvar, podeEditar }: { eventoId: string; feira: PbFeira; salvar: (f: PbFeira) => void; podeEditar: boolean }) {
+function AbaLeads({ eventoId, eventoData, feira, salvar, podeEditar }: { eventoId: string; eventoData?: string; feira: PbFeira; salvar: (f: PbFeira) => void; podeEditar: boolean }) {
   const ui = useUI();
+  const registrarExportacaoLeads = useRegistrarExportacaoLeads();
   const leads = feira.leads;
   const setLeads = (patch: Partial<PbFeira['leads']>) => salvar({ ...feira, leads: { ...leads, ...patch } });
 
@@ -126,10 +130,28 @@ function AbaLeads({ eventoId, feira, salvar, podeEditar }: { eventoId: string; f
     a.download = 'leads.csv';
     a.click();
     URL.revokeObjectURL(a.href);
+    // exportação de PII de terceiros deixa rastro (quem levou a lista, quando)
+    registrarExportacaoLeads(eventoId, leads.manuais.length);
+    ui.showToast(leads.manuais.length + ' lead(s) exportados — o download ficou registrado nos logs de auditoria.');
   };
+
+  // política de retenção (docs/lgpd.md): leads de feira são PII de TERCEIROS
+  // e devem ser eliminados ~24 meses após o evento. O aviso torna a regra
+  // visível para quem opera — a eliminação continua sendo decisão humana.
+  const isoEvento = eventoISO({ data: eventoData });
+  const mesesDesde = isoEvento ? (Date.now() - Date.parse(isoEvento)) / 2629800000 : 0;
+  const venceuRetencao = mesesDesde > 24 && (leads.manuais.length > 0 || !!leads.planilha || !!leads.manualPlanilha);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+      {venceuRetencao && (
+        <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', border: '1px solid var(--tf-amber)', background: 'color-mix(in srgb, var(--tf-amber) 8%, transparent)', borderRadius: 10, padding: '12px 14px' }}>
+          <span aria-hidden="true">⏳</span>
+          <p className="tf-small" style={{ margin: 0, fontSize: '0.78rem' }}>
+            Esta feira aconteceu há mais de <strong>24 meses</strong>. Pela política de retenção (LGPD), os leads devem ser eliminados — apague os contatos e as planilhas, salvo os que viraram relacionamento comercial ativo.
+          </p>
+        </div>
+      )}
       <div className="g-1col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
         <UploadCampo rotulo="Planilha do coletor do evento" valor={leads.planilha} pathPrefix={`leads/${eventoId}`} accept=".xlsx,.xls,.csv" podeEditar={podeEditar} onSalvar={(arq) => setLeads({ planilha: arq })} />
         <UploadCampo rotulo="Planilha consolidada (manual)" valor={leads.manualPlanilha} pathPrefix={`leads/${eventoId}`} accept=".xlsx,.xls,.csv" podeEditar={podeEditar} onSalvar={(arq) => setLeads({ manualPlanilha: arq })} />
@@ -139,7 +161,9 @@ function AbaLeads({ eventoId, feira, salvar, podeEditar }: { eventoId: string; f
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           <L>Captação manual · {leads.manuais.length} lead{leads.manuais.length === 1 ? '' : 's'}</L>
           <div style={{ display: 'flex', gap: 8 }}>
-            {leads.manuais.length > 0 && <button onClick={exportarCsv} className="tf-btn tf-btn-ghost" style={{ padding: '7px 13px', fontSize: '0.78rem' }}>Exportar CSV</button>}
+            {/* PII de terceiros: só editores exportam a lista (observador lê na
+                tela, mas não leva o arquivo embora) */}
+            {leads.manuais.length > 0 && podeEditar && <button onClick={exportarCsv} className="tf-btn tf-btn-ghost" style={{ padding: '7px 13px', fontSize: '0.78rem' }}>Exportar CSV</button>}
             {podeEditar && (
               <button
                 onClick={() => setLeads({ manuais: [...leads.manuais, { id: pbId(), origem: 'Cartão de visita', ordem: leads.manuais.length } as PbLeadManual] })}
@@ -200,16 +224,16 @@ function AbaPortal({ feira, salvar, podeEditar }: { feira: PbFeira; salvar: (f: 
     <div style={{ maxWidth: 560, display: 'flex', flexDirection: 'column', gap: 14 }}>
       <div><L>Link do portal do expositor</L><CampoBlur mono valor={portal.link ?? ''} onSalvar={(v) => setPortal({ link: v })} desabilitado={!podeEditar} placeholder="https://…" /></div>
       <div className="g-1col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-        <div><L>Login</L><CampoBlur mono valor={portal.login ?? ''} onSalvar={(v) => setPortal({ login: v })} desabilitado={!podeEditar} /></div>
+        <div><L>Login</L><CampoBlur mono autoComplete="off" valor={portal.login ?? ''} onSalvar={(v) => setPortal({ login: v })} desabilitado={!podeEditar} /></div>
         <div>
           <L>Senha</L>
           <div style={{ display: 'flex', gap: 6 }}>
-            <CampoBlur mono tipo={mostrarSenha ? 'text' : 'password'} valor={portal.senha ?? ''} onSalvar={(v) => setPortal({ senha: v })} desabilitado={!podeEditar} style={{ flex: 1 }} />
+            <CampoBlur mono autoComplete="new-password" tipo={mostrarSenha ? 'text' : 'password'} valor={portal.senha ?? ''} onSalvar={(v) => setPortal({ senha: v })} desabilitado={!podeEditar} style={{ flex: 1 }} />
             <button onClick={() => setMostrarSenha((v) => !v)} className="tf-btn tf-btn-ghost" style={{ padding: '8px 12px', flex: 'none' }}>{mostrarSenha ? 'ocultar' : 'ver'}</button>
           </div>
         </div>
       </div>
-      {portal.link && <a href={portal.link} target="_blank" rel="noreferrer" className="tf-btn tf-btn-ghost" style={{ alignSelf: 'flex-start' }}>Abrir portal ↗</a>}
+      {urlSegura(portal.link) && <a href={urlSegura(portal.link)} target="_blank" rel="noreferrer" className="tf-btn tf-btn-ghost" style={{ alignSelf: 'flex-start' }}>Abrir portal ↗</a>}
       <p className="tf-small" style={{ fontSize: '0.7rem', margin: 0 }}>Credenciais visíveis apenas para colaboradores logados no portal.</p>
     </div>
   );

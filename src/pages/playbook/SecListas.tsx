@@ -3,7 +3,7 @@ import React from 'react';
 import type { PbAssociacao, PbBrinde, PbDocProspeccao, PbParticipacao } from '../../lib/playbook';
 import { useUI } from '../../store/AppStore';
 import { pbId } from './usePlaybook';
-import { BotaoRemover, CampoBlur, NumeroBlur, SecHead } from './comum';
+import { BotaoRemover, CampoBlur, NumeroBlur, SecHead, urlSegura } from './comum';
 
 /* ── [04] Associações ── */
 export function SecAssociacoes({ lista, podeEditar, salvar }: { lista: PbAssociacao[]; podeEditar: boolean; salvar: (d: { lista: PbAssociacao[] }) => void }) {
@@ -95,7 +95,7 @@ export function SecProspeccao({ dados, podeEditar, salvar }: {
                     </select>
                     <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                       <CampoBlur mono valor={e.link ?? ''} onSalvar={(v) => salvar((d) => ({ ...d, eventos: d.eventos.map((x) => (x.id === e.id ? { ...x, link: v || undefined } : x)) }))} desabilitado={!podeEditar} placeholder="https://…" style={{ flex: 1, padding: '7px 9px' }} />
-                      {e.link && <a href={e.link} target="_blank" rel="noreferrer" className="tf-mono" style={{ fontSize: '0.66rem', color: 'var(--tf-accent)', flex: 'none' }}>↗</a>}
+                      {urlSegura(e.link) && <a href={urlSegura(e.link)} target="_blank" rel="noreferrer" className="tf-mono" style={{ fontSize: '0.66rem', color: 'var(--tf-accent)', flex: 'none' }}>↗</a>}
                     </div>
                     <CampoBlur valor={e.obs ?? ''} onSalvar={(v) => salvar((d) => ({ ...d, eventos: d.eventos.map((x) => (x.id === e.id ? { ...x, obs: v } : x)) }))} desabilitado={!podeEditar} placeholder="Obs" style={{ padding: '7px 10px', fontSize: '0.8rem' }} />
                     <BotaoRemover podeEditar={podeEditar} titulo="Remover evento?" texto={`"${e.nome}" sai da prospecção.`} onConfirmar={() => salvar((d) => ({ ...d, eventos: d.eventos.filter((x) => x.id !== e.id) }))} />

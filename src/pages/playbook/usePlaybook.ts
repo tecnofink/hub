@@ -3,7 +3,7 @@
  * seção + gravação (regras do Firestore restringem escrita a editores/admins).
  */
 import { useEffect, useMemo, useState } from 'react';
-import { deleteDoc, doc, getDoc, onSnapshot, runTransaction, setDoc } from 'firebase/firestore';
+import { collection, deleteDoc, doc, getDoc, onSnapshot, runTransaction, serverTimestamp, setDoc } from 'firebase/firestore';
 import { deleteObject, getDownloadURL, ref as sRef, uploadBytes } from 'firebase/storage';
 import { db, storage } from '../../lib/firebase';
 import { useStore, useUI } from '../../store/AppStore';
@@ -176,6 +176,27 @@ export function useFeira(eventoId: string | null) {
 function msg(e: unknown): string {
   const s = String((e as { code?: string })?.code ?? e);
   return s.includes('permission') ? 'Somente editores podem alterar o conteúdo.' : s;
+}
+
+/**
+ * Trilha de auditoria da exportação de leads (PII de terceiros): registra quem
+ * baixou a lista de qual feira e quantos contatos levou. Usa a coleção `logs`
+ * do portal — a regra exige quemUid == auth.uid, então a autoria é confiável.
+ */
+export function useRegistrarExportacaoLeads() {
+  const { me } = useStore();
+  return (eventoId: string, quantidade: number) => {
+    if (!me) return;
+    const agora = new Date();
+    const ts = agora.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+      + ' · ' + agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    setDoc(doc(collection(db, 'logs')), {
+      ts, quem: me.nome, quemUid: me.id,
+      acao: 'Leads exportados (Marketing)',
+      det: quantidade + ' contato(s) da feira ' + eventoId,
+      tipo: 'admin', at: serverTimestamp(),
+    }).catch(() => { /* trilha é best-effort — não bloqueia a exportação */ });
+  };
 }
 
 /**

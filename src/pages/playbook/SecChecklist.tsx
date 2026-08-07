@@ -95,7 +95,7 @@ export default function SecChecklist({ eventos, arvore, podeEditar, salvarArvore
               <AbaChecklist arvore={arvore} feira={feira} podeEditar={podeEditar} salvarFeira={salvarFeira} salvarArvore={salvarArvore} />
             )}
             {aba !== 'checklist' && (
-              <AbasFeira aba={aba} eventoId={feiraId!} feira={feira} salvar={salvarFeira} podeEditar={podeEditar} />
+              <AbasFeira aba={aba} eventoId={feiraId!} eventoData={evento?.data} feira={feira} salvar={salvarFeira} podeEditar={podeEditar} />
             )}
           </div>
         </div>
